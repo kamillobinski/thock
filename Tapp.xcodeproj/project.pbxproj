@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		777D594A2D7B0E3100A1B71F /* Resources in Resources */ = {isa = PBXBuildFile; fileRef = 777D59492D7B0E3100A1B71F /* Resources */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7762F4A22D7A83BC0033AE42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,11 +31,42 @@
 		7762F4902D7A83BA0033AE42 /* Tapp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7762F4A12D7A83BC0033AE42 /* TappTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TappTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7762F4AB2D7A83BC0033AE42 /* TappUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TappUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		777D59492D7B0E3100A1B71F /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Resources; path = Tapp/Resources; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		777D591E2D7B0B7600A1B71F /* Exceptions for "Tapp" folder in "Tapp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/Sounds/Default/down_enter.mp3,
+				Resources/Sounds/Default/down_space.mp3,
+				Resources/Sounds/Default/down1.mp3,
+				Resources/Sounds/Default/down2.mp3,
+				Resources/Sounds/Default/down3.mp3,
+				Resources/Sounds/Default/down4.mp3,
+				Resources/Sounds/Default/down5.mp3,
+				Resources/Sounds/Default/down6.mp3,
+				Resources/Sounds/Default/down7.mp3,
+				Resources/Sounds/Default/up_enter.mp3,
+				Resources/Sounds/Default/up_space.mp3,
+				Resources/Sounds/Default/up1.mp3,
+				Resources/Sounds/Default/up2.mp3,
+				Resources/Sounds/Default/up3.mp3,
+				Resources/Sounds/Default/up4.mp3,
+				Resources/Sounds/Default/up5.mp3,
+				Resources/Sounds/Default/up6.mp3,
+				Resources/Sounds/Default/up7.mp3,
+			);
+			target = 7762F48F2D7A83BA0033AE42 /* Tapp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7762F4922D7A83BA0033AE42 /* Tapp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				777D591E2D7B0B7600A1B71F /* Exceptions for "Tapp" folder in "Tapp" target */,
+			);
 			path = Tapp;
 			sourceTree = "<group>";
 		};
@@ -75,6 +110,7 @@
 		7762F4872D7A83BA0033AE42 = {
 			isa = PBXGroup;
 			children = (
+				777D59492D7B0E3100A1B71F /* Resources */,
 				7762F4922D7A83BA0033AE42 /* Tapp */,
 				7762F4A42D7A83BC0033AE42 /* TappTests */,
 				7762F4AE2D7A83BC0033AE42 /* TappUITests */,
@@ -212,6 +248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				777D594A2D7B0E3100A1B71F /* Resources in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
