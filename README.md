@@ -5,7 +5,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="Tapp/Assets.xcassets/AppIcon.appiconset/icon_128x128.png?token=GHSAT0AAAAAAC72ZVP56ZWMWUP7PHKLBV6OZ6LIMOQ" alt="Logo" width="80" height="80">
+  <img src="Tapp/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="80" height="80">
   <h3 align="center">Tapp</h3>
   <p align="center">
     A macOS utility that adds sound effects to your keyboard.
