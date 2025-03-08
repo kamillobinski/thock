@@ -100,7 +100,7 @@ Tapp requires macOS 15.2 Sequoia or later.
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-TODO
+![usage](usage.png)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
