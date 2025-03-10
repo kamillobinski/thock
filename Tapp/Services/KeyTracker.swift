@@ -11,14 +11,14 @@ class KeyTracker {
     private weak var delegate: KeyTrackerDelegate?
     private var pressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
-
+    
     init(delegate: KeyTrackerDelegate) {
         self.delegate = delegate
     }
-
+    
     func startTrackingKeys() {
         stopTrackingKeys()
-
+        
         let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
         let observer = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         eventMonitor = CGEvent.tapCreate(
@@ -48,7 +48,7 @@ class KeyTracker {
             },
             userInfo: observer
         )
-
+        
         if let eventMonitor = eventMonitor {
             let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
             CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
@@ -57,7 +57,7 @@ class KeyTracker {
             print("Failed to create event tap.")
         }
     }
-
+    
     func stopTrackingKeys() {
         if let eventMonitor = eventMonitor {
             CFMachPortInvalidate(eventMonitor)

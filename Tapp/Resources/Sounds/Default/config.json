@@ -1,0 +1,46 @@
+{
+    "name": "Default",
+    "source": "https://github.com/webdevcody/type-joy",
+    "license": {
+        "type": "MIT",
+        "url": "https://github.com/webdevcody/type-joy/blob/main/LICENSE"
+    },
+    "sounds": {
+        "default": {
+            "down": [
+                "1.mp3",
+                "2.mp3",
+                "3.mp3",
+                "4.mp3",
+                "5.mp3",
+                "6.mp3",
+                "7.mp3"
+            ],
+            "up": [
+                "101.mp3",
+                "102.mp3",
+                "103.mp3",
+                "104.mp3",
+                "105.mp3",
+                "106.mp3",
+                "107.mp3"
+            ]
+        },
+        "space": {
+            "down": [
+                "201.mp3"
+            ],
+            "up": [
+                "251.mp3"
+            ]
+        },
+        "enter": {
+            "down": [
+                "301.mp3"
+            ],
+            "up": [
+                "351.mp3"
+            ]
+        }
+    }
+}

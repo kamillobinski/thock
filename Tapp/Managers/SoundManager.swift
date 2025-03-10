@@ -12,10 +12,10 @@ class SoundManager: NSObject, AVAudioPlayerDelegate {
     
     private var audioDataCache: [String: Data] = [:]
     private var activeAudioPlayers: [AVAudioPlayer] = []
-
+    
     func playSound(soundFileName: String, mode: Modes) {
         let soundFolder = "Resources/Sounds/\(mode.folderName)"
-
+        
         if let cachedData = audioDataCache[soundFileName] {
             createAndPlayAudioPlayer(with: cachedData)
         } else {
@@ -32,7 +32,7 @@ class SoundManager: NSObject, AVAudioPlayerDelegate {
             }
         }
     }
-
+    
     private func createAndPlayAudioPlayer(with soundData: Data) {
         do {
             let player = try AVAudioPlayer(data: soundData)
@@ -44,7 +44,11 @@ class SoundManager: NSObject, AVAudioPlayerDelegate {
             print("Error playing sound: \(error)")
         }
     }
-
+    
+    func clearAudioDataCache() {
+        audioDataCache.removeAll()
+    }
+    
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         activeAudioPlayers.removeAll { $0 == player }
     }
