@@ -6,64 +6,79 @@
 //
 
 import Cocoa
+import SwiftUI
 
 class MenuManager {
     private var menu: NSMenu
     private var statusBarItem: NSStatusItem
     private weak var delegate: MenuManagerDelegate?
 
+    private enum MenuItemTitle {
+        static let modes = "Modes"
+        static let quit = "Quit"
+        static let version = "Version"
+    }
+
     init(statusBarItem: NSStatusItem, delegate: MenuManagerDelegate) {
         self.menu = NSMenu()
         self.statusBarItem = statusBarItem
         self.delegate = delegate
-        updateMenu()
         statusBarItem.menu = menu
+        updateMenu()
     }
 
     func updateMenu() {
         menu.removeAllItems()
 
-        let toggleItem = NSMenuItem(
-            title: delegate?.isSoundEnabled == true ? "Disable Sound" : "Enable Sound",
-            action: #selector(toggleSound),
-            keyEquivalent: ""
-        )
-        toggleItem.target = self
-
-        let iconName = delegate?.isSoundEnabled == true ? "x.circle.fill" : "checkmark.circle.fill"
-        if let icon = NSImage(systemSymbolName: iconName, accessibilityDescription: nil) {
-            icon.size = NSSize(width: 16, height: 16)
-            toggleItem.image = icon
-        }
-
-        menu.addItem(toggleItem)
+        addToggleMenuItem()
         menu.addItem(NSMenuItem.separator())
+        addSoundModesMenu()
+        menu.addItem(NSMenuItem.separator())
+        addVersionMenuItem()
+        menu.addItem(NSMenuItem.separator())
+        addQuitMenuItem()
+    }
+
+    private func addToggleMenuItem() {
+        guard let delegate = delegate else { return }
+
+        let toggleItem = NSMenuItem()
+        toggleItem.view = ToggleMenuItemView(title: AppInfoHelper.appName, isOn: delegate.isSoundEnabled) { [weak self] _ in
+            self?.delegate?.toggleSound()
+        }
+        menu.addItem(toggleItem)
+    }
+
+    private func addSoundModesMenu() {
+        guard let delegate = delegate else { return }
 
         let soundMenu = NSMenu()
         for sound in Modes.allCases {
             let item = NSMenuItem(title: sound.rawValue, action: #selector(changeSoundType(_:)), keyEquivalent: "")
-            item.state = (sound == delegate?.currentSoundMode) ? .on : .off
+            item.state = (sound == delegate.currentSoundMode) ? .on : .off
             item.target = self
             soundMenu.addItem(item)
         }
 
-        let soundTypeItem = NSMenuItem(title: "Modes", action: nil, keyEquivalent: "")
+        let soundTypeItem = NSMenuItem(title: MenuItemTitle.modes, action: nil, keyEquivalent: "")
         menu.addItem(soundTypeItem)
         menu.setSubmenu(soundMenu, for: soundTypeItem)
-        menu.addItem(NSMenuItem.separator())
+    }
 
-        let quitItem = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q")
+    private func addVersionMenuItem() {
+        let versionItem = NSMenuItem(title: "\(MenuItemTitle.version) \(AppInfoHelper.appVersion)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        menu.addItem(versionItem)
+    }
+
+    private func addQuitMenuItem() {
+        let quitItem = NSMenuItem(title: MenuItemTitle.quit, action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
     }
 
     @objc private func changeSoundType(_ sender: NSMenuItem) {
         delegate?.changeSoundMode(to: sender.title)
-        updateMenu()
-    }
-
-    @objc private func toggleSound() {
-        delegate?.toggleSound()
         updateMenu()
     }
 
@@ -75,7 +90,7 @@ class MenuManager {
 protocol MenuManagerDelegate: AnyObject {
     var isSoundEnabled: Bool { get }
     var currentSoundMode: Modes { get }
-    
+
     func toggleSound()
     func changeSoundMode(to mode: String)
     func quitApp()
