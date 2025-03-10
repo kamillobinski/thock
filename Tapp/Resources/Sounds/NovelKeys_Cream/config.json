@@ -1,0 +1,46 @@
+{
+    "name": "NovelKeys Cream",
+    "source": "https://github.com/tplai/kbsim",
+    "license": {
+        "type": "MIT",
+        "url": "https://github.com/tplai/kbsim/blob/master/LICENSE.md"
+    },
+    "sounds": {
+        "default": {
+            "down": [
+                "1.mp3",
+                "2.mp3",
+                "3.mp3",
+                "4.mp3",
+                "5.mp3"
+            ],
+            "up": [
+                "101.mp3"
+            ]
+        },
+        "space": {
+            "down": [
+                "201.mp3"
+            ],
+            "up": [
+                "251.mp3"
+            ]
+        },
+        "enter": {
+            "down": [
+                "301.mp3"
+            ],
+            "up": [
+                "351.mp3"
+            ]
+        },
+        "backspace": {
+            "down": [
+                "401.mp3"
+            ],
+            "up": [
+                "451.mp3"
+            ]
+        }
+    }
+}

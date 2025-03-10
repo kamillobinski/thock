@@ -69,7 +69,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
     
     func changeMode(to mode: String) {
         SoundManager.shared.clearAudioDataCache()
-        if let newType = Modes(rawValue: mode) {
+        if let newType = Modes.fromDisplayName(mode) {
             SoundModeManager.shared.setMode(newType)
             SoundConfigManager.shared.loadConfig()
         }

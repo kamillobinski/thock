@@ -51,13 +51,24 @@ class MenuManager {
     
     private func addSoundModesMenu() {
         let soundMenu = NSMenu()
-        for sound in Modes.allCases {
-            let item = NSMenuItem(title: sound.rawValue, action: #selector(changeSoundType(_:)), keyEquivalent: "")
-            item.state = (sound == SoundModeManager.shared.getMode()) ? .on : .off
-            item.target = self
-            soundMenu.addItem(item)
+
+        let groupedModes = Dictionary(grouping: Modes.allCases, by: { $0.group })
+
+        for (group, modes) in groupedModes.sorted(by: { $0.key < $1.key }) {
+            let groupItem = NSMenuItem(title: group, action: nil, keyEquivalent: "")
+            groupItem.isEnabled = false
+            soundMenu.addItem(groupItem)
+
+            for mode in modes {
+                let item = NSMenuItem(title: mode.displayName, action: #selector(changeSoundType(_:)), keyEquivalent: "")
+                item.state = (mode == SoundModeManager.shared.getMode()) ? .on : .off
+                item.target = self
+                soundMenu.addItem(item)
+            }
+
+            soundMenu.addItem(NSMenuItem.separator())
         }
-        
+
         let soundTypeItem = NSMenuItem(title: MenuItemTitle.modes, action: nil, keyEquivalent: "")
         menu.addItem(soundTypeItem)
         menu.setSubmenu(soundMenu, for: soundTypeItem)
