@@ -34,7 +34,7 @@ struct ModeDatabase {
         .Gateron: [
             .tplai: [
                 Mode(id: UUID(uuidString: "de0f70c0-9123-45bf-aeea-9490fbba7200")!, name: "Ink Black", path: "Resources/Sounds/Gateron/tplai/Ink_Black/"),
-                Mode(id: UUID(uuidString: "81417c50-8a5f-4243-a0bc-9a6b5c1f558e")!, name: "Ink Black", path: "Resources/Sounds/Gateron/tplai/Ink_Red/"),
+                Mode(id: UUID(uuidString: "81417c50-8a5f-4243-a0bc-9a6b5c1f558e")!, name: "Ink Red", path: "Resources/Sounds/Gateron/tplai/Ink_Red/"),
                 Mode(id: UUID(uuidString: "d455f490-bcad-44af-8e72-49227c38cadf")!, name: "Turquoise Tealios", path: "Resources/Sounds/Gateron/tplai/Turquoise_Tealios/"),
             ]
         ],

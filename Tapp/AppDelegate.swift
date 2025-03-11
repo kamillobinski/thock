@@ -20,12 +20,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         }
         keyTracker = KeyTracker(delegate: self)
         keyTracker.startTrackingKeys()
-        ModeConfigManager.shared.loadModeConfig()
+        ModeConfigManager.shared.loadModeConfig(mode: ModeManager.shared.getCurrentMode())
         
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         menuManager = MenuManager(statusBarItem: statusBarItem, delegate: self)
         menuManager.updateMenuBarIcon()
+        SoundManager.shared.preloadSounds(for: ModeManager.shared.getCurrentMode())
     }
     
     func isProcessTrusted() -> Bool {
@@ -41,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         let soundList = ModeConfigManager.shared.getKeyDownSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
-            SoundManager.shared.playSound(soundFileName: soundFileName, mode: ModeManager.shared.getCurrentMode())
+            SoundManager.shared.playSound(soundFileName: soundFileName)
         } else {
             print("Warning: No available sound for keyCode: \(keyCode)")
         }
@@ -54,7 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         let soundList = ModeConfigManager.shared.getKeyUpSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
-            SoundManager.shared.playSound(soundFileName: soundFileName, mode: ModeManager.shared.getCurrentMode())
+            SoundManager.shared.playSound(soundFileName: soundFileName)
         } else {
             print("Warning: No available sound for keyCode: \(keyCode)")
         }
@@ -68,9 +69,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
     }
     
     func changeMode(to mode: Mode) {
-        SoundManager.shared.clearAudioDataCache()
         ModeManager.shared.setCurrentMode(mode)
-        ModeConfigManager.shared.loadModeConfig()
+        ModeConfigManager.shared.loadModeConfig(mode: mode)
+        SoundManager.shared.preloadSounds(for: ModeManager.shared.getCurrentMode())
     }
     
     func quitApp() {

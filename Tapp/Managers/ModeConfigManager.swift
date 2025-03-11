@@ -15,8 +15,8 @@ class ModeConfigManager {
     
     private init() {}
     
-    func loadModeConfig() {
-        if let jsonURL = Bundle.main.url(forResource: soundConfigFile, withExtension: soundConfigFileExtension, subdirectory: ModeManager.shared.getCurrentMode().path),
+    func loadModeConfig(mode: Mode) {
+        if let jsonURL = Bundle.main.url(forResource: soundConfigFile, withExtension: soundConfigFileExtension, subdirectory: mode.path),
            let jsonData = try? Data(contentsOf: jsonURL) {
             let decoder = JSONDecoder()
             do {
