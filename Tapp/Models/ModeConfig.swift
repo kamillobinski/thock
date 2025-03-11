@@ -1,5 +1,5 @@
 //
-//  SoundConfig.swift
+//  ModeConfig.swift
 //  Tapp
 //
 //  Created by Kamil Łobiński on 10/03/2025.

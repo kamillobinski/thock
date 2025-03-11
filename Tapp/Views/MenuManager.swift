@@ -29,7 +29,6 @@ class MenuManager {
     
     func updateMenu() {
         menu.removeAllItems()
-        
         addToggleMenuItem()
         menu.addItem(NSMenuItem.separator())
         addSoundModesMenu()
@@ -50,28 +49,28 @@ class MenuManager {
     }
     
     private func addSoundModesMenu() {
-        let soundMenu = NSMenu()
-
-        let groupedModes = Dictionary(grouping: Modes.allCases, by: { $0.group })
-
-        for (group, modes) in groupedModes.sorted(by: { $0.key < $1.key }) {
-            let groupItem = NSMenuItem(title: group, action: nil, keyEquivalent: "")
-            groupItem.isEnabled = false
-            soundMenu.addItem(groupItem)
-
-            for mode in modes {
-                let item = NSMenuItem(title: mode.displayName, action: #selector(changeSoundType(_:)), keyEquivalent: "")
-                item.state = (mode == SoundModeManager.shared.getMode()) ? .on : .off
-                item.target = self
-                soundMenu.addItem(item)
+        for brand in ModeDatabase().getAllBrands() {
+            let brandSubMenu = NSMenu()
+            for author in ModeDatabase().getAuthors(for: brand) {
+                guard let modes = ModeDatabase().getModes(for: brand, author: author), !modes.isEmpty else { continue }
+                
+                let authorItem = NSMenuItem(title: "by \(author.rawValue)", action: nil, keyEquivalent: "")
+                authorItem.isEnabled = false
+                brandSubMenu.addItem(authorItem)
+                
+                for mode in modes {
+                    let item = NSMenuItem(title: mode.name, action: #selector(changeMode(_:)), keyEquivalent: "")
+                    item.state = (mode == ModeManager.shared.getCurrentMode()) ? .on : .off
+                    item.target = self
+                    item.representedObject = mode
+                    brandSubMenu.addItem(item)
+                }
+                brandSubMenu.addItem(NSMenuItem.separator())
             }
-
-            soundMenu.addItem(NSMenuItem.separator())
+            let brandMenuItem = NSMenuItem(title: brand.rawValue, action: nil, keyEquivalent: "")
+            menu.addItem(brandMenuItem)
+            menu.setSubmenu(brandSubMenu, for: brandMenuItem)
         }
-
-        let soundTypeItem = NSMenuItem(title: MenuItemTitle.modes, action: nil, keyEquivalent: "")
-        menu.addItem(soundTypeItem)
-        menu.setSubmenu(soundMenu, for: soundTypeItem)
     }
     
     private func addVersionMenuItem() {
@@ -93,9 +92,11 @@ class MenuManager {
         statusBarItem.button?.alphaValue = delegate.isSoundEnabled ? 1.0 : 0.5
     }
     
-    @objc private func changeSoundType(_ sender: NSMenuItem) {
-        delegate?.changeMode(to: sender.title)
-        updateMenu()
+    @objc private func changeMode(_ sender: NSMenuItem) {
+        if let mode = sender.representedObject as? Mode {
+            delegate?.changeMode(to: mode)
+            updateMenu()
+        }
     }
     
     @objc private func quitApp() {
@@ -105,9 +106,8 @@ class MenuManager {
 
 protocol MenuManagerDelegate: AnyObject {
     var isSoundEnabled: Bool { get }
-    //    var currentSoundMode: Modes { get }
     
     func toggleSound()
-    func changeMode(to mode: String)
+    func changeMode(to mode: Mode)
     func quitApp()
 }

@@ -1,5 +1,5 @@
 //
-//  SoundConfigManager.swift
+//  ModeConfigManager.swift
 //  Tapp
 //
 //  Created by Kamil Łobiński on 10/03/2025.
@@ -7,17 +7,16 @@
 
 import SwiftUI
 
-class SoundConfigManager {
-    static let shared = SoundConfigManager()
+class ModeConfigManager {
+    static let shared = ModeConfigManager()
     
-    private var soundFolder = "Resources/Sounds/"
-    private var soundConfigFile = "config", soundConfigFileExtension: String = "json"
+    private let soundConfigFile = "config", soundConfigFileExtension: String = "json"
     private var soundConfig: SoundConfig?
     
     private init() {}
     
-    func loadConfig() {
-        if let jsonURL = Bundle.main.url(forResource: soundConfigFile, withExtension: soundConfigFileExtension, subdirectory: "\(soundFolder)\(SoundModeManager.shared.getMode().folderName)"),
+    func loadModeConfig() {
+        if let jsonURL = Bundle.main.url(forResource: soundConfigFile, withExtension: soundConfigFileExtension, subdirectory: ModeManager.shared.getCurrentMode().path),
            let jsonData = try? Data(contentsOf: jsonURL) {
             let decoder = JSONDecoder()
             do {

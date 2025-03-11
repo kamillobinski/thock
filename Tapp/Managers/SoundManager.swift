@@ -13,8 +13,8 @@ class SoundManager: NSObject, AVAudioPlayerDelegate {
     private var audioDataCache: [String: Data] = [:]
     private var activeAudioPlayers: [AVAudioPlayer] = []
     
-    func playSound(soundFileName: String, mode: Modes) {
-        let soundFolder = "Resources/Sounds/\(mode.folderName)"
+    func playSound(soundFileName: String, mode: Mode) {
+        let soundFolder = mode.path
         
         if let cachedData = audioDataCache[soundFileName] {
             createAndPlayAudioPlayer(with: cachedData)

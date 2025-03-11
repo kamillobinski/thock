@@ -20,7 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         }
         keyTracker = KeyTracker(delegate: self)
         keyTracker.startTrackingKeys()
-        SoundConfigManager.shared.loadConfig()
+        ModeConfigManager.shared.loadModeConfig()
         
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
@@ -38,10 +38,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         guard isEnabled else { return }
         
         let keyType = KeyType.fromKeyCode(keyCode)
-        let soundList = SoundConfigManager.shared.getKeyDownSounds(for: keyType)
+        let soundList = ModeConfigManager.shared.getKeyDownSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
-            SoundManager.shared.playSound(soundFileName: soundFileName, mode: SoundModeManager.shared.getMode())
+            SoundManager.shared.playSound(soundFileName: soundFileName, mode: ModeManager.shared.getCurrentMode())
         } else {
             print("Warning: No available sound for keyCode: \(keyCode)")
         }
@@ -51,10 +51,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         guard isEnabled else { return }
         
         let keyType = KeyType.fromKeyCode(keyCode)
-        let soundList = SoundConfigManager.shared.getKeyUpSounds(for: keyType)
+        let soundList = ModeConfigManager.shared.getKeyUpSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
-            SoundManager.shared.playSound(soundFileName: soundFileName, mode: SoundModeManager.shared.getMode())
+            SoundManager.shared.playSound(soundFileName: soundFileName, mode: ModeManager.shared.getCurrentMode())
         } else {
             print("Warning: No available sound for keyCode: \(keyCode)")
         }
@@ -67,12 +67,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         menuManager.updateMenuBarIcon()
     }
     
-    func changeMode(to mode: String) {
+    func changeMode(to mode: Mode) {
         SoundManager.shared.clearAudioDataCache()
-        if let newType = Modes.fromDisplayName(mode) {
-            SoundModeManager.shared.setMode(newType)
-            SoundConfigManager.shared.loadConfig()
-        }
+        ModeManager.shared.setCurrentMode(mode)
+        ModeConfigManager.shared.loadModeConfig()
     }
     
     func quitApp() {
