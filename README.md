@@ -5,8 +5,8 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="Tapp/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="80" height="80">
-  <h3 align="center">Tapp</h3>
+  <img src="Thock/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="80" height="80">
+  <h3 align="center">Thock</h3>
   <p align="center">
     A macOS utility that adds sound effects to your keyboard.
     <br />Lightweight, native and runs in the menu bar.
@@ -45,7 +45,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-Tapp is a native macOS utility that adds sound effects to your keyboard.
+ is a native macOS utility that adds sound effects to your keyboard.
 
 Built this project purely for fun and to explore Swift since I had never used it before.
 The idea was simple - add some satisfying sound feedback to typing, kind of like a mechanical keyboard but purely in software.
@@ -74,24 +74,20 @@ To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
-Tapp requires macOS 15.2 Sequoia or later.
+Thock requires macOS 15.2 Sequoia or later.
 
 ### Installation
 
 1. Clone the repository
    ```sh
-   git clone https://github.com/kamillobinski/tapp.git
-   cd tapp
+   git clone https://github.com/kamillobinski/.git
+   cd 
    ```
    
 2. Open in Xcode
    ```sh
-   open Tapp.xcodeproj
+   open Thock.xcodeproj
    ```
-   
-4. Build & Run<br/>
-   <kbd>Command</kbd> + <kbd>B</kbd><br/>
-   <kbd>Command</kbd> + <kbd>R</kbd>
    
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -117,7 +113,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Tapp is open-source and contributions are always welcome! 
+Thock is open-source and contributions are always welcome! 
 If you want to improve the code, fix bugs or add new sound modes, open a pull request or an issue.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
