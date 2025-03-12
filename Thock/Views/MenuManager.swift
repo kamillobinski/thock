@@ -49,10 +49,15 @@ class MenuManager {
     }
     
     private func addSoundModesMenu() {
-        for brand in ModeDatabase().getAllBrands() {
+        let modeDatabase = ModeDatabase()
+        let currentMode = ModeManager.shared.getCurrentMode()
+        
+        for brand in modeDatabase.getAllBrands() {
             let brandSubMenu = NSMenu()
-            for author in ModeDatabase().getAuthors(for: brand) {
-                guard let modes = ModeDatabase().getModes(for: brand, author: author), !modes.isEmpty else { continue }
+            var isModeActiveInBrand = false
+            
+            for author in modeDatabase.getAuthors(for: brand) {
+                guard let modes = modeDatabase.getModes(for: brand, author: author), !modes.isEmpty else { continue }
                 
                 let authorItem = NSMenuItem(title: "by \(author.rawValue)", action: nil, keyEquivalent: "")
                 authorItem.isEnabled = false
@@ -60,14 +65,29 @@ class MenuManager {
                 
                 for mode in modes {
                     let item = NSMenuItem(title: mode.name, action: #selector(changeMode(_:)), keyEquivalent: "")
-                    item.state = (mode == ModeManager.shared.getCurrentMode()) ? .on : .off
+                    item.state = (mode == currentMode) ? .on : .off
                     item.target = self
                     item.representedObject = mode
                     brandSubMenu.addItem(item)
+                    
+                    if mode == currentMode {
+                        isModeActiveInBrand = true
+                    }
                 }
                 brandSubMenu.addItem(NSMenuItem.separator())
             }
+            
             let brandMenuItem = NSMenuItem(title: brand.rawValue, action: nil, keyEquivalent: "")
+            
+            if isModeActiveInBrand {
+                let attributes: [NSAttributedString.Key: Any] = [
+                    .font: NSFont.systemFont(ofSize: 13, weight: .bold)
+                ]
+                brandMenuItem.attributedTitle = NSAttributedString(string: brand.rawValue, attributes: attributes)
+            } else {
+                brandMenuItem.attributedTitle = NSAttributedString(string: brand.rawValue)
+            }
+            
             menu.addItem(brandMenuItem)
             menu.setSubmenu(brandSubMenu, for: brandMenuItem)
         }

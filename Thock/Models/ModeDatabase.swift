@@ -92,4 +92,26 @@ struct ModeDatabase {
         }
         return nil
     }
+    
+    func findBrand(for mode: Mode) -> Brand? {
+        for (brand, authors) in modeStorage {
+            for (_, modes) in authors {
+                if modes.contains(where: { $0.id == mode.id }) {
+                    return brand
+                }
+            }
+        }
+        return nil
+    }
+    
+    func findAuthor(for mode: Mode) -> Author? {
+        for (_, authors) in modeStorage {
+            for (author, modes) in authors {
+                if modes.contains(where: { $0.id == mode.id }) {
+                    return author
+                }
+            }
+        }
+        return nil
+    }
 }
