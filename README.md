@@ -45,7 +45,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
- is a native macOS utility that adds sound effects to your keyboard.
+Thock is a native macOS utility that adds sound effects to your keyboard.
 
 Built this project purely for fun and to explore Swift since I had never used it before.
 The idea was simple - add some satisfying sound feedback to typing, kind of like a mechanical keyboard but purely in software.
@@ -80,8 +80,8 @@ Thock requires macOS 15.2 Sequoia or later.
 
 1. Clone the repository
    ```sh
-   git clone https://github.com/kamillobinski/.git
-   cd 
+   git clone https://github.com/kamillobinski/thock.git
+   cd thock
    ```
    
 2. Open in Xcode
@@ -125,7 +125,9 @@ If you want to improve the code, fix bugs or add new sound modes, open a pull re
 
 Thanks to the tools and resources that helped make this project a reality!
 
-* [webdevcody/type-joy](https://github.com/webdevcody/type-joy) - keyboard sound recordings
+**Keyboard Sound Recordings**
+- [tplai/kbsim](https://github.com/tplai/kbsim)
+- [webdevcody/type-joy](https://github.com/webdevcody/type-joy)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
