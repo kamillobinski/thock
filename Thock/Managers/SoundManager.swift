@@ -15,11 +15,14 @@ class SoundManager {
     private var audioBuffers: [String: AVAudioPCMBuffer] = [:]
     private let mixer = AVAudioMixerNode()
     
+    private var volume: Float = 0.5
+    
     init() {
         setupAudioEngine()
     }
     
     private func setupAudioEngine() {
+        mixer.outputVolume = Float(volume)
         engine.attach(mixer)
         engine.connect(mixer, to: engine.outputNode, format: nil)
         do {
@@ -104,5 +107,14 @@ class SoundManager {
             print("Error loading audio buffer: \(error)")
             return nil
         }
+    }
+    
+    func setVolume(_ newValue: Float) {
+        mixer.outputVolume = Float(newValue)
+        volume = newValue
+    }
+    
+    func getVolume() -> Float {
+        return volume
     }
 }

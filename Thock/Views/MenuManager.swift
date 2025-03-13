@@ -14,7 +14,7 @@ class MenuManager {
     private weak var delegate: MenuManagerDelegate?
     
     private enum MenuItemTitle {
-        static let modes = "Modes"
+        static let volume = "Volume"
         static let quit = "Quit"
         static let version = "Version"
     }
@@ -31,6 +31,8 @@ class MenuManager {
         menu.removeAllItems()
         addToggleMenuItem()
         menu.addItem(NSMenuItem.separator())
+        addVolumeSliderItem()
+        menu.addItem(NSMenuItem.separator())
         addSoundModesMenu()
         menu.addItem(NSMenuItem.separator())
         addVersionMenuItem()
@@ -46,6 +48,33 @@ class MenuManager {
             self?.delegate?.toggleSound()
         }
         menu.addItem(toggleItem)
+    }
+    
+    private func addVolumeSliderItem() {
+        let labelItem = NSMenuItem(title: MenuItemTitle.volume, action: nil, keyEquivalent: "")
+        labelItem.isEnabled = false
+        menu.addItem(labelItem)
+        
+        let volumeItem = NSMenuItem()
+        
+        let hostingView = NSHostingView(rootView: VolumeSliderItemView(
+            volume: Binding(
+                get: { Double(SoundManager.shared.getVolume()) },
+                set: { _ in }
+            ),
+            onVolumeChange: { newValue in
+                SoundManager.shared.setVolume(Float(newValue))
+            }, step: 0.01
+        ))
+        
+        hostingView.frame = NSRect(x: 15, y: 0, width: 150, height: 20)
+        
+        let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 180, height: 20))
+        containerView.addSubview(hostingView)
+        
+        volumeItem.view = containerView
+        menu.addItem(volumeItem)
+        menu.update()
     }
     
     private func addSoundModesMenu() {
