@@ -19,8 +19,12 @@ class KeyTracker {
     func startTrackingKeys() {
         stopTrackingKeys()
         
-        let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
+        let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue) |
+        (1 << CGEventType.keyUp.rawValue) |
+        (1 << CGEventType.flagsChanged.rawValue)
+        
         let observer = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        
         eventMonitor = CGEvent.tapCreate(
             tap: .cghidEventTap,
             place: .tailAppendEventTap,
@@ -34,16 +38,31 @@ class KeyTracker {
                 let keyTracker = Unmanaged<KeyTracker>.fromOpaque(userInfo).takeUnretainedValue()
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                 
-                if type == .keyDown {
+                switch type {
+                case .keyDown:
                     if keyTracker.pressedKeys.contains(keyCode) {
                         return Unmanaged.passUnretained(event)
                     }
                     keyTracker.pressedKeys.insert(keyCode)
                     keyTracker.delegate?.handleKeyDown(keyCode)
-                } else if type == .keyUp {
+                    
+                case .keyUp:
                     keyTracker.pressedKeys.remove(keyCode)
                     keyTracker.delegate?.handleKeyUp(keyCode)
+                    
+                case .flagsChanged:
+                    if keyTracker.pressedKeys.contains(keyCode) {
+                        keyTracker.pressedKeys.remove(keyCode)
+                        keyTracker.delegate?.handleKeyUp(keyCode)
+                    } else {
+                        keyTracker.pressedKeys.insert(keyCode)
+                        keyTracker.delegate?.handleKeyDown(keyCode)
+                    }
+                    
+                default:
+                    break
                 }
+                
                 return Unmanaged.passUnretained(event)
             },
             userInfo: observer
