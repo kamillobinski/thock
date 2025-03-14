@@ -7,27 +7,11 @@
 
 import Foundation
 
-enum KeyType: String, Codable, CaseIterable {
-    case `default` = "default"
-    case space = "space"
-    case enter = "enter"
-    case backspace = "backspace"
-    
-    static func fromKeyCode(_ keyCode: Int64) -> KeyType {
-        switch keyCode {
-        case 36: return .enter
-        case 49: return .space
-        case 51: return .backspace
-        default: return .default
-        }
-    }
-}
-
 struct SoundConfig: Codable {
     let name: String
     let source: String
     let license: License
-    let sounds: [KeyType: KeySound]
+    let sounds: [String: KeySound]
     
     // Custom Decoder to Map Dictionary Keys to KeyType Enum
     init(from decoder: Decoder) throws {
@@ -35,18 +19,7 @@ struct SoundConfig: Codable {
         name = try container.decode(String.self, forKey: .name)
         source = try container.decode(String.self, forKey: .source)
         license = try container.decode(License.self, forKey: .license)
-        let soundsDict = try container.decode([String: KeySound].self, forKey: .sounds)
-        
-        var mappedSounds: [KeyType: KeySound] = [:]
-        for (key, value) in soundsDict {
-            if let keyType = KeyType(rawValue: key) {
-                mappedSounds[keyType] = value
-            } else {
-                print("Warning: Unknown key type '\(key)' found in JSON. Skipping.")
-            }
-        }
-        
-        sounds = mappedSounds
+        sounds = try container.decode([String: KeySound].self, forKey: .sounds)
     }
 }
 

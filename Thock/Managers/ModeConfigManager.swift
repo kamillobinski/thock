@@ -29,11 +29,23 @@ class ModeConfigManager {
         }
     }
     
-    func getKeyUpSounds(for key: KeyType) -> [String] {
-        return soundConfig?.sounds[key]?.up ?? []
+    /// Retrieves the "KeyUp" sounds for a given key.
+    /// - If a sound array exists for the key, it is returned.
+    /// - If no sound array is found, falls back to the default key sound array.
+    /// - If no default sound array exists, returns an empty array.
+    /// - Parameter key: The key for which to retrieve the "KeyUp" sounds.
+    /// - Returns: An array of sound file names, or an empty array if none are found.
+    func getKeyUpSounds(for key: String) -> [String] {
+        return soundConfig?.sounds[key]?.up ?? soundConfig?.sounds[KeyMapper.keyCodeNotFound]?.up ?? []
     }
     
-    func getKeyDownSounds(for key: KeyType) -> [String] {
-        return soundConfig?.sounds[key]?.down ?? []
+    /// Retrieves the "KeyDown" sounds for a given key.
+    /// - If a sound array exists for the key, it is returned.
+    /// - If no sound array is found, falls back to the default key sound array.
+    /// - If no default sound array exists, returns an empty array.
+    /// - Parameter key: The key for which to retrieve the "KeyDown" sounds.
+    /// - Returns: An array of sound file names, or an empty array if none are found.
+    func getKeyDownSounds(for key: String) -> [String] {
+        return soundConfig?.sounds[key]?.down ?? soundConfig?.sounds[KeyMapper.keyCodeNotFound]?.down ?? []
     }
 }

@@ -38,7 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
     func handleKeyDown(_ keyCode: Int64) {
         guard isEnabled else { return }
         
-        let keyType = KeyType.fromKeyCode(keyCode)
+        let keyType = KeyMapper.fromKeyCode(keyCode)
         let soundList = ModeConfigManager.shared.getKeyDownSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
@@ -51,7 +51,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
     func handleKeyUp(_ keyCode: Int64) {
         guard isEnabled else { return }
         
-        let keyType = KeyType.fromKeyCode(keyCode)
+        let keyType = KeyMapper.fromKeyCode(keyCode)
         let soundList = ModeConfigManager.shared.getKeyUpSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
