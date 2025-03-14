@@ -18,6 +18,12 @@ struct ModeDatabase {
             .mechvibes: [
                 Mode(id: UUID(uuidString: "113f785e-0a0a-4300-9525-865654c619aa")!, name: "Black ABS", path: "Resources/Sounds/Cherry_MX/mechvibes/Black_ABS/"),
                 Mode(id: UUID(uuidString: "eb2d732c-9777-4b2f-b132-b1da5f735ebb")!, name: "Black PBT", path: "Resources/Sounds/Cherry_MX/mechvibes/Black_PBT/"),
+                Mode(id: UUID(uuidString: "25f28ac0-62f1-4e9d-bc68-f7f85d6ef35a")!, name: "Blue ABS", path: "Resources/Sounds/Cherry_MX/mechvibes/Blue_ABS/"),
+                Mode(id: UUID(uuidString: "0b4e19ba-6a22-41eb-a9ef-ac0571181b52")!, name: "Blue PBT", path: "Resources/Sounds/Cherry_MX/mechvibes/Blue_PBT/"),
+                Mode(id: UUID(uuidString: "c9bcdb8f-50c1-4438-830f-67eeeeb40ea2")!, name: "Brown ABS", path: "Resources/Sounds/Cherry_MX/mechvibes/Brown_ABS/"),
+                Mode(id: UUID(uuidString: "83d8416b-2dc0-47fb-ac02-e5495c547244")!, name: "Brown PBT", path: "Resources/Sounds/Cherry_MX/mechvibes/Brown_PBT/"),
+                Mode(id: UUID(uuidString: "ea69d01e-e83e-4186-a122-72ebfb7d620e")!, name: "Red ABS", path: "Resources/Sounds/Cherry_MX/mechvibes/Red_ABS/"),
+                Mode(id: UUID(uuidString: "313554e8-8440-45f9-84ab-799bb1e4217f")!, name: "Red PBT", path: "Resources/Sounds/Cherry_MX/mechvibes/Red_PBT/"),
             ],
             .tplai: [
                 Mode(id: UUID(uuidString: "8f6a8074-e5a5-49f3-b3e9-f9f735b98476")!, name: "Black", path: "Resources/Sounds/Cherry_MX/tplai/Black/"),
@@ -77,7 +83,9 @@ struct ModeDatabase {
     
     func getAuthors(for brand: Brand) -> [Author] {
         if let authorsDict = modeStorage[brand] {
-            return Array(authorsDict.keys)
+            return Array(authorsDict.keys).sorted {
+                return "\($0)" < "\($1)"
+            }
         }
         return []
     }
