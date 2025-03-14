@@ -5,6 +5,7 @@
         "type": "MIT",
         "url": "https://github.com/webdevcody/type-joy/blob/main/LICENSE"
     },
+    "supportsKeyUp": true,
     "sounds": {
         "default": {
             "down": [

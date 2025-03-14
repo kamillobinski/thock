@@ -50,6 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
     
     func handleKeyUp(_ keyCode: Int64) {
         guard isEnabled else { return }
+        guard ModeConfigManager.shared.supportsKeyUpSounds() else { return }
         
         let keyType = KeyMapper.fromKeyCode(keyCode)
         let soundList = ModeConfigManager.shared.getKeyUpSounds(for: keyType)

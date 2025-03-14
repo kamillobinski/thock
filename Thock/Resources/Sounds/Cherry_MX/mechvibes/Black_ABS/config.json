@@ -1,0 +1,269 @@
+{
+    "name": "Cherry MX Black ABS",
+    "source": "https://github.com/hainguyents13/mechvibes",
+    "license": {
+        "type": "MIT",
+        "url": "https://github.com/hainguyents13/mechvibes/blob/main/LICENSE"
+    },
+    "supportsKeyUp": false,
+    "sounds": {
+        "default": {
+            "down": [
+                "20.mp3",
+                "21.mp3",
+                "22.mp3",
+                "23.mp3",
+                "24.mp3"
+            ],
+        },
+        "1": {
+            "down": ["2.mp3"],
+        },
+        "2": {
+            "down": ["3.mp3"],
+        },
+        "3": {
+            "down": ["4.mp3"],
+        },
+        "4": {
+            "down": ["5.mp3"],
+        },
+        "5": {
+            "down": ["6.mp3"],
+        },
+        "6": {
+            "down": ["7.mp3"],
+        },
+        "7": {
+            "down": ["8.mp3"],
+        },
+        "8": {
+            "down": ["9.mp3"],
+        },
+        "9": {
+            "down": ["10.mp3"],
+        },
+        "0": {
+            "down": ["11.mp3"],
+        },
+        "q": {
+            "down": ["16.mp3"],
+        },
+        "w": {
+            "down": ["17.mp3"],
+        },
+        "e": {
+            "down": ["18.mp3"],
+        },
+        "r": {
+            "down": ["19.mp3"],
+        },
+        "t": {
+            "down": ["20.mp3"],
+        },
+        "y": {
+            "down": ["21.mp3"],
+        },
+        "u": {
+            "down": ["22.mp3"],
+        },
+        "i": {
+            "down": ["23.mp3"],
+        },
+        "o": {
+            "down": ["24.mp3"],
+        },
+        "p": {
+            "down": ["25.mp3"],
+        },
+        "a": {
+            "down": ["30.mp3"],
+        },
+        "s": {
+            "down": ["31.mp3"],
+        },
+        "d": {
+            "down": ["32.mp3"],
+        },
+        "f": {
+            "down": ["33.mp3"],
+        },
+        "g": {
+            "down": ["34.mp3"],
+        },
+        "h": {
+            "down": ["35.mp3"],
+        },
+        "j": {
+            "down": ["36.mp3"],
+        },
+        "k": {
+            "down": ["37.mp3"],
+        },
+        "l": {
+            "down": ["38.mp3"],
+        },
+        "z": {
+            "down": ["44.mp3"],
+        },
+        "x": {
+            "down": ["45.mp3"],
+        },
+        "c": {
+            "down": ["46.mp3"],
+        },
+        "v": {
+            "down": ["47.mp3"],
+        },
+        "b": {
+            "down": ["48.mp3"],
+        },
+        "n": {
+            "down": ["49.mp3"],
+        },
+        "m": {
+            "down": ["50.mp3"],
+        },
+        "*": {
+            "down": ["55.mp3"],
+        },
+        "/": {
+            "down": ["53.mp3"],
+        },
+        "+": {
+            "down": ["78.mp3"],
+        },
+        "-": {
+            "down": ["12.mp3"],
+        },
+        "=": {
+            "down": ["13.mp3"],
+        },
+        "[": {
+            "down": ["26.mp3"],
+        },
+        "]": {
+            "down": ["27.mp3"],
+        },
+        ";": {
+            "down": ["39.mp3"],
+        },
+        "'": {
+            "down": ["40.mp3"],
+        },
+        ",": {
+            "down": ["51.mp3"],
+        },
+        ".": {
+            "down": ["52.mp3"],
+        },
+        "\\": {
+            "down": ["43.mp3"],
+        },
+        "`": {
+            "down": ["41.mp3"],
+        },
+        "clear": {
+            "down": ["69.mp3"],
+        },
+        "tab": {
+            "down": ["15.mp3"],
+        },
+        "space": {
+            "down": ["57.mp3"],
+        },
+        "del": {
+            "down": ["14.mp3"],
+        },
+        "esc": {
+            "down": ["1.mp3"],
+        },
+        "capsLock": {
+            "down": ["58.mp3"],
+        },
+        "ctrlLeft": {
+            "down": ["29.mp3"],
+        },
+        "fn": {
+            "down": ["3666.mp3"],
+        },
+        "enter": {
+            "down": ["28.mp3"],
+        },
+        "command": {
+            "down": ["3675.mp3", "3676.mp3"],
+        },
+        "shiftLeft": {
+            "down": ["42.mp3"],
+        },
+        "shiftRight": {
+            "down": ["54.mp3"],
+        },
+        "optionLeft": {
+            "down": ["56.mp3"],
+        },
+        "optionRight": {
+            "down": ["3640.mp3"],
+        },
+        "arrLeft": {
+            "down": ["57419.mp3"],
+        },
+        "arrRight": {
+            "down": ["57421.mp3"],
+        },
+        "arrDown": {
+            "down": ["57424.mp3"],
+        },
+        "arrUp": {
+            "down": ["57416.mp3"],
+        },
+        "home": {
+            "down": ["3655.mp3"],
+        },
+        "end": {
+            "down": ["3663.mp3"],
+        },
+        "pgUp": {
+            "down": ["3657.mp3"],
+        },
+        "pgDn": {
+            "down": ["3665.mp3"],
+        },
+        "f1": {
+            "down": ["59.mp3"],
+        },
+        "f2": {
+            "down": ["60.mp3"],
+        },
+        "f3": {
+            "down": ["61.mp3"],
+        },
+        "f4": {
+            "down": ["62.mp3"],
+        },
+        "f5": {
+            "down": ["63.mp3"],
+        },
+        "f6": {
+            "down": ["64.mp3"],
+        },
+        "f7": {
+            "down": ["65.mp3"],
+        },
+        "f8": {
+            "down": ["66.mp3"],
+        },
+        "f9": {
+            "down": ["67.mp3"],
+        },
+        "f10": {
+            "down": ["68.mp3"],
+        },
+        "f11": {
+            "down": ["87.mp3"],
+        },
+        "f12": {
+            "down": ["88.mp3"],
+        }
+    }
+}

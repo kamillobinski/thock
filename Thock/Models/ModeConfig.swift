@@ -11,6 +11,7 @@ struct SoundConfig: Codable {
     let name: String
     let source: String
     let license: License
+    let supportsKeyUp: Bool
     let sounds: [String: KeySound]
     
     // Custom Decoder to Map Dictionary Keys to KeyType Enum
@@ -19,6 +20,7 @@ struct SoundConfig: Codable {
         name = try container.decode(String.self, forKey: .name)
         source = try container.decode(String.self, forKey: .source)
         license = try container.decode(License.self, forKey: .license)
+        supportsKeyUp = try container.decode(Bool.self, forKey: .supportsKeyUp)
         sounds = try container.decode([String: KeySound].self, forKey: .sounds)
     }
 }

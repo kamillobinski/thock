@@ -29,6 +29,10 @@ class ModeConfigManager {
         }
     }
     
+    func supportsKeyUpSounds() -> Bool {
+        return soundConfig?.supportsKeyUp ?? false
+    }
+    
     /// Retrieves the "KeyUp" sounds for a given key.
     /// - If a sound array exists for the key, it is returned.
     /// - If no sound array is found, falls back to the default key sound array.

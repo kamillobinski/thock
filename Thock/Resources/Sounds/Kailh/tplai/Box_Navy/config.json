@@ -5,6 +5,7 @@
         "type": "MIT",
         "url": "https://github.com/tplai/kbsim/blob/master/LICENSE.md"
     },
+    "supportsKeyUp": true,
     "sounds": {
         "default": {
             "down": [

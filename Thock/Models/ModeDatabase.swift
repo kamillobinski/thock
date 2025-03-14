@@ -15,6 +15,9 @@ struct ModeDatabase {
             ]
         ],
         .CherryMX: [
+            .mechvibes: [
+                Mode(id: UUID(uuidString: "113f785e-0a0a-4300-9525-865654c619aa")!, name: "Black ABS", path: "Resources/Sounds/Cherry_MX/mechvibes/Black_ABS/"),
+            ],
             .tplai: [
                 Mode(id: UUID(uuidString: "8f6a8074-e5a5-49f3-b3e9-f9f735b98476")!, name: "Black", path: "Resources/Sounds/Cherry_MX/tplai/Black/"),
                 Mode(id: UUID(uuidString: "191afe92-2d30-4e36-95bd-d2558879ce36")!, name: "Blue", path: "Resources/Sounds/Cherry_MX/tplai/Blue/"),
