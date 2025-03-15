@@ -94,6 +94,7 @@ class MenuManager {
                 
                 for mode in modes {
                     let item = NSMenuItem(title: mode.name, action: #selector(changeMode(_:)), keyEquivalent: "")
+                    if mode.isNew { item.badge = NSMenuItemBadge(string: "NEW")}
                     item.state = (mode == currentMode) ? .on : .off
                     item.target = self
                     item.representedObject = mode
