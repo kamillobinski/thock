@@ -111,6 +111,22 @@ struct ModeDatabase {
                 ),
             ]
         ],
+        .Everglide: [
+            .mechvibes: [
+                Mode(
+                    id: UUID(uuidString: "e91d2da9-1a7f-40ee-af3e-928090ba217a")!,
+                    name: "Crystal Purple",
+                    isNew: true,
+                    path: "Resources/Sounds/Everglide/mechvibes/Crystal_Purple/"
+                ),
+                Mode(
+                    id: UUID(uuidString: "ec6eb0ba-10d3-4c60-a521-c7747e6e39ab")!,
+                    name: "Oreo",
+                    isNew: true,
+                    path: "Resources/Sounds/Everglide/mechvibes/Oreo/"
+                ),
+            ]
+        ],
         .Gateron: [
             .tplai: [
                 Mode(
@@ -154,6 +170,14 @@ struct ModeDatabase {
             ]
         ],
         .Topre: [
+            .mechvibes: [
+                Mode(
+                    id: UUID(uuidString: "4c48615c-4765-4785-9dc6-1196ed4b8796")!,
+                    name: "Purple Hybrid PBT",
+                    isNew: true,
+                    path: "Resources/Sounds/Topre/mechvibes/Purple_Hybrid_PBT/"
+                ),
+            ],
             .tplai: [
                 Mode(
                     id: UUID(uuidString: "3a7c9427-b65b-4b28-8426-e65677b6667b")!,

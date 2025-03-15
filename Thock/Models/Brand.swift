@@ -10,6 +10,7 @@ enum Brand: String, CaseIterable {
     case CherryMX = "Cherry MX"
     case Drop = "Drop"
     case Durock = "Durock"
+    case Everglide = "Everglide"
     case Gateron = "Gateron"
     case Kailh = "Kailh"
     case NovelKeys = "NovelKeys"
