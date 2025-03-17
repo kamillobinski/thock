@@ -108,9 +108,7 @@ It's quick and easy. You can either download a prebuilt release or build it your
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-> Placeholder for a video recording. Will do it soon xd
-
-[![usage](usage.png)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+![usage](usage.gif)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
