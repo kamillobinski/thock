@@ -45,15 +45,18 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
+![banner](banner.png)
+
 Thock is a native macOS utility that adds sound effects to your keyboard.
 
-Built this project purely for fun and to explore Swift since I had never used it before.
-The idea was simple - add some satisfying sound feedback to typing, kind of like a mechanical keyboard but purely in software.
+I built this project for fun, aiming to create a satisfying typing experience - like a mechanical keyboard, but entirely in software. Similar apps exist, but those written in other languages often lack proper macOS support or fall short in quality and functionality. There’s also Klack, a $5 paid alternative on the App Store, but I believe an open source community can do better lol.
 
 Key features:
+* &nbsp; Native macOS application
 * ⚡ Minimal CPU & memory usage
-* 🎛️ Menu bar integration
-* 🎧 Modes switch
+* 📎 Menu bar utility
+* 🔊 Over 25 unique sound modes
+* 🕹️ Adjustable volume slider
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -70,13 +73,20 @@ Key features:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running follow these simple steps.
+It's quick and easy. You can either download a prebuilt release or build it yourself if you prefer.
 
-### Prerequisites
+> [!IMPORTANT]  
+> Thock requires macOS 15.2 Sequoia or later.
 
-Thock requires macOS 15.2 Sequoia or later.
+### → Installation (recommended)
 
-### Installation
+1. Go to the [latest release](https://github.com/kamillobinski/thock/releases/latest)
+2. Download `Thock-x.y.z.zip`
+3. Unpack the ZIP file
+4. Move the app to your Applications folder for easy access
+5. Open Thock
+
+### Build From Source
 
 1. Clone the repository
    ```sh
@@ -88,6 +98,8 @@ Thock requires macOS 15.2 Sequoia or later.
    ```sh
    open Thock.xcodeproj
    ```
+
+3. Build and run the application
    
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -96,7 +108,9 @@ Thock requires macOS 15.2 Sequoia or later.
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-![usage](usage.png)
+> Placeholder for a video recording. Will do it soon xd
+
+[![usage](usage.png)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -113,8 +127,15 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Thock is open-source and contributions are always welcome! 
-If you want to improve the code, fix bugs or add new sound modes, open a pull request or an issue.
+Any contributions - whether improving the code or adding new sound modes - are greatly appreciated!
+
+If you have a suggestion that would make Thock better, please fork the repo and submit a pull request. You can also open an issue if you have an idea or find a bug. Thanks! 🤟
+
+1. Fork the Project
+2. Create your Feature Branch(`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -126,6 +147,7 @@ If you want to improve the code, fix bugs or add new sound modes, open a pull re
 Thanks to the tools and resources that helped make this project a reality!
 
 **Keyboard Sound Recordings**
+- [hainguyents13/mechvibes](https://github.com/hainguyents13/mechvibes/)
 - [tplai/kbsim](https://github.com/tplai/kbsim)
 - [webdevcody/type-joy](https://github.com/webdevcody/type-joy)
 
