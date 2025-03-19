@@ -8,13 +8,8 @@
 import Cocoa
 
 class KeyTracker {
-    private weak var delegate: KeyTrackerDelegate?
     private var pressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
-    
-    init(delegate: KeyTrackerDelegate? = nil) {
-        self.delegate = delegate
-    }
     
     deinit {
         stopTrackingKeys()
@@ -22,12 +17,8 @@ class KeyTracker {
     
     /// Starts tracking key events.
     /// - Parameter delegate: The delegate to handle key events.
-    func startTrackingKeys(delegate: KeyTrackerDelegate? = nil) {
+    func startTrackingKeys() {
         stopTrackingKeys()
-        
-        if let delegate = delegate {
-            self.delegate = delegate
-        }
         
         let eventMask: CGEventMask =
         (1 << CGEventType.keyDown.rawValue) |
@@ -48,18 +39,18 @@ class KeyTracker {
                 switch type {
                 case .keyDown where !keyTracker.pressedKeys.contains(keyCode):
                     keyTracker.pressedKeys.insert(keyCode)
-                    keyTracker.delegate?.handleKeyDown(keyCode)
+                    SoundManager.shared.playSound(for: keyCode, isKeyDown: true)
                     
                 case .keyUp:
                     keyTracker.pressedKeys.remove(keyCode)
-                    keyTracker.delegate?.handleKeyUp(keyCode)
+                    SoundManager.shared.playSound(for: keyCode, isKeyDown: false)
                     
                 case .flagsChanged:
                     if keyTracker.pressedKeys.remove(keyCode) == nil {
                         keyTracker.pressedKeys.insert(keyCode)
-                        keyTracker.delegate?.handleKeyDown(keyCode)
+                        SoundManager.shared.playSound(for: keyCode, isKeyDown: true)
                     } else {
-                        keyTracker.delegate?.handleKeyUp(keyCode)
+                        SoundManager.shared.playSound(for: keyCode, isKeyDown: false)
                     }
                     
                 default:
@@ -87,9 +78,4 @@ class KeyTracker {
             self.eventMonitor = nil
         }
     }
-}
-
-protocol KeyTrackerDelegate: AnyObject {
-    func handleKeyDown(_ keyCode: Int64)
-    func handleKeyUp(_ keyCode: Int64)
 }

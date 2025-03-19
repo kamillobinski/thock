@@ -100,6 +100,22 @@ class SoundManager {
         }
     }
     
+    /// Plays sound for a key press event.
+    func playSound(for keyCode: Int64, isKeyDown: Bool) {
+        guard AppStateManager.shared.isEnabled else { return }
+        
+        let keyType = KeyMapper.fromKeyCode(keyCode)
+        let soundList = isKeyDown
+        ? ModeConfigManager.shared.getKeyDownSounds(for: keyType)
+        : ModeConfigManager.shared.getKeyUpSounds(for: keyType)
+        
+        if let soundFileName = soundList.randomElement() {
+            SoundManager.shared.playSound(name: soundFileName)
+        } else {
+            print("Warning: (keydown: \(isKeyDown)) No available sound for keyCode: \(keyCode)")
+        }
+    }
+    
     /// Plays a preloaded sound.
     /// - Parameter name: The name of the file to play.
     func playSound(name: String) {
