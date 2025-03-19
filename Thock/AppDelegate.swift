@@ -10,7 +10,7 @@ import AppKit
 
 class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuManagerDelegate {
     var statusBarItem: NSStatusItem!
-    var menuManager: MenuManager!
+    var menuManager: Menu!
     var isEnabled: Bool = true
     var keyTracker: KeyTracker!
     
@@ -20,11 +20,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         }
         keyTracker = KeyTracker(delegate: self)
         keyTracker.startTrackingKeys()
-        ModeConfigManager.shared.loadModeConfig(mode: ModeManager.shared.getCurrentMode())
+        ModeConfigManager.shared.loadModeConfig(for: ModeManager.shared.getCurrentMode())
         
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
-        menuManager = MenuManager(statusBarItem: statusBarItem, delegate: self)
+        menuManager = Menu(statusBarItem: statusBarItem, delegate: self)
         menuManager.updateMenuBarIcon()
         SoundManager.shared.preloadSounds(for: ModeManager.shared.getCurrentMode())
     }
@@ -42,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         let soundList = ModeConfigManager.shared.getKeyDownSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
-            SoundManager.shared.playSound(soundFileName: soundFileName)
+            SoundManager.shared.playSound(name: soundFileName)
         } else {
             print("Warning: No available sound for keyCode: \(keyCode)")
         }
@@ -56,7 +56,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
         let soundList = ModeConfigManager.shared.getKeyUpSounds(for: keyType)
         
         if let soundFileName = soundList.randomElement() {
-            SoundManager.shared.playSound(soundFileName: soundFileName)
+            SoundManager.shared.playSound(name: soundFileName)
         } else {
             print("Warning: No available sound for keyCode: \(keyCode)")
         }
@@ -71,7 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, KeyTrackerDelegate, MenuMana
     
     func changeMode(to mode: Mode) {
         ModeManager.shared.setCurrentMode(mode)
-        ModeConfigManager.shared.loadModeConfig(mode: mode)
+        ModeConfigManager.shared.loadModeConfig(for: mode)
         SoundManager.shared.preloadSounds(for: ModeManager.shared.getCurrentMode())
     }
     

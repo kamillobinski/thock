@@ -15,36 +15,42 @@ class SoundManager {
     private var audioBuffers: [String: AVAudioPCMBuffer] = [:]
     private let mixer = AVAudioMixerNode()
     
-    private var volume: Float = 0.5
-    
     init() {
         setupAudioEngine()
     }
     
     private func setupAudioEngine() {
-        mixer.outputVolume = Float(volume)
+        mixer.outputVolume = 0.5
         engine.attach(mixer)
         engine.connect(mixer, to: engine.outputNode, format: nil)
+        startAudioEngine()
+    }
+    
+    private func startAudioEngine() {
         do {
-            try engine.start()
+            if !engine.isRunning {
+                try engine.start()
+            }
         } catch {
             print("Error starting AVAudioEngine: \(error)")
         }
     }
     
-    func preloadSounds(for mode: Mode) {
-        engine.stop()
+    /// Stops and detaches all existing audio nodes to prevent memory leaks.
+    private func resetAudioNodes() {
         for player in audioPlayers.values {
+            player.stop()
             engine.detach(player)
         }
-        audioBuffers.removeAll()
-        audioPlayers.removeAll()
         
-        do {
-            try engine.start()
-        } catch {
-            print("Error restarting AVAudioEngine: \(error)")
-        }
+        audioPlayers.removeAll()
+        audioBuffers.removeAll()
+    }
+    
+    /// Preloads sound files from the given mode’s directory.
+    /// - Parameter mode: The mode defining which sounds to load.
+    func preloadSounds(for mode: Mode) {
+        resetAudioNodes()
         
         let fileManager = FileManager.default
         guard let soundDirectory = Bundle.main.resourceURL?
@@ -56,43 +62,28 @@ class SoundManager {
         
         do {
             let soundFiles = try fileManager.contentsOfDirectory(atPath: soundDirectory.path)
+                .filter { $0.hasSuffix(".mp3") || $0.hasSuffix(".wav") }
             
-            for file in soundFiles where file.hasSuffix(".mp3") || file.hasSuffix(".wav") {
+            for file in soundFiles {
                 let fileURL = soundDirectory.appendingPathComponent(file)
-                
                 if let buffer = loadAudioBuffer(from: fileURL) {
-                    audioBuffers[file] = buffer
-                    
                     let player = AVAudioPlayerNode()
                     engine.attach(player)
                     engine.connect(player, to: mixer, format: buffer.format)
                     audioPlayers[file] = player
+                    audioBuffers[file] = buffer
                 }
             }
             print("Preloaded \(audioBuffers.count) sounds successfully.")
-            
         } catch {
             print("Error loading sound files: \(error)")
         }
+        startAudioEngine()
     }
     
-    func playSound(soundFileName: String) {
-        guard let buffer = audioBuffers[soundFileName], let player = audioPlayers[soundFileName] else {
-            print("Sound not found: \(soundFileName)")
-            return
-        }
-        
-        if !engine.isRunning {
-            try? engine.start()
-        }
-        
-        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
-        
-        if !player.isPlaying {
-            player.play()
-        }
-    }
-    
+    /// Loads an audio file into a buffer.
+    /// - Parameter url: File URL of the sound.
+    /// - Returns: `AVAudioPCMBuffer` if successful, otherwise `nil`.
     private func loadAudioBuffer(from url: URL) -> AVAudioPCMBuffer? {
         do {
             let file = try AVAudioFile(forReading: url)
@@ -109,12 +100,26 @@ class SoundManager {
         }
     }
     
+    /// Plays a preloaded sound.
+    /// - Parameter name: The name of the file to play.
+    func playSound(name: String) {
+        guard let buffer = audioBuffers[name], let player = audioPlayers[name] else {
+            print("Sound not found: \(name)")
+            return
+        }
+        
+        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
+        
+        if !player.isPlaying {
+            player.play()
+        }
+    }
+    
     func setVolume(_ newValue: Float) {
-        mixer.outputVolume = Float(newValue)
-        volume = newValue
+        mixer.outputVolume = newValue
     }
     
     func getVolume() -> Float {
-        return volume
+        return mixer.outputVolume
     }
 }

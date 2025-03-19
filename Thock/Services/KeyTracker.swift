@@ -12,18 +12,29 @@ class KeyTracker {
     private var pressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
     
-    init(delegate: KeyTrackerDelegate) {
+    init(delegate: KeyTrackerDelegate? = nil) {
         self.delegate = delegate
     }
     
-    func startTrackingKeys() {
+    deinit {
+        stopTrackingKeys()
+    }
+    
+    /// Starts tracking key events.
+    /// - Parameter delegate: The delegate to handle key events.
+    func startTrackingKeys(delegate: KeyTrackerDelegate? = nil) {
         stopTrackingKeys()
         
-        let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue) |
+        if let delegate = delegate {
+            self.delegate = delegate
+        }
+        
+        let eventMask: CGEventMask =
+        (1 << CGEventType.keyDown.rawValue) |
         (1 << CGEventType.keyUp.rawValue) |
         (1 << CGEventType.flagsChanged.rawValue)
         
-        let observer = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        let observer = Unmanaged.passRetained(self).toOpaque()
         
         eventMonitor = CGEvent.tapCreate(
             tap: .cghidEventTap,
@@ -31,18 +42,11 @@ class KeyTracker {
             options: .defaultTap,
             eventsOfInterest: eventMask,
             callback: { _, type, event, userInfo in
-                guard let userInfo = userInfo else {
-                    return Unmanaged.passUnretained(event)
-                }
-                
-                let keyTracker = Unmanaged<KeyTracker>.fromOpaque(userInfo).takeUnretainedValue()
+                let keyTracker = Unmanaged<KeyTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                 
                 switch type {
-                case .keyDown:
-                    if keyTracker.pressedKeys.contains(keyCode) {
-                        return Unmanaged.passUnretained(event)
-                    }
+                case .keyDown where !keyTracker.pressedKeys.contains(keyCode):
                     keyTracker.pressedKeys.insert(keyCode)
                     keyTracker.delegate?.handleKeyDown(keyCode)
                     
@@ -51,12 +55,11 @@ class KeyTracker {
                     keyTracker.delegate?.handleKeyUp(keyCode)
                     
                 case .flagsChanged:
-                    if keyTracker.pressedKeys.contains(keyCode) {
-                        keyTracker.pressedKeys.remove(keyCode)
-                        keyTracker.delegate?.handleKeyUp(keyCode)
-                    } else {
+                    if keyTracker.pressedKeys.remove(keyCode) == nil {
                         keyTracker.pressedKeys.insert(keyCode)
                         keyTracker.delegate?.handleKeyDown(keyCode)
+                    } else {
+                        keyTracker.delegate?.handleKeyUp(keyCode)
                     }
                     
                 default:
@@ -77,6 +80,7 @@ class KeyTracker {
         }
     }
     
+    /// Stops tracking key events and removes the event tap.
     func stopTrackingKeys() {
         if let eventMonitor = eventMonitor {
             CFMachPortInvalidate(eventMonitor)

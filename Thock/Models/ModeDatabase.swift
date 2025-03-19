@@ -228,7 +228,7 @@ struct ModeDatabase {
         return modeStorage[brand]?[author]
     }
     
-    func findMode(by uuid: UUID) -> Mode? {
+    func getMode(by uuid: UUID) -> Mode? {
         for (_, authors) in modeStorage {
             for (_, modes) in authors {
                 if let mode = modes.first(where: { $0.id == uuid }) {
@@ -239,7 +239,7 @@ struct ModeDatabase {
         return nil
     }
     
-    func findBrand(for mode: Mode) -> Brand? {
+    func getBrand(for mode: Mode) -> Brand? {
         for (brand, authors) in modeStorage {
             for (_, modes) in authors {
                 if modes.contains(where: { $0.id == mode.id }) {
@@ -250,7 +250,7 @@ struct ModeDatabase {
         return nil
     }
     
-    func findAuthor(for mode: Mode) -> Author? {
+    func getAuthor(for mode: Mode) -> Author? {
         for (_, authors) in modeStorage {
             for (author, modes) in authors {
                 if modes.contains(where: { $0.id == mode.id }) {

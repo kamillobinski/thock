@@ -1,5 +1,5 @@
 //
-//  VolumeSliderItemView.swift
+//  VolumeSliderMenuItem.swift
 //  Thock
 //
 //  Created by Kamil Łobiński on 13/03/2025.
@@ -8,7 +8,7 @@
 import SwiftUI
 import AppKit
 
-struct VolumeSliderItemView: NSViewRepresentable {
+struct VolumeSliderMenuItem: NSViewRepresentable {
     @Binding var volume: Double
     let onVolumeChange: (Double) -> Void
     let step: Double
@@ -30,9 +30,9 @@ struct VolumeSliderItemView: NSViewRepresentable {
     }
     
     class Coordinator: NSObject {
-        var parent: VolumeSliderItemView
+        var parent: VolumeSliderMenuItem
         
-        init(_ parent: VolumeSliderItemView) {
+        init(_ parent: VolumeSliderMenuItem) {
             self.parent = parent
         }
         

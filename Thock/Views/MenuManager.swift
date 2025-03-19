@@ -1,5 +1,5 @@
 //
-//  MenuManager.swift
+//  Menu.swift
 //  Thock
 //
 //  Created by Kamil Łobiński on 07/03/2025.
@@ -8,7 +8,7 @@
 import Cocoa
 import SwiftUI
 
-class MenuManager {
+class Menu {
     private var menu: NSMenu
     private var statusBarItem: NSStatusItem
     private weak var delegate: MenuManagerDelegate?
@@ -44,7 +44,7 @@ class MenuManager {
         guard let delegate = delegate else { return }
         
         let toggleItem = NSMenuItem()
-        toggleItem.view = ToggleMenuItemView(title: AppInfoHelper.appName, isOn: delegate.isSoundEnabled) { [weak self] _ in
+        toggleItem.view = EnableAppMenuItem(title: AppInfoHelper.appName, isOn: delegate.isSoundEnabled) { [weak self] _ in
             self?.delegate?.toggleSound()
         }
         menu.addItem(toggleItem)
@@ -57,7 +57,7 @@ class MenuManager {
         
         let volumeItem = NSMenuItem()
         
-        let hostingView = NSHostingView(rootView: VolumeSliderItemView(
+        let hostingView = NSHostingView(rootView: VolumeSliderMenuItem(
             volume: Binding(
                 get: { Double(SoundManager.shared.getVolume()) },
                 set: { _ in }

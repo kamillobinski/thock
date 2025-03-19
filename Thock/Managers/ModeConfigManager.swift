@@ -15,7 +15,9 @@ class ModeConfigManager {
     
     private init() {}
     
-    func loadModeConfig(mode: Mode) {
+    /// Loads the sound configuration for a given mode from a JSON file.
+    /// - Parameter mode: The `Mode` whose configuration should be loaded.
+    func loadModeConfig(for mode: Mode) {
         if let jsonURL = Bundle.main.url(forResource: soundConfigFile, withExtension: soundConfigFileExtension, subdirectory: mode.path),
            let jsonData = try? Data(contentsOf: jsonURL) {
             let decoder = JSONDecoder()
