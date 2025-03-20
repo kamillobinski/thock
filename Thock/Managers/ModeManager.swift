@@ -10,7 +10,9 @@ import Foundation
 class ModeManager {
     static let shared = ModeManager()
     
-    private var currentMode: Mode = ModeDatabase().findMode(by: UUID(uuidString: "8f6a8074-e5a5-49f3-b3e9-f9f735b98476")!)!
+    private var currentMode: Mode = ModeDatabase().getMode(
+        by: UUID(uuidString: "8f6a8074-e5a5-49f3-b3e9-f9f735b98476")!
+    )!
     
     func setCurrentMode(_ newMode: Mode) {
         currentMode = newMode

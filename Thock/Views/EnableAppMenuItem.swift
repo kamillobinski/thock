@@ -1,5 +1,5 @@
 //
-//  ToggleMenuItemView.swift
+//  EnableAppMenuItem.swift
 //  Thock
 //
 //  Created by Kamil Łobiński on 10/03/2025.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-class ToggleMenuItemView: NSView {
+class EnableAppMenuItem: NSView {
     private let toggleSwitch = NSSwitch()
     private let label = NSTextField(labelWithString: "")
     var toggleAction: ((Bool) -> Void)?
