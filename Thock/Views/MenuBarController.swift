@@ -107,7 +107,62 @@ class MenuBarController {
                 modeItem.state = (mode == currentMode) ? .on : .off
                 modeItem.representedObject = mode
                 modeItem.target = self
-                if mode.isNew { modeItem.badge = NSMenuItemBadge(string: "NEW") }
+                
+                if mode.isNew {
+                    if #available(macOS 14, *) {
+                        modeItem.badge = NSMenuItemBadge(string: "NEW")
+                    } else {
+                        let customView = HoverableView()
+                        customView.translatesAutoresizingMaskIntoConstraints = false
+                        customView.menuItem = modeItem
+                        customView.isSelected = (mode == currentMode)
+                        
+                        let titleField = NSTextField(labelWithString: mode.name)
+                        titleField.translatesAutoresizingMaskIntoConstraints = false
+                        titleField.font = .menuFont(ofSize: 13)
+                        titleField.textColor = .labelColor
+                        titleField.isBezeled = false
+                        titleField.isEditable = false
+                        titleField.isSelectable = false
+                        
+                        let checkmark = NSImageView()
+                        checkmark.translatesAutoresizingMaskIntoConstraints = false
+                        checkmark.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil)
+                        checkmark.contentTintColor = .white
+                        checkmark.isHidden = !(mode == currentMode)
+                        
+                        let badge = NSTextField(labelWithString: "NEW")
+                        badge.translatesAutoresizingMaskIntoConstraints = false
+                        badge.font = .menuFont(ofSize: 11)
+                        badge.textColor = .systemGray
+                        badge.isBezeled = false
+                        badge.isEditable = false
+                        badge.isSelectable = false
+                        
+                        customView.addSubview(checkmark)
+                        customView.addSubview(titleField)
+                        customView.addSubview(badge)
+                        
+                        NSLayoutConstraint.activate([
+                            customView.heightAnchor.constraint(equalToConstant: 22),
+                            
+                            checkmark.leadingAnchor.constraint(equalTo: customView.leadingAnchor, constant: 8),
+                            checkmark.centerYAnchor.constraint(equalTo: customView.centerYAnchor),
+                            checkmark.widthAnchor.constraint(equalToConstant: 16),
+                            checkmark.heightAnchor.constraint(equalToConstant: 16),
+                            
+                            titleField.leadingAnchor.constraint(equalTo: checkmark.trailingAnchor, constant: 8),
+                            titleField.centerYAnchor.constraint(equalTo: customView.centerYAnchor),
+                            
+                            badge.leadingAnchor.constraint(greaterThanOrEqualTo: titleField.trailingAnchor, constant: 8),
+                            badge.trailingAnchor.constraint(equalTo: customView.trailingAnchor, constant: -20),
+                            badge.centerYAnchor.constraint(equalTo: customView.centerYAnchor)
+                        ])
+                        
+                        modeItem.view = customView
+                    }
+                }
+                
                 brandSubMenu.addItem(modeItem)
             }
             
@@ -115,6 +170,109 @@ class MenuBarController {
         }
         
         return brandSubMenu
+    }
+
+    class HoverableView: NSView {
+        private var trackingArea: NSTrackingArea?
+        weak var menuItem: NSMenuItem?
+        var isSelected: Bool = false {
+            didSet {
+                updateAppearance()
+            }
+        }
+        
+        private let selectionView = NSVisualEffectView()
+        private let checkmark = NSImageView()
+        
+        override init(frame frameRect: NSRect) {
+            super.init(frame: frameRect)
+            setupSelectionView()
+            setupCheckmark()
+        }
+        
+        required init?(coder: NSCoder) {
+            super.init(coder: coder)
+            setupSelectionView()
+            setupCheckmark()
+        }
+        
+        private func setupSelectionView() {
+            selectionView.translatesAutoresizingMaskIntoConstraints = false
+            selectionView.material = .selection
+            selectionView.state = .active
+            selectionView.isHidden = true
+            selectionView.blendingMode = .withinWindow
+            selectionView.wantsLayer = true
+            selectionView.layer?.cornerRadius = 4
+            
+            addSubview(selectionView, positioned: .below, relativeTo: nil)
+            
+            NSLayoutConstraint.activate([
+                selectionView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                selectionView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                selectionView.topAnchor.constraint(equalTo: topAnchor),
+                selectionView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ])
+        }
+        
+        private func setupCheckmark() {
+            checkmark.translatesAutoresizingMaskIntoConstraints = false
+            checkmark.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil)
+            checkmark.contentTintColor = .white
+            checkmark.isHidden = !isSelected
+            addSubview(checkmark)
+            
+            NSLayoutConstraint.activate([
+                checkmark.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+                checkmark.centerYAnchor.constraint(equalTo: centerYAnchor),
+                checkmark.widthAnchor.constraint(equalToConstant: 16),
+                checkmark.heightAnchor.constraint(equalToConstant: 16)
+            ])
+        }
+        
+        private func updateAppearance() {
+            checkmark.isHidden = !isSelected
+        }
+        
+        override func updateTrackingAreas() {
+            super.updateTrackingAreas()
+            
+            if let trackingArea = self.trackingArea {
+                removeTrackingArea(trackingArea)
+            }
+            
+            let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways]
+            trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
+            addTrackingArea(trackingArea!)
+        }
+        
+        override func mouseEntered(with event: NSEvent) {
+            selectionView.isHidden = false
+            checkmark.contentTintColor = .white
+        }
+        
+        override func mouseExited(with event: NSEvent) {
+            selectionView.isHidden = true
+            checkmark.contentTintColor = .white
+        }
+        
+        override func mouseDown(with event: NSEvent) {
+            if let menuItem = self.menuItem {
+                if let target = menuItem.target, let action = menuItem.action {
+                    NSApp.sendAction(action, to: target, from: menuItem)
+                    
+                    if let menu = enclosingMenuItem?.menu {
+                        menu.cancelTracking()
+                    }
+                }
+            }
+        }
+        
+        override func draw(_ dirtyRect: NSRect) {
+            super.draw(dirtyRect)
+            self.wantsLayer = true
+            self.layer?.cornerRadius = 4
+        }
     }
     
     /// Creates a brand menu item with optional styling if it's active.
