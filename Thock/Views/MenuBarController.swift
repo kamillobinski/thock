@@ -107,7 +107,9 @@ class MenuBarController {
                 modeItem.state = (mode == currentMode) ? .on : .off
                 modeItem.representedObject = mode
                 modeItem.target = self
-                if mode.isNew { modeItem.badge = NSMenuItemBadge(string: "NEW") }
+                if #available(macOS 14, *), mode.isNew {
+                    modeItem.badge = NSMenuItemBadge(string: "NEW")
+                }
                 brandSubMenu.addItem(modeItem)
             }
             
