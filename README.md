@@ -76,7 +76,7 @@ Key features:
 It's quick and easy. You can either download a prebuilt release or build it yourself if you prefer.
 
 > [!IMPORTANT]  
-> Thock requires macOS 15.2 Sequoia or later.
+> Thock requires macOS 11.5 Big Sur or later.
 
 ### → Installation (recommended)
 
