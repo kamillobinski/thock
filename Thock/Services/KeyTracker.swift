@@ -10,7 +10,8 @@ import Cocoa
 class KeyTracker {
     private var pressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
-    
+    private var lastEventTime: Double = 0
+
     deinit {
         stopTrackingKeys()
     }
@@ -26,7 +27,8 @@ class KeyTracker {
         (1 << CGEventType.flagsChanged.rawValue)
         
         let observer = Unmanaged.passRetained(self).toOpaque()
-        
+        lastEventTime = currentTime()
+
         eventMonitor = CGEvent.tapCreate(
             tap: .cghidEventTap,
             place: .tailAppendEventTap,
@@ -35,16 +37,22 @@ class KeyTracker {
             callback: { _, type, event, userInfo in
                 let keyTracker = Unmanaged<KeyTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-                
+
+                // Ignore events that are too close to each other.
+                defer { keyTracker.lastEventTime = keyTracker.currentTime() }
+                let currentTimestamp = keyTracker.currentTime()
+                let elapsedTime = currentTimestamp - keyTracker.lastEventTime
+                if elapsedTime <= 10 { return Unmanaged.passUnretained(event) }
+
                 switch type {
                 case .keyDown where !keyTracker.pressedKeys.contains(keyCode):
                     keyTracker.pressedKeys.insert(keyCode)
                     SoundManager.shared.playSound(for: keyCode, isKeyDown: true)
-                    
+
                 case .keyUp:
                     keyTracker.pressedKeys.remove(keyCode)
                     SoundManager.shared.playSound(for: keyCode, isKeyDown: false)
-                    
+
                 case .flagsChanged:
                     if keyTracker.pressedKeys.remove(keyCode) == nil {
                         keyTracker.pressedKeys.insert(keyCode)
@@ -52,11 +60,10 @@ class KeyTracker {
                     } else {
                         SoundManager.shared.playSound(for: keyCode, isKeyDown: false)
                     }
-                    
                 default:
                     break
                 }
-                
+
                 return Unmanaged.passUnretained(event)
             },
             userInfo: observer
@@ -77,5 +84,11 @@ class KeyTracker {
             CFMachPortInvalidate(eventMonitor)
             self.eventMonitor = nil
         }
+    }
+
+    // MARK: Private methods
+
+    private func currentTime() -> Double {
+        Double(DispatchTime.now().uptimeNanoseconds) / 1_000_000
     }
 }
