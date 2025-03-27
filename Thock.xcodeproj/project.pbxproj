@@ -1217,7 +1217,9 @@
 				7762F4AE2D7A83BC0033AE42 /* ThockUITests */,
 				7762F4912D7A83BA0033AE42 /* Products */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
 		};
 		7762F4912D7A83BA0033AE42 /* Products */ = {
 			isa = PBXGroup;
