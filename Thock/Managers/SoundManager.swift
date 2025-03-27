@@ -16,6 +16,12 @@ class SoundManager {
     private let mixer = AVAudioMixerNode()
     
     init() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleEngineConfigChange),
+            name: .AVAudioEngineConfigurationChange,
+            object: engine
+        )
         setupAudioEngine()
     }
     
@@ -34,6 +40,27 @@ class SoundManager {
         } catch {
             print("Error starting AVAudioEngine: \(error)")
         }
+    }
+    
+    /// Handles output device change.
+    @objc private func handleEngineConfigChange(notification: Notification) {
+        engine.stop()
+        engine.reset()
+
+        // Detach and reattach mixer
+        engine.detach(mixer)
+        engine.attach(mixer)
+        engine.connect(mixer, to: engine.outputNode, format: nil)
+
+        // Reattach all players
+        for (fileName, buffer) in audioBuffers {
+            let player = AVAudioPlayerNode()
+            engine.attach(player)
+            engine.connect(player, to: mixer, format: buffer.format)
+            audioPlayers[fileName] = player
+        }
+
+        startAudioEngine()
     }
     
     /// Stops and detaches all existing audio nodes to prevent memory leaks.
