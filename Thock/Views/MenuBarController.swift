@@ -18,7 +18,13 @@ class MenuBarController {
         static let volume = "Volume"
         static let quit = "Quit"
         static let version = "Version"
+        static let settings = "Settings..."
+        static let openAtLogin = "Open at login"
+        static let disableModifierKeys = "Disable modifier keys"
+        static let whatsNew = "What's new?"
     }
+    
+    // MARK: - Init
     
     init(statusBarItem: NSStatusItem, delegate: MenuBarControllerDelegate) {
         self.menu = NSMenu()
@@ -28,13 +34,29 @@ class MenuBarController {
         setupMenu()
     }
     
+    // MARK: - Public API
+    
+    /// Updates the menu bar icon based on app state.
+    func updateMenuBarIcon() {
+        statusBarItem.button?.image = NSImage(named: "MenuBarIcon")
+        statusBarItem.button?.alphaValue = AppStateManager.shared.isEnabled ? 1.0 : 0.5
+    }
+    
+    /// Toggles sound on/off.
+    func toggleSound() {
+        AppStateManager.shared.isEnabled.toggle()
+        updateMenuBarIcon()
+    }
+    
+    // MARK: - Menu Setup
+    
     func setupMenu() {
         menu.removeAllItems()
         
         addToggleMenuItem()
         addVolumeSliderItem()
         addSoundModesMenu()
-        addVersionMenuItem()
+        addQuickSettingsMenu()
         addQuitMenuItem()
     }
     
@@ -58,6 +80,39 @@ class MenuBarController {
         menu.addItem(NSMenuItem.separator())
     }
     
+    private func addQuickSettingsMenu() {
+        let settingsItem = NSMenuItem(title: MenuItemTitle.settings, action: nil, keyEquivalent: "")
+        let subMenu = createQuickSettingsSubmenu()
+        menu.addItem(settingsItem)
+        menu.setSubmenu(subMenu, for: settingsItem)
+        menu.addItem(NSMenuItem.separator())
+    }
+    
+    /// Adds a quit application menu item.
+    private func addQuitMenuItem() {
+        let quitItem = NSMenuItem(title: MenuItemTitle.quit, action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+    }
+    
+    /// Adds a submenu for selecting sound modes.
+    private func addSoundModesMenu() {
+        let modeDatabase = ModeDatabase()
+        let currentMode = ModeManager.shared.getCurrentMode()
+        
+        for brand in modeDatabase.getAllBrands() {
+            let brandSubMenu = createBrandSubMenu(for: brand, currentMode: currentMode, modeDatabase: modeDatabase)
+            let brandMenuItem = createBrandMenuItem(brand: brand, isActive: brandSubMenu.items.contains { $0.state == .on })
+            
+            menu.addItem(brandMenuItem)
+            menu.setSubmenu(brandSubMenu, for: brandMenuItem)
+        }
+        
+        menu.addItem(NSMenuItem.separator())
+    }
+    
+    // MARK: - Menu Creation Helpers
+    
     /// Creates a volume slider using SwiftUI inside an NSHostingView.
     private func createVolumeSlider() -> NSView {
         let hostingView = NSHostingView(rootView: VolumeSliderMenuItem(
@@ -75,22 +130,6 @@ class MenuBarController {
         containerView.addSubview(hostingView)
         
         return containerView
-    }
-    
-    /// Adds a submenu for selecting sound modes.
-    private func addSoundModesMenu() {
-        let modeDatabase = ModeDatabase()
-        let currentMode = ModeManager.shared.getCurrentMode()
-        
-        for brand in modeDatabase.getAllBrands() {
-            let brandSubMenu = createBrandSubMenu(for: brand, currentMode: currentMode, modeDatabase: modeDatabase)
-            let brandMenuItem = createBrandMenuItem(brand: brand, isActive: brandSubMenu.items.contains { $0.state == .on })
-            
-            menu.addItem(brandMenuItem)
-            menu.setSubmenu(brandSubMenu, for: brandMenuItem)
-        }
-        
-        menu.addItem(NSMenuItem.separator())
     }
     
     /// Creates a submenu for a given brand, including its authors and modes.
@@ -139,17 +178,70 @@ class MenuBarController {
         menu.addItem(NSMenuItem.separator())
     }
     
-    /// Adds a quit application menu item.
-    private func addQuitMenuItem() {
-        let quitItem = NSMenuItem(title: MenuItemTitle.quit, action: #selector(quitApp), keyEquivalent: "q")
-        quitItem.target = self
-        menu.addItem(quitItem)
+    private func createQuickSettingsSubmenu() -> NSMenu {
+        let subMenu = NSMenu()
+        
+        // Open at login toggle
+        let openAtLoginItem = NSMenuItem(
+            title: MenuItemTitle.openAtLogin,
+            action: #selector(toggleOpenAtLogin(_:)),
+            keyEquivalent: ""
+        )
+        openAtLoginItem.state = SettingsManager.shared.openAtLogin ? .on : .off
+        openAtLoginItem.target = self
+        subMenu.addItem(openAtLoginItem)
+        
+        // Disable modifier keys toggle
+        let disableModKeysItem = NSMenuItem(
+            title: MenuItemTitle.disableModifierKeys,
+            action: #selector(toggleModifierKeysSetting(_:)),
+            keyEquivalent: ""
+        )
+        disableModKeysItem.state = SettingsManager.shared.disableModifierKeys ? .on : .off
+        disableModKeysItem.target = self
+        subMenu.addItem(disableModKeysItem)
+        
+        subMenu.addItem(NSMenuItem.separator())
+        
+        // What's new link
+        let whatsNewItem = NSMenuItem(
+            title: MenuItemTitle.whatsNew,
+            action: #selector(openChangelog),
+            keyEquivalent: ""
+        )
+        whatsNewItem.target = self
+        subMenu.addItem(whatsNewItem)
+        
+        subMenu.addItem(NSMenuItem.separator())
+        
+        // App version
+        let versionItem = NSMenuItem(
+            title: "\(MenuItemTitle.version) \(AppInfoHelper.appVersion)",
+            action: nil,
+            keyEquivalent: ""
+        ).disabled()
+        subMenu.addItem(versionItem)
+        
+        return subMenu
     }
     
-    /// Updates the menu bar icon based on app state.
-    func updateMenuBarIcon() {
-        statusBarItem.button?.image = NSImage(named: "MenuBarIcon")
-        statusBarItem.button?.alphaValue = AppStateManager.shared.isEnabled ? 1.0 : 0.5
+    // MARK: - Actions
+    
+    @objc private func toggleOpenAtLogin(_ sender: NSMenuItem) {
+        let newState = !SettingsManager.shared.openAtLogin
+        SettingsManager.shared.openAtLogin = newState
+        sender.state = newState ? .on : .off
+    }
+    
+    @objc private func toggleModifierKeysSetting(_ sender: NSMenuItem) {
+        sender.state = sender.state == .on ? .off : .on
+        SettingsManager.shared.disableModifierKeys = (sender.state == .on)
+    }
+    
+    @objc private func openChangelog() {
+        if let url = URL(string: "https://github.com/kamillobinski/thock/releases/latest") {
+            NSWorkspace.shared.open(url)
+        }
     }
     
     @objc private func changeMode(_ sender: NSMenuItem) {
@@ -157,12 +249,6 @@ class MenuBarController {
             delegate?.changeMode(to: mode)
             setupMenu()
         }
-    }
-    
-    /// Toggles sound on/off.
-    func toggleSound() {
-        AppStateManager.shared.isEnabled.toggle()
-        updateMenuBarIcon()
     }
     
     @objc private func quitApp() {

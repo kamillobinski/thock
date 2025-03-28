@@ -54,6 +54,11 @@ class KeyTracker {
                     SoundManager.shared.playSound(for: keyCode, isKeyDown: false)
 
                 case .flagsChanged:
+                    // Respect the user setting to ignore modifier key sounds
+                    if SettingsManager.shared.disableModifierKeys {
+                        return Unmanaged.passUnretained(event)
+                    }
+                    
                     if keyTracker.pressedKeys.remove(keyCode) == nil {
                         keyTracker.pressedKeys.insert(keyCode)
                         SoundManager.shared.playSound(for: keyCode, isKeyDown: true)
