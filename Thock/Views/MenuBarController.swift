@@ -19,8 +19,8 @@ class MenuBarController {
         static let quit = "Quit"
         static let version = "Version"
         static let settings = "Settings..."
-        static let openAtLogin = "Open at login"
-        static let disableModifierKeys = "Disable modifier keys"
+        static let openAtLogin = "Launch Thock at Login"
+        static let disableModifierKeys = "Disable Sound for Modifier Keys"
         static let whatsNew = "What's new?"
     }
     
