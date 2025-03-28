@@ -39,7 +39,8 @@ class MenuBarController {
     /// Updates the menu bar icon based on app state.
     func updateMenuBarIcon() {
         statusBarItem.button?.image = NSImage(named: "MenuBarIcon")
-        statusBarItem.button?.alphaValue = AppStateManager.shared.isEnabled ? 1.0 : 0.5
+        statusBarItem.button?.image?.isTemplate = true
+        statusBarItem.button?.alphaValue = AppStateManager.shared.isEnabled ? 1.0 : 0.3
     }
     
     /// Toggles sound on/off.
