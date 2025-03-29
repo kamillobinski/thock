@@ -26,12 +26,12 @@ final class PipeListenerService {
         if !FileManager.default.fileExists(atPath: supportDir.path) {
             try? FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
         }
-
+        
         self.pipePath = supportDir.appendingPathComponent("thock.pipe").path
         recreatePipeIfNeeded()
         startListening()
     }
-
+    
     private func recreatePipeIfNeeded() {
         var statInfo = stat()
         if stat(pipePath, &statInfo) == 0 {
@@ -41,7 +41,7 @@ final class PipeListenerService {
                 try? FileManager.default.removeItem(atPath: pipePath)
             }
         }
-
+        
         if !FileManager.default.fileExists(atPath: pipePath) {
             let result = pipePath.withCString { mkfifo($0, 0o600) }
             if result != 0 {
@@ -52,7 +52,7 @@ final class PipeListenerService {
             }
         }
     }
-
+    
     private func startListening() {
         DispatchQueue.global(qos: .background).async { [pipePath] in
             print("[PIPE] Listener started at \(pipePath)")
@@ -65,25 +65,22 @@ final class PipeListenerService {
                     sleep(1)
                     continue
                 }
-
+                
                 let fileHandle = FileHandle(fileDescriptor: fd)
-                fileHandle.readabilityHandler = { handle in
-                    let data = handle.availableData
-                    guard !data.isEmpty,
-                          let command = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
-                        return
-                    }
-
+                let data = fileHandle.readDataToEndOfFile()
+                fileHandle.closeFile()
+                
+                if !data.isEmpty,
+                   let command = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
                     print("[COMMAND] Received: \(command)")
                     self.handle(command: command)
                 }
-
-                // Keep the runloop alive
-                RunLoop.current.run()
+                
+                // Loop continues, reopens pipe
             }
         }
     }
-
+    
     private func handle(command: String) {
         let pattern = #"(".*?"|\S+)"#
         let regex = try! NSRegularExpression(pattern: pattern)
