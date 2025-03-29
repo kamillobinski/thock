@@ -28,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7709B6642D98A08C00E5E6E9 /* thock-cli */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "thock-cli"; sourceTree = "<group>"; };
 		772D9F2D2D817942003DA1A4 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Resources; path = Thock/Resources; sourceTree = "<group>"; };
 		7762F4902D7A83BA0033AE42 /* Thock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Thock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7762F4A12D7A83BC0033AE42 /* ThockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -38,6 +39,7 @@
 		777D591E2D7B0B7600A1B71F /* Exceptions for "Thock" folder in "Thock" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Info.plist,
 				"Preview Content/Preview Assets.xcassets",
 				Resources/Sounds/Alps/tplai/SKCM_Blue/1.mp3,
 				Resources/Sounds/Alps/tplai/SKCM_Blue/2.mp3,
@@ -1208,6 +1210,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7709B6652D98A08C00E5E6E9 /* cli */ = {
+			isa = PBXGroup;
+			children = (
+				7709B6642D98A08C00E5E6E9 /* thock-cli */,
+			);
+			path = cli;
+			sourceTree = "<group>";
+		};
 		7762F4872D7A83BA0033AE42 = {
 			isa = PBXGroup;
 			children = (
@@ -1216,6 +1226,7 @@
 				7762F4A42D7A83BC0033AE42 /* ThockTests */,
 				7762F4AE2D7A83BC0033AE42 /* ThockUITests */,
 				7762F4912D7A83BA0033AE42 /* Products */,
+				7709B6652D98A08C00E5E6E9 /* cli */,
 			);
 			indentWidth = 4;
 			sourceTree = "<group>";
@@ -1536,12 +1547,13 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_ASSET_PATHS = "\"Thock/Preview Content\"";
 				DEVELOPMENT_TEAM = 2CF8T4CQ6S;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Thock/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1549,7 +1561,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 1.10.0;
+				MARKETING_VERSION = 1.11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kamillobinski.Thock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1566,12 +1578,13 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_ASSET_PATHS = "\"Thock/Preview Content\"";
 				DEVELOPMENT_TEAM = 2CF8T4CQ6S;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Thock/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1579,7 +1592,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 1.10.0;
+				MARKETING_VERSION = 1.11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kamillobinski.Thock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
