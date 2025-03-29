@@ -12,23 +12,30 @@ final class SettingsManager {
     static let shared = SettingsManager()
     static let defaultOpenAtLogin: Bool = false
     static let defaultDisableModifierKeys: Bool = false
+    static let defaultIgnoreRapidKeyEvents: Bool = false
+    
     
     private init() {}
-
+    
     /// Whether the app should launch at login.
     /// Automatically updates the system login item registration.
     var openAtLogin: Bool {
         get { UserDefaults.openAtLogin }
         set {
             UserDefaults.openAtLogin = newValue
-            OpenAtLoginManager.setEnabled(newValue)
         }
     }
-
+    
     /// Whether modifier keys should be ignored in sound playback.
     var disableModifierKeys: Bool {
         get { UserDefaults.disableModifierKeys }
         set { UserDefaults.disableModifierKeys = newValue }
+    }
+    
+    /// Whether to filter out key events that occur too rapidly in succession.
+    var ignoreRapidKeyEvents: Bool {
+        get { UserDefaults.ignoreRapidKeyEvents }
+        set { UserDefaults.ignoreRapidKeyEvents = newValue }
     }
 }
 
@@ -36,8 +43,9 @@ private extension UserDefaults {
     private enum Keys {
         static let openAtLogin = "openAtLogin"
         static let disableModifierKeys = "disableModifierKeys"
+        static let ignoreRapidKeyEvents = "ignoreRapidKeyEvents"
     }
-
+    
     static var openAtLogin: Bool {
         get {
             if standard.object(forKey: Keys.openAtLogin) == nil {
@@ -49,7 +57,7 @@ private extension UserDefaults {
             standard.set(newValue, forKey: Keys.openAtLogin)
         }
     }
-
+    
     static var disableModifierKeys: Bool {
         get {
             if standard.object(forKey: Keys.disableModifierKeys) == nil {
@@ -59,6 +67,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.disableModifierKeys)
+        }
+    }
+    
+    static var ignoreRapidKeyEvents: Bool {
+        get {
+            if standard.object(forKey: Keys.ignoreRapidKeyEvents) == nil {
+                return SettingsManager.defaultIgnoreRapidKeyEvents
+            }
+            return standard.bool(forKey: Keys.ignoreRapidKeyEvents)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.ignoreRapidKeyEvents)
         }
     }
 }

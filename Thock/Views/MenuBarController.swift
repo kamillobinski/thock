@@ -1,5 +1,5 @@
 //
-//  MenuBarView.swift
+//  MenuBarController.swift
 //  Thock
 //
 //  Created by Kamil Łobiński on 07/03/2025.
@@ -21,6 +21,7 @@ class MenuBarController {
         static let settings = "Settings..."
         static let openAtLogin = "Launch Thock at Login"
         static let disableModifierKeys = "Disable Sound for Modifier Keys"
+        static let ignoreRapidKeyEvents = "Ignore rapid key events"
         static let whatsNew = "What's new?"
     }
     
@@ -32,27 +33,34 @@ class MenuBarController {
         self.delegate = delegate
         statusBarItem.menu = menu
         setupMenu()
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsUpdate),
+            name: .settingsDidChange,
+            object: nil
+        )
     }
     
     // MARK: - Public API
     
     /// Updates the menu bar icon based on app state.
-    func updateMenuBarIcon() {
+    func updateMenuBarIcon(for state: Bool) {
         statusBarItem.button?.image = NSImage(named: "MenuBarIcon")
         statusBarItem.button?.image?.isTemplate = true
-        statusBarItem.button?.alphaValue = AppStateManager.shared.isEnabled ? 1.0 : 0.3
+        statusBarItem.button?.alphaValue = state ? 1.0 : 0.3
     }
     
     /// Toggles sound on/off.
     func toggleSound() {
-        AppStateManager.shared.isEnabled.toggle()
-        updateMenuBarIcon()
+        updateMenuBarIcon(for: AppEngine.shared.toggleIsEnabled())
     }
     
     // MARK: - Menu Setup
     
     func setupMenu() {
         menu.removeAllItems()
+        updateMenuBarIcon(for: AppEngine.shared.isEnabled())
         
         addToggleMenuItem()
         addVolumeSliderItem()
@@ -64,7 +72,7 @@ class MenuBarController {
     /// Adds an enabled/disabled toggle item for the app.
     private func addToggleMenuItem() {
         let toggleItem = NSMenuItem()
-        toggleItem.view = EnableAppMenuItem(title: MenuItemTitle.app, isOn: AppStateManager.shared.isEnabled) { [weak self] _ in
+        toggleItem.view = EnableAppMenuItem(title: MenuItemTitle.app, isOn: AppEngine.shared.isEnabled()) { [weak self] _ in
             self?.toggleSound()
         }
         menu.addItem(toggleItem)
@@ -99,7 +107,7 @@ class MenuBarController {
     /// Adds a submenu for selecting sound modes.
     private func addSoundModesMenu() {
         let modeDatabase = ModeDatabase()
-        let currentMode = ModeManager.shared.getCurrentMode()
+        let currentMode = ModeEngine.shared.getModeCurrentMode()
         
         for brand in modeDatabase.getAllBrands() {
             let brandSubMenu = createBrandSubMenu(for: brand, currentMode: currentMode, modeDatabase: modeDatabase)
@@ -118,10 +126,10 @@ class MenuBarController {
     private func createVolumeSlider() -> NSView {
         let hostingView = NSHostingView(rootView: VolumeSliderMenuItem(
             volume: Binding(
-                get: { Double(SoundManager.shared.getVolume()) },
+                get: { Double(SoundEngine.shared.getVolume()) },
                 set: { _ in }
             ),
-            onVolumeChange: { newValue in SoundManager.shared.setVolume(Float(newValue)) },
+            onVolumeChange: { newValue in SoundEngine.shared.setVolume(Float(newValue)) },
             step: 0.01
         ))
         
@@ -188,7 +196,7 @@ class MenuBarController {
             action: #selector(toggleOpenAtLogin(_:)),
             keyEquivalent: ""
         )
-        openAtLoginItem.state = SettingsManager.shared.openAtLogin ? .on : .off
+        openAtLoginItem.state = SettingsEngine.shared.isOpenAtLoginEnabled() ? .on : .off
         openAtLoginItem.target = self
         subMenu.addItem(openAtLoginItem)
         
@@ -198,9 +206,19 @@ class MenuBarController {
             action: #selector(toggleModifierKeysSetting(_:)),
             keyEquivalent: ""
         )
-        disableModKeysItem.state = SettingsManager.shared.disableModifierKeys ? .on : .off
+        disableModKeysItem.state = SettingsEngine.shared.isModifierKeySoundDisabled() ? .on : .off
         disableModKeysItem.target = self
         subMenu.addItem(disableModKeysItem)
+        
+        // Ignore rapid key events
+        let ignoreRapidKeyEventsItem = NSMenuItem(
+            title: MenuItemTitle.ignoreRapidKeyEvents,
+            action: #selector(toggleIgnoreRapidKeyEventsSetting(_:)),
+            keyEquivalent: ""
+        )
+        ignoreRapidKeyEventsItem.state = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled() ? .on : .off
+        ignoreRapidKeyEventsItem.target = self
+        subMenu.addItem(ignoreRapidKeyEventsItem)
         
         subMenu.addItem(NSMenuItem.separator())
         
@@ -228,15 +246,20 @@ class MenuBarController {
     
     // MARK: - Actions
     
+    @objc private func handleSettingsUpdate() {
+        setupMenu()
+    }
+    
     @objc private func toggleOpenAtLogin(_ sender: NSMenuItem) {
-        let newState = !SettingsManager.shared.openAtLogin
-        SettingsManager.shared.openAtLogin = newState
-        sender.state = newState ? .on : .off
+        sender.state = SettingsEngine.shared.toggleOpenAtLogin() ? .on : .off
     }
     
     @objc private func toggleModifierKeysSetting(_ sender: NSMenuItem) {
-        sender.state = sender.state == .on ? .off : .on
-        SettingsManager.shared.disableModifierKeys = (sender.state == .on)
+        sender.state = SettingsEngine.shared.toggleModifierKeySound() ? .on : .off
+    }
+    
+    @objc private func toggleIgnoreRapidKeyEventsSetting(_ sender: NSMenuItem) {
+        sender.state = SettingsEngine.shared.toggleIgnoreRapidKeyEvents() ? .on : .off
     }
     
     @objc private func openChangelog() {
@@ -247,8 +270,7 @@ class MenuBarController {
     
     @objc private func changeMode(_ sender: NSMenuItem) {
         if let mode = sender.representedObject as? Mode {
-            delegate?.changeMode(to: mode)
-            setupMenu()
+            SettingsEngine.shared.selectMode(mode: mode)
         }
     }
     
@@ -266,6 +288,5 @@ private extension NSMenuItem {
 }
 
 protocol MenuBarControllerDelegate: AnyObject {
-    func changeMode(to mode: Mode)
     func quitApp()
 }

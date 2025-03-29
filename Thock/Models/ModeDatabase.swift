@@ -24,49 +24,49 @@ struct ModeDatabase {
                 Mode(
                     id: UUID(uuidString: "113f785e-0a0a-4300-9525-865654c619aa")!,
                     name: "Black ABS",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Black_ABS/"
                 ),
                 Mode(
                     id: UUID(uuidString: "eb2d732c-9777-4b2f-b132-b1da5f735ebb")!,
                     name: "Black PBT",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Black_PBT/"
                 ),
                 Mode(
                     id: UUID(uuidString: "25f28ac0-62f1-4e9d-bc68-f7f85d6ef35a")!,
                     name:"Blue ABS",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Blue_ABS/"
                 ),
                 Mode(
                     id: UUID(uuidString: "0b4e19ba-6a22-41eb-a9ef-ac0571181b52")!,
                     name: "Blue PBT",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Blue_PBT/"
                 ),
                 Mode(
                     id: UUID(uuidString: "c9bcdb8f-50c1-4438-830f-67eeeeb40ea2")!,
                     name: "Brown ABS",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Brown_ABS/"
                 ),
                 Mode(
                     id: UUID(uuidString: "83d8416b-2dc0-47fb-ac02-e5495c547244")!,
                     name: "Brown PBT",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Brown_PBT/"
                 ),
                 Mode(
                     id: UUID(uuidString: "ea69d01e-e83e-4186-a122-72ebfb7d620e")!,
                     name: "Red ABS",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Red_ABS/"
                 ),
                 Mode(
                     id: UUID(uuidString: "313554e8-8440-45f9-84ab-799bb1e4217f")!,
                     name: "Red PBT",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Cherry_MX/mechvibes/Red_PBT/"
                 ),
             ],
@@ -116,13 +116,13 @@ struct ModeDatabase {
                 Mode(
                     id: UUID(uuidString: "e91d2da9-1a7f-40ee-af3e-928090ba217a")!,
                     name: "Crystal Purple",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Everglide/mechvibes/Crystal_Purple/"
                 ),
                 Mode(
                     id: UUID(uuidString: "ec6eb0ba-10d3-4c60-a521-c7747e6e39ab")!,
                     name: "Oreo",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Everglide/mechvibes/Oreo/"
                 ),
             ]
@@ -174,7 +174,7 @@ struct ModeDatabase {
                 Mode(
                     id: UUID(uuidString: "4c48615c-4765-4785-9dc6-1196ed4b8796")!,
                     name: "Purple Hybrid PBT",
-                    isNew: true,
+                    isNew: false,
                     path: "Resources/Sounds/Topre/mechvibes/Purple_Hybrid_PBT/"
                 ),
             ],
@@ -237,6 +237,31 @@ struct ModeDatabase {
             }
         }
         return nil
+    }
+    
+    func getMode(byName name: String, author: Author, brand: Brand) -> Mode? {
+        guard let authorModes = modeStorage[brand]?[author] else { return nil }
+        return authorModes.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+    }
+    
+    func getMode(byName name: String, authorName: String, brandName: String) -> Mode? {
+        func normalize(_ string: String) -> String {
+            return string.lowercased().replacingOccurrences(of: " ", with: "")
+        }
+        
+        let normalizedName = normalize(name)
+        let normalizedAuthorName = normalize(authorName)
+        let normalizedBrandName = normalize(brandName)
+        
+        guard let author = Author.allCases.first(where: { normalize($0.rawValue) == normalizedAuthorName }) else {
+            return nil
+        }
+        
+        guard let brand = Brand.allCases.first(where: { normalize($0.rawValue) == normalizedBrandName }) else {
+            return nil
+        }
+        
+        return getMode(byName: normalizedName, author: author, brand: brand)
     }
     
     func getBrand(for mode: Mode) -> Brand? {
