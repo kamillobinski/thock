@@ -25,6 +25,29 @@ class SoundManager {
         setupAudioEngine()
     }
     
+    /// Plays a preloaded sound.
+    /// - Parameter name: The name of the file to play.
+    func play(sound name: String) {
+        guard let buffer = audioBuffers[name], let player = audioPlayers[name] else {
+            print("Sound not found: \(name)")
+            return
+        }
+        
+        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
+        
+        if !player.isPlaying {
+            player.play()
+        }
+    }
+    
+    func setVolume(_ newValue: Float) {
+        mixer.outputVolume = newValue
+    }
+    
+    func getVolume() -> Float {
+        return mixer.outputVolume
+    }
+    
     private func setupAudioEngine() {
         mixer.outputVolume = 0.5
         engine.attach(mixer)
@@ -46,12 +69,12 @@ class SoundManager {
     @objc private func handleEngineConfigChange(notification: Notification) {
         engine.stop()
         engine.reset()
-
+        
         // Detach and reattach mixer
         engine.detach(mixer)
         engine.attach(mixer)
         engine.connect(mixer, to: engine.outputNode, format: nil)
-
+        
         // Reattach all players
         for (fileName, buffer) in audioBuffers {
             let player = AVAudioPlayerNode()
@@ -59,7 +82,7 @@ class SoundManager {
             engine.connect(player, to: mixer, format: buffer.format)
             audioPlayers[fileName] = player
         }
-
+        
         startAudioEngine()
     }
     
@@ -125,44 +148,5 @@ class SoundManager {
             print("Error loading audio buffer: \(error)")
             return nil
         }
-    }
-    
-    /// Plays sound for a key press event.
-    func playSound(for keyCode: Int64, isKeyDown: Bool) {
-        guard AppStateManager.shared.isEnabled else { return }
-        
-        let keyType = KeyMapper.fromKeyCode(keyCode)
-        let soundList = isKeyDown
-        ? ModeConfigManager.shared.getKeyDownSounds(for: keyType)
-        : ModeConfigManager.shared.getKeyUpSounds(for: keyType)
-        
-        if let soundFileName = soundList.randomElement() {
-            SoundManager.shared.playSound(name: soundFileName)
-        } else {
-            print("Warning: (keydown: \(isKeyDown)) No available sound for keyCode: \(keyCode)")
-        }
-    }
-    
-    /// Plays a preloaded sound.
-    /// - Parameter name: The name of the file to play.
-    func playSound(name: String) {
-        guard let buffer = audioBuffers[name], let player = audioPlayers[name] else {
-            print("Sound not found: \(name)")
-            return
-        }
-        
-        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
-        
-        if !player.isPlaying {
-            player.play()
-        }
-    }
-    
-    func setVolume(_ newValue: Float) {
-        mixer.outputVolume = newValue
-    }
-    
-    func getVolume() -> Float {
-        return mixer.outputVolume
     }
 }

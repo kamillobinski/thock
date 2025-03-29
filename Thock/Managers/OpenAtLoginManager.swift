@@ -15,7 +15,7 @@ enum OpenAtLoginManager {
     private static var appService: SMAppService {
         SMAppService.mainApp
     }
-
+    
     /// Registers or unregisters the app as a login item based on the user's preference.
     /// - Parameter enabled: If `true`, app is added to login items. If `false`, it's removed.
     static func setEnabled(_ enabled: Bool) {
@@ -29,7 +29,7 @@ enum OpenAtLoginManager {
             print("Failed to \(enabled ? "enable" : "disable") login item: \(error.localizedDescription)")
         }
     }
-
+    
     /// Returns whether the app is currently set to launch at login.
     static func isEnabled() -> Bool {
         return appService.status == .enabled
