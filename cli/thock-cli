@@ -1,22 +1,32 @@
 #!/bin/bash
 
+# thock-cli
+# A simple shell wrapper to send commands to the Thock macOS app via named pipe.
+# Usage:
+#   thock-cli set-mode "oreo" --brand "everglide" --author "mechvibes"
+
+# Define the path to the Thock named pipe
 PIPE="$HOME/Library/Application Support/thock/thock.pipe"
 
+# Check if the named pipe exists
 if [[ ! -p "$PIPE" ]]; then
   echo "Error: Thock pipe not found at: $PIPE"
   echo "Make sure Thock is running and has created the named pipe."
   exit 1
 fi
 
-# Build the command by wrapping all args in double quotes
+# Construct the command to send, wrapping each argument in double quotes
 COMMAND=""
 for arg in "$@"; do
-  # Escape any embedded double quotes inside the arg
+  # Escape any existing double quotes within the argument
   escaped_arg="${arg//\"/\\\"}"
+  
+  # Wrap the argument in double quotes and add it to the command string
   COMMAND+="\"$escaped_arg\" "
 done
 
-# Trim trailing space
+# Trim any trailing whitespace from the final command string
 COMMAND="${COMMAND%% }"
 
+# Send the formatted command to the Thock named pipe
 echo "$COMMAND" > "$PIPE"
