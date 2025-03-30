@@ -64,6 +64,7 @@ class MenuBarController {
         
         addToggleMenuItem()
         addVolumeSliderItem()
+        addPitchVariationSliderItem()
         addSoundModesMenu()
         addQuickSettingsMenu()
         addQuitMenuItem()
@@ -88,6 +89,19 @@ class MenuBarController {
         menu.addItem(volumeItem)
         menu.addItem(NSMenuItem.separator())
     }
+    
+    /// Adds a slider to control the randomized pitch variation in cents
+    private func addPitchVariationSliderItem() {
+        menu.addItem(NSMenuItem(title: "Pitch Variation", action: nil, keyEquivalent: "").disabled())
+
+        let pitchItem = NSMenuItem()
+        pitchItem.view = createPitchVariationSlider()
+        menu.addItem(pitchItem)
+        menu.addItem(NSMenuItem.separator())
+    }
+
+
+
     
     private func addQuickSettingsMenu() {
         let settingsItem = NSMenuItem(title: MenuItemTitle.settings, action: nil, keyEquivalent: "")
@@ -138,6 +152,22 @@ class MenuBarController {
         let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 180, height: 20))
         containerView.addSubview(hostingView)
         
+        return containerView
+    }
+
+    /// Creates a pitch variation slider using SwiftUI inside an NSHostingView.
+    private func createPitchVariationSlider() -> NSView {
+        let hostingView = NSHostingView(rootView: PitchVariationSliderMenuItem(
+            pitchVariation: Double(SoundEngine.shared.getPitchVariation()),
+            onPitchChange: { newValue in SoundEngine.shared.setPitchVariation(Float(newValue)) },
+            step: 5.0
+        ))
+
+        hostingView.frame = NSRect(x: 15, y: 0, width: 150, height: 40)
+
+        let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 180, height: 40))
+        containerView.addSubview(hostingView)
+
         return containerView
     }
     
