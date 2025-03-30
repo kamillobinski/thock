@@ -70,8 +70,8 @@ Sets the active sound mode.
 
 **Arguments:**
 - `modeName` - the name of the mode (required)
-- `--brand <brand>` - optional brand name to show in the menu
-- `--author <author>` - optional author name of the sound mode
+- `--brand <brand>` - brand name to show in the menu (required)
+- `--author <author>` - author name of the sound mode (required)
 
 **Example:**
 ```sh
