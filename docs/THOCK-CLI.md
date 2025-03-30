@@ -70,7 +70,7 @@ Sets the active sound mode.
 
 **Arguments:**
 - `modeName` - the name of the mode (required)
-- `--brand <brand>` - brand name to show in the menu (required)
+- `--brand <brand>` - Brand name of the sound mode (required)
 - `--author <author>` - author name of the sound mode (required)
 
 **Example:**
