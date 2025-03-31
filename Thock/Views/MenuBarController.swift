@@ -16,6 +16,7 @@ class MenuBarController {
     private enum MenuItemTitle {
         static let app = AppInfoHelper.appName
         static let volume = "Volume"
+        static let pitch = "Pitch Variation"
         static let quit = "Quit"
         static let version = "Version"
         static let settings = "Settings..."
@@ -92,7 +93,7 @@ class MenuBarController {
     
     /// Adds a slider to control the randomized pitch variation in cents
     private func addPitchVariationSliderItem() {
-        menu.addItem(NSMenuItem(title: "Pitch Variation", action: nil, keyEquivalent: "").disabled())
+        menu.addItem(NSMenuItem(title: MenuItemTitle.pitch, action: nil, keyEquivalent: "").disabled())
 
         let pitchItem = NSMenuItem()
         pitchItem.view = createPitchVariationSlider()
@@ -160,7 +161,9 @@ class MenuBarController {
         let hostingView = NSHostingView(rootView: PitchVariationSliderMenuItem(
             pitchVariation: Double(SoundEngine.shared.getPitchVariation()),
             onPitchChange: { newValue in SoundEngine.shared.setPitchVariation(Float(newValue)) },
-            step: 2.0
+            step: 2.0,
+            minimumValue: 0.0,
+            maximumValue: 10.0
         ))
 
         hostingView.frame = NSRect(x: 15, y: 0, width: 150, height: 40)
