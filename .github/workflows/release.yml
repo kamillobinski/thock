@@ -1,0 +1,70 @@
+name: 🚀 Thock Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    name: 🔨 Build, Release & Bump Homebrew
+    runs-on: macos-latest
+
+    steps:
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🛠️ Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: 📦 Build Archive
+        run: |
+          mkdir -p build
+          xcodebuild -scheme Thock -configuration Release \
+            -archivePath build/Thock.xcarchive archive \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          cp -R build/Thock.xcarchive/Products/Applications/Thock.app build/Thock.app
+
+      - name: ➕ Add CLI
+        run: cp cli/thock-cli build/thock-cli
+
+      - name: 🏷️ Zip with version
+        run: |
+          cd build
+          ZIP_NAME="Thock-${{ github.ref_name }}.zip"
+          zip -r "$ZIP_NAME" Thock.app thock-cli
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+
+      - name: 🧮 Get SHA256
+        id: sha
+        run: |
+          HASH=$(shasum -a 256 "build/$ZIP_NAME" | awk '{ print $1 }')
+          echo "sha=$HASH" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Upload release artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/${{ env.ZIP_NAME }}
+
+      - name: 🧪 Update Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
+        run: |
+          git config --global user.email "release-bot@thock.dev"
+          git config --global user.name "Thock Release Bot"
+          git clone https://github.com/kamillobinski/homebrew-thock.git
+          cd homebrew-thock
+          git checkout -b bump-${{ env.VERSION }}
+
+          # Replace values in thock.rb
+          sed -i '' "s|url \".*\"|url \"https://github.com/kamillobinski/thock/releases/download/${{ env.VERSION }}/${{ env.ZIP_NAME }}\"|" thock.rb
+          sed -i '' "s|sha256 \".*\"|sha256 \"${{ steps.sha.outputs.sha }}\"|" thock.rb
+          sed -i '' "s|version \".*\"|version \"${{ env.VERSION }}\"|" thock.rb
+
+          git add thock.rb
+          git commit -m "chore: update to ${{ env.VERSION }}"
+          git push origin bump-${{ env.VERSION }}
+          gh pr create --title "chore: update to ${{ env.VERSION }}" --body "Automated Thock release bump." --head bump-${{ env.VERSION }}
