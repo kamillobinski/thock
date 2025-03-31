@@ -25,7 +25,7 @@ struct PitchVariationSliderMenuItem: View {
                 .font(.caption)
             Slider(
                 value: $localPitchVariation,
-                in: 0...50,
+                in: 0...10,
                 step: step,
                 onEditingChanged: { _ in
                     onPitchChange(localPitchVariation)

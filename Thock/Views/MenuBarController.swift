@@ -160,7 +160,7 @@ class MenuBarController {
         let hostingView = NSHostingView(rootView: PitchVariationSliderMenuItem(
             pitchVariation: Double(SoundEngine.shared.getPitchVariation()),
             onPitchChange: { newValue in SoundEngine.shared.setPitchVariation(Float(newValue)) },
-            step: 5.0
+            step: 2.0
         ))
 
         hostingView.frame = NSRect(x: 15, y: 0, width: 150, height: 40)
