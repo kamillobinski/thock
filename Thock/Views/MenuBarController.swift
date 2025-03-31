@@ -101,9 +101,6 @@ class MenuBarController {
         menu.addItem(NSMenuItem.separator())
     }
 
-
-
-    
     private func addQuickSettingsMenu() {
         let settingsItem = NSMenuItem(title: MenuItemTitle.settings, action: nil, keyEquivalent: "")
         let subMenu = createQuickSettingsSubmenu()
