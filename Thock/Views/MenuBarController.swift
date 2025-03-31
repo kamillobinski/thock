@@ -31,8 +31,14 @@ class MenuBarController {
         self.menu = NSMenu()
         self.statusBarItem = statusBarItem
         self.delegate = delegate
-        statusBarItem.menu = menu
         setupMenu()
+        
+        // StatusBarItem left/right click event
+        if let button = statusBarItem.button {
+            button.target = self
+            button.action = #selector(onStatusBarIconClick(sender:))
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
         
         NotificationCenter.default.addObserver(
             self,
@@ -43,6 +49,10 @@ class MenuBarController {
     }
     
     // MARK: - Public API
+    
+    public func getMenu() -> NSMenu {
+        return menu
+    }
     
     /// Updates the menu bar icon based on app state.
     func updateMenuBarIcon(for state: Bool) {
@@ -244,7 +254,33 @@ class MenuBarController {
         return subMenu
     }
     
+    // MARK: - StatusBarItem Click Handlers
+    
+    private func handleLeftClick(sender: NSStatusBarButton) {
+        statusBarItem.menu = self.menu
+        sender.performClick(nil)
+        statusBarItem.menu = nil
+    }
+    
+    private func handleRightClick(sender: NSStatusBarButton) {
+        toggleSound()
+        setupMenu()
+    }
+    
     // MARK: - Actions
+    
+    @objc private func onStatusBarIconClick(sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+        
+        switch event.type {
+        case .rightMouseUp:
+            handleRightClick(sender: sender)
+        case .leftMouseUp:
+            handleLeftClick(sender: sender)
+        default:
+            break
+        }
+    }
     
     @objc private func handleSettingsUpdate() {
         setupMenu()
