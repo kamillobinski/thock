@@ -37,7 +37,7 @@ class KeyTracker {
             callback: { _, type, event, userInfo in
                 let keyTracker = Unmanaged<KeyTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-                
+
                 if SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled() {
                     // Ignore events that are too close to each other.
                     defer { keyTracker.lastEventTime = keyTracker.currentTime() }
@@ -45,37 +45,35 @@ class KeyTracker {
                     let elapsedTime = currentTimestamp - keyTracker.lastEventTime
                     if elapsedTime <= 10 { return Unmanaged.passUnretained(event) }
                 }
-                
-                switch type {
-                case .keyDown where !keyTracker.pressedKeys.contains(keyCode):
-                    keyTracker.pressedKeys.insert(keyCode)
-                    SoundEngine.shared.play(for: keyCode, isKeyDown: true)
-                    
-                case .keyUp:
-                    keyTracker.pressedKeys.remove(keyCode)
-                    SoundEngine.shared.play(for: keyCode, isKeyDown: false)
-                    
-                case .flagsChanged:
-                    // Respect the user setting to ignore modifier key sounds
-                    if SettingsEngine.shared.isModifierKeySoundDisabled() {
-                        return Unmanaged.passUnretained(event)
-                    }
-                    
-                    if keyTracker.pressedKeys.remove(keyCode) == nil {
+
+                defer {
+                    switch type {
+                    case .keyDown where !keyTracker.pressedKeys.contains(keyCode):
                         keyTracker.pressedKeys.insert(keyCode)
                         SoundEngine.shared.play(for: keyCode, isKeyDown: true)
-                    } else {
+
+                    case .keyUp:
+                        keyTracker.pressedKeys.remove(keyCode)
                         SoundEngine.shared.play(for: keyCode, isKeyDown: false)
+
+                    case .flagsChanged:
+                        // Respect the user setting to ignore modifier key sounds
+                        if !SettingsEngine.shared.isModifierKeySoundDisabled() {
+                            if keyTracker.pressedKeys.remove(keyCode) == nil {
+                                keyTracker.pressedKeys.insert(keyCode)
+                                SoundEngine.shared.play(for: keyCode, isKeyDown: true)
+                            } else {
+                                SoundEngine.shared.play(for: keyCode, isKeyDown: false)
+                            }
+                        }
+                    default:
+                        break
                     }
-                default:
-                    break
-                    
                 }
                 return Unmanaged.passUnretained(event)
             },
             userInfo: observer
         )
-        
         if let eventMonitor = eventMonitor {
             let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
             CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
