@@ -56,15 +56,15 @@ jobs:
         run: |
           git config --global user.email "release-bot@thock.dev"
           git config --global user.name "Thock Release Bot"
-          git clone https://github.com/kamillobinski/homebrew-thock.git
+          
+          git clone https://${GH_TOKEN}@github.com/kamillobinski/homebrew-thock.git
           cd homebrew-thock
           git checkout -b bump-${{ env.VERSION }}
-
-          # Replace values in thock.rb
+          
           sed -i '' "s|url \".*\"|url \"https://github.com/kamillobinski/thock/releases/download/${{ env.VERSION }}/${{ env.ZIP_NAME }}\"|" thock.rb
           sed -i '' "s|sha256 \".*\"|sha256 \"${{ steps.sha.outputs.sha }}\"|" thock.rb
           sed -i '' "s|version \".*\"|version \"${{ env.VERSION }}\"|" thock.rb
-
+          
           git add thock.rb
           git commit -m "chore: update to ${{ env.VERSION }}"
           git push origin bump-${{ env.VERSION }}
