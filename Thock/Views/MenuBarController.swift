@@ -16,6 +16,8 @@ class MenuBarController {
     private enum MenuItemTitle {
         static let app = AppInfoHelper.appName
         static let volume = "Volume"
+        static let pitch = "Pitch Variation"
+        static let pitchTooltip = "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
         static let quit = "Quit"
         static let version = "Version"
         static let settings = "Settings..."
@@ -31,8 +33,14 @@ class MenuBarController {
         self.menu = NSMenu()
         self.statusBarItem = statusBarItem
         self.delegate = delegate
-        statusBarItem.menu = menu
         setupMenu()
+        
+        // StatusBarItem left/right click event
+        if let button = statusBarItem.button {
+            button.target = self
+            button.action = #selector(onStatusBarIconClick(sender:))
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
         
         NotificationCenter.default.addObserver(
             self,
@@ -43,6 +51,10 @@ class MenuBarController {
     }
     
     // MARK: - Public API
+    
+    public func getMenu() -> NSMenu {
+        return menu
+    }
     
     /// Updates the menu bar icon based on app state.
     func updateMenuBarIcon(for state: Bool) {
@@ -64,9 +76,16 @@ class MenuBarController {
         
         addToggleMenuItem()
         addVolumeSliderItem()
+        addPitchButtonRowItem()
         addSoundModesMenu()
         addQuickSettingsMenu()
         addQuitMenuItem()
+    }
+    
+    private func addPitchButtonRowItem() {
+        menu.addItem(createMenuLabel(MenuItemTitle.pitch, tooltip: MenuItemTitle.pitchTooltip))
+        menu.addItem(createPitchButtonRowItem())
+        menu.addItem(NSMenuItem.separator())
     }
     
     /// Adds an enabled/disabled toggle item for the app.
@@ -81,7 +100,7 @@ class MenuBarController {
     
     /// Adds a volume slider to the menu.
     private func addVolumeSliderItem() {
-        menu.addItem(NSMenuItem(title: MenuItemTitle.volume, action: nil, keyEquivalent: "").disabled())
+        menu.addItem(createMenuLabel(MenuItemTitle.volume))
         
         let volumeItem = NSMenuItem()
         volumeItem.view = createVolumeSlider()
@@ -122,6 +141,24 @@ class MenuBarController {
     
     // MARK: - Menu Creation Helpers
     
+    private func createMenuLabel(_ text: String, tooltip: String? = nil) -> NSMenuItem {
+        let menuItem = NSMenuItem()
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 160, height: 20))
+        
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.systemFont(ofSize: 11)
+        label.textColor = NSColor.disabledControlTextColor
+        label.frame = NSRect(x: 12, y: 2, width: 140, height: 16)
+        if let tooltip = tooltip {
+            label.stringValue += " 􀁜"
+            label.toolTip = tooltip
+        }
+        
+        container.addSubview(label)
+        menuItem.view = container
+        return menuItem
+    }
+    
     /// Creates a volume slider using SwiftUI inside an NSHostingView.
     private func createVolumeSlider() -> NSView {
         let hostingView = NSHostingView(rootView: VolumeSliderMenuItem(
@@ -141,6 +178,31 @@ class MenuBarController {
         return containerView
     }
     
+    /// Creates a pitch variation button row
+    private func createPitchButtonRowItem() -> NSMenuItem {
+        let pitchBinding = Binding<Float>(
+            get: { SoundEngine.shared.getPitchVariation() },
+            set: { newVal in SoundEngine.shared.setPitchVariation(newVal) }
+        )
+        
+        let view = PitchVariationButtonRow(
+            values: [0, 2.5, 5, 7.5, 10],
+            selected: pitchBinding,
+            onSelect: { _ in
+                DispatchQueue.main.async {
+                    self.setupMenu()
+                }
+            }
+        )
+        
+        let hosting = NSHostingView(rootView: view)
+        hosting.frame = NSRect(x: 0, y: 0, width: 180, height: 26)
+        
+        let item = NSMenuItem()
+        item.view = hosting
+        return item
+    }
+    
     /// Creates a submenu for a given brand, including its authors and modes.
     private func createBrandSubMenu(for brand: Brand, currentMode: Mode, modeDatabase: ModeDatabase) -> NSMenu {
         let brandSubMenu = NSMenu()
@@ -148,7 +210,7 @@ class MenuBarController {
         for author in modeDatabase.getAuthors(for: brand) {
             guard let modes = modeDatabase.getModes(for: brand, author: author), !modes.isEmpty else { continue }
             
-            brandSubMenu.addItem(NSMenuItem(title: "by \(author.rawValue)", action: nil, keyEquivalent: "").disabled())
+            brandSubMenu.addItem(createMenuLabel("by \(author.rawValue)"))
             
             for mode in modes {
                 let modeItem = NSMenuItem(title: mode.name, action: #selector(changeMode(_:)), keyEquivalent: "")
@@ -179,12 +241,6 @@ class MenuBarController {
         }
         
         return brandMenuItem
-    }
-    
-    /// Adds the app version menu item.
-    private func addVersionMenuItem() {
-        menu.addItem(NSMenuItem(title: "\(MenuItemTitle.version) \(AppInfoHelper.appVersion)", action: nil, keyEquivalent: "").disabled())
-        menu.addItem(NSMenuItem.separator())
     }
     
     private func createQuickSettingsSubmenu() -> NSMenu {
@@ -244,7 +300,33 @@ class MenuBarController {
         return subMenu
     }
     
+    // MARK: - StatusBarItem Click Handlers
+    
+    private func handleLeftClick(sender: NSStatusBarButton) {
+        statusBarItem.menu = self.menu
+        sender.performClick(nil)
+        statusBarItem.menu = nil
+    }
+    
+    private func handleRightClick(sender: NSStatusBarButton) {
+        toggleSound()
+        setupMenu()
+    }
+    
     // MARK: - Actions
+    
+    @objc private func onStatusBarIconClick(sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+        
+        switch event.type {
+        case .rightMouseUp:
+            handleRightClick(sender: sender)
+        case .leftMouseUp:
+            handleLeftClick(sender: sender)
+        default:
+            break
+        }
+    }
     
     @objc private func handleSettingsUpdate() {
         setupMenu()
