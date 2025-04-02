@@ -13,7 +13,9 @@ class SoundManager {
     private var engine = AVAudioEngine()
     private var audioPlayers: [String: AVAudioPlayerNode] = [:]
     private var audioBuffers: [String: AVAudioPCMBuffer] = [:]
+    
     private let mixer = AVAudioMixerNode()
+    private let pitchNode = AVAudioUnitTimePitch()
     
     init() {
         NotificationCenter.default.addObserver(
@@ -48,10 +50,18 @@ class SoundManager {
         return mixer.outputVolume
     }
     
+    func setGlobalPitch(_ pitch: Float) {
+        pitchNode.pitch = pitch
+    }
+    
     private func setupAudioEngine() {
         mixer.outputVolume = 0.5
+        engine.attach(pitchNode)
         engine.attach(mixer)
-        engine.connect(mixer, to: engine.outputNode, format: nil)
+        
+        engine.connect(mixer, to: pitchNode, format: nil)
+        engine.connect(pitchNode, to: engine.outputNode, format: nil)
+        
         startAudioEngine()
     }
     
@@ -72,8 +82,13 @@ class SoundManager {
         
         // Detach and reattach mixer
         engine.detach(mixer)
+        engine.detach(pitchNode)
+        
+        engine.attach(pitchNode)
         engine.attach(mixer)
-        engine.connect(mixer, to: engine.outputNode, format: nil)
+        
+        engine.connect(mixer, to: pitchNode, format: nil)
+        engine.connect(pitchNode, to: engine.outputNode, format: nil)
         
         // Reattach all players
         for (fileName, buffer) in audioBuffers {
@@ -120,6 +135,7 @@ class SoundManager {
                     let player = AVAudioPlayerNode()
                     engine.attach(player)
                     engine.connect(player, to: mixer, format: buffer.format)
+                    
                     audioPlayers[file] = player
                     audioBuffers[file] = buffer
                 }

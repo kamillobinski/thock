@@ -11,6 +11,8 @@ final class SoundEngine {
     static let shared = SoundEngine()
     
     private init() {}
+    private var pitchVariation: Float = 0.0
+
     
     func preloadSounds(for mode: Mode) {
         print("Preload sounds")
@@ -21,13 +23,14 @@ final class SoundEngine {
     func play(for keyCode: Int64, isKeyDown: Bool) {
         guard AppEngine.shared.isEnabled() else { return }
         print("Play sound for keyCode: \(keyCode)")
-        
         let keyType = KeyMapper.fromKeyCode(keyCode)
         let keySoundList = isKeyDown
         ? ModeEngine.shared.getKeyDownSounds(for: keyType)
         : ModeEngine.shared.getKeyUpSounds(for: keyType)
         
         if let soundFileName = keySoundList.randomElement() {
+            let randomPitchOffset = Float.random(in: -pitchVariation...pitchVariation)
+            SoundManager.shared.setGlobalPitch(randomPitchOffset)
             play(sound: soundFileName)
         } else {
             // print("Warning: (keydown: \(isKeyDown)) No available sound for keyCode: \(keyCode)")
@@ -47,6 +50,15 @@ final class SoundEngine {
     func getVolume() -> Float {
         print("Get volume")
         return SoundManager.shared.getVolume()
+    }
+    
+    func setPitchVariation(_ variation: Float) {
+        print("Set pitch variation: \(variation)")
+        pitchVariation = variation
+    }
+
+    func getPitchVariation() -> Float {
+        return pitchVariation
     }
     
 }
