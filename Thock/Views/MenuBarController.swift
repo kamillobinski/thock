@@ -17,6 +17,7 @@ class MenuBarController {
         static let app = AppInfoHelper.appName
         static let volume = "Volume"
         static let pitch = "Pitch Variation"
+        static let pitchTooltip = "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
         static let quit = "Quit"
         static let version = "Version"
         static let settings = "Settings..."
@@ -75,10 +76,16 @@ class MenuBarController {
         
         addToggleMenuItem()
         addVolumeSliderItem()
-        addPitchVariationSliderItem()
+        addPitchButtonRowItem()
         addSoundModesMenu()
         addQuickSettingsMenu()
         addQuitMenuItem()
+    }
+    
+    private func addPitchButtonRowItem() {
+        menu.addItem(createMenuLabel(MenuItemTitle.pitch, tooltip: MenuItemTitle.pitchTooltip))
+        menu.addItem(createPitchButtonRowItem())
+        menu.addItem(NSMenuItem.separator())
     }
     
     /// Adds an enabled/disabled toggle item for the app.
@@ -93,7 +100,7 @@ class MenuBarController {
     
     /// Adds a volume slider to the menu.
     private func addVolumeSliderItem() {
-        menu.addItem(NSMenuItem(title: MenuItemTitle.volume, action: nil, keyEquivalent: "").disabled())
+        menu.addItem(createMenuLabel(MenuItemTitle.volume))
         
         let volumeItem = NSMenuItem()
         volumeItem.view = createVolumeSlider()
@@ -101,16 +108,6 @@ class MenuBarController {
         menu.addItem(NSMenuItem.separator())
     }
     
-    /// Adds a slider to control the randomized pitch variation in cents
-    private func addPitchVariationSliderItem() {
-        menu.addItem(NSMenuItem(title: MenuItemTitle.pitch, action: nil, keyEquivalent: "").disabled())
-
-        let pitchItem = NSMenuItem()
-        pitchItem.view = createPitchVariationSlider()
-        menu.addItem(pitchItem)
-        menu.addItem(NSMenuItem.separator())
-    }
-
     private func addQuickSettingsMenu() {
         let settingsItem = NSMenuItem(title: MenuItemTitle.settings, action: nil, keyEquivalent: "")
         let subMenu = createQuickSettingsSubmenu()
@@ -144,6 +141,24 @@ class MenuBarController {
     
     // MARK: - Menu Creation Helpers
     
+    private func createMenuLabel(_ text: String, tooltip: String? = nil) -> NSMenuItem {
+        let menuItem = NSMenuItem()
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 160, height: 20))
+        
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.systemFont(ofSize: 11)
+        label.textColor = NSColor.disabledControlTextColor
+        label.frame = NSRect(x: 12, y: 2, width: 140, height: 16)
+        if let tooltip = tooltip {
+            label.stringValue += " 􀁜"
+            label.toolTip = tooltip
+        }
+        
+        container.addSubview(label)
+        menuItem.view = container
+        return menuItem
+    }
+    
     /// Creates a volume slider using SwiftUI inside an NSHostingView.
     private func createVolumeSlider() -> NSView {
         let hostingView = NSHostingView(rootView: VolumeSliderMenuItem(
@@ -162,23 +177,30 @@ class MenuBarController {
         
         return containerView
     }
-
-    /// Creates a pitch variation slider using SwiftUI inside an NSHostingView.
-    private func createPitchVariationSlider() -> NSView {
-        let hostingView = NSHostingView(rootView: PitchVariationSliderMenuItem(
-            pitchVariation: Double(SoundEngine.shared.getPitchVariation()),
-            onPitchChange: { newValue in SoundEngine.shared.setPitchVariation(Float(newValue)) },
-            step: 2.0,
-            minimumValue: 0.0,
-            maximumValue: 10.0
-        ))
-
-        hostingView.frame = NSRect(x: 15, y: 0, width: 150, height: 40)
-
-        let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 180, height: 40))
-        containerView.addSubview(hostingView)
-
-        return containerView
+    
+    /// Creates a pitch variation button row
+    private func createPitchButtonRowItem() -> NSMenuItem {
+        let pitchBinding = Binding<Float>(
+            get: { SoundEngine.shared.getPitchVariation() },
+            set: { newVal in SoundEngine.shared.setPitchVariation(newVal) }
+        )
+        
+        let view = PitchVariationButtonRow(
+            values: [0, 2.5, 5, 7.5, 10],
+            selected: pitchBinding,
+            onSelect: { _ in
+                DispatchQueue.main.async {
+                    self.setupMenu()
+                }
+            }
+        )
+        
+        let hosting = NSHostingView(rootView: view)
+        hosting.frame = NSRect(x: 0, y: 0, width: 180, height: 26)
+        
+        let item = NSMenuItem()
+        item.view = hosting
+        return item
     }
     
     /// Creates a submenu for a given brand, including its authors and modes.
@@ -188,7 +210,7 @@ class MenuBarController {
         for author in modeDatabase.getAuthors(for: brand) {
             guard let modes = modeDatabase.getModes(for: brand, author: author), !modes.isEmpty else { continue }
             
-            brandSubMenu.addItem(NSMenuItem(title: "by \(author.rawValue)", action: nil, keyEquivalent: "").disabled())
+            brandSubMenu.addItem(createMenuLabel("by \(author.rawValue)"))
             
             for mode in modes {
                 let modeItem = NSMenuItem(title: mode.name, action: #selector(changeMode(_:)), keyEquivalent: "")
@@ -219,12 +241,6 @@ class MenuBarController {
         }
         
         return brandMenuItem
-    }
-    
-    /// Adds the app version menu item.
-    private func addVersionMenuItem() {
-        menu.addItem(NSMenuItem(title: "\(MenuItemTitle.version) \(AppInfoHelper.appVersion)", action: nil, keyEquivalent: "").disabled())
-        menu.addItem(NSMenuItem.separator())
     }
     
     private func createQuickSettingsSubmenu() -> NSMenu {

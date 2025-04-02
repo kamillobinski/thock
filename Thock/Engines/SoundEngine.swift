@@ -12,7 +12,7 @@ final class SoundEngine {
     
     private init() {}
     private var pitchVariation: Float = 0.0
-
+    
     
     func preloadSounds(for mode: Mode) {
         print("Preload sounds")
@@ -56,7 +56,7 @@ final class SoundEngine {
         print("Set pitch variation: \(variation)")
         pitchVariation = variation
     }
-
+    
     func getPitchVariation() -> Float {
         return pitchVariation
     }
