@@ -48,6 +48,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: build/${{ env.ZIP_NAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🧪 Update Homebrew tap
         env:
