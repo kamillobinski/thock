@@ -245,23 +245,29 @@ struct ModeDatabase {
     }
     
     func getMode(byName name: String, authorName: String, brandName: String) -> Mode? {
-        func normalize(_ string: String) -> String {
+        func normalizeKey(_ string: String) -> String {
             return string.lowercased().replacingOccurrences(of: " ", with: "")
         }
         
-        let normalizedName = normalize(name)
-        let normalizedAuthorName = normalize(authorName)
-        let normalizedBrandName = normalize(brandName)
+        func normalizeModeName(_ string: String) -> String {
+            return string.lowercased() // preserve spaces!
+        }
         
-        guard let author = Author.allCases.first(where: { normalize($0.rawValue) == normalizedAuthorName }) else {
+        let normalizedName = normalizeModeName(name)
+        let normalizedAuthorName = normalizeKey(authorName)
+        let normalizedBrandName = normalizeKey(brandName)
+        
+        guard let author = Author.allCases.first(where: { normalizeKey($0.rawValue) == normalizedAuthorName }) else {
             return nil
         }
         
-        guard let brand = Brand.allCases.first(where: { normalize($0.rawValue) == normalizedBrandName }) else {
+        guard let brand = Brand.allCases.first(where: { normalizeKey($0.rawValue) == normalizedBrandName }) else {
             return nil
         }
         
-        return getMode(byName: normalizedName, author: author, brand: brand)
+        guard let authorModes = modeStorage[brand]?[author] else { return nil }
+        
+        return authorModes.first { normalizeModeName($0.name) == normalizedName }
     }
     
     func getBrand(for mode: Mode) -> Brand? {
@@ -272,6 +278,7 @@ struct ModeDatabase {
                 }
             }
         }
+        
         return nil
     }
     
