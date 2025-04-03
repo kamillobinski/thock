@@ -22,6 +22,7 @@ final class AppEngine {
         return AppStateManager.shared.isEnabled
     }
     
+    @discardableResult
     func setEnabled(_ enabled: Bool) -> Bool {
         print("Set enabled: \(enabled)")
         AppStateManager.shared.isEnabled = enabled

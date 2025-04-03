@@ -32,6 +32,11 @@ final class PipeListenerService {
         startListening()
     }
     
+    func cleanUp() {
+        try? FileManager.default.removeItem(atPath: pipePath)
+        print("[PIPE] Pipe cleaned up")
+    }
+    
     private func recreatePipeIfNeeded() {
         var statInfo = stat()
         if stat(pipePath, &statInfo) == 0 {
@@ -97,8 +102,24 @@ final class PipeListenerService {
             }
         }
         
-        guard components.first == "set-mode", components.count >= 2 else {
-            print("[COMMAND] Invalid format")
+        guard let commandName = components.first else {
+            print("[COMMAND] Empty command")
+            return
+        }
+        
+        switch commandName {
+        case "set-mode":
+            handleSetModeCommand(components: components)
+        case "set-enabled":
+            handleSetEnabledCommand(components: components)
+        default:
+            print("[COMMAND] Unknown command '\(commandName)'")
+        }
+    }
+    
+    private func handleSetModeCommand(components: [String]) {
+        guard components.count >= 2 else {
+            print("[COMMAND] Invalid set-mode format")
             return
         }
         
@@ -142,8 +163,29 @@ final class PipeListenerService {
         }
     }
     
-    func cleanUp() {
-        try? FileManager.default.removeItem(atPath: pipePath)
-        print("[PIPE] Pipe cleaned up")
+    private func handleSetEnabledCommand(components: [String]) {
+        guard components.count == 2 else {
+            print("[COMMAND] Invalid set-enabled format. Usage: set-enabled true|false")
+            return
+        }
+        
+        let arg = components[1].lowercased()
+        let enabled: Bool
+        
+        switch arg {
+        case "true", "1", "yes", "on":
+            enabled = true
+        case "false", "0", "no", "off":
+            enabled = false
+        default:
+            print("[COMMAND] Invalid value for set-enabled: '\(arg)'")
+            return
+        }
+        
+        DispatchQueue.main.async {
+            AppEngine.shared.setEnabled(enabled)
+            SettingsEngine.shared.refreshMenu()
+            print("[COMMAND] Thock is now \(enabled ? "enabled" : "disabled")")
+        }
     }
 }

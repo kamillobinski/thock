@@ -86,6 +86,12 @@ thock-cli set-mode "oreo" --brand "everglide" --author "mechvibes"
 
 ### Examples
 
+Set enabled/disabled state
+
+```sh
+thock-cli set-enabled "true"
+```
+
 Set a mode with metadata:
 
 ```sh
