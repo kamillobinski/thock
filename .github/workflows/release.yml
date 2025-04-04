@@ -29,6 +29,41 @@ jobs:
 
       - name: ➕ Add CLI
         run: cp cli/thock-cli build/thock-cli
+        
+      - name: 🧹 Clean quarantine attributes
+        run: |
+          xattr -cr build/Thock.app
+          xattr -cr build/thock-cli
+
+      - name: 🖋️ Ad-hoc sign the app
+        run: codesign --force --deep --sign - build/Thock.app
+
+      - name: 🔍 Verify quarantine removal and signature
+        run: |
+          echo "Checking for quarantine attributes..."
+
+          if xattr -p com.apple.quarantine build/Thock.app; then
+            echo "Error: Thock.app still has quarantine attribute!" >&2
+          exit 1
+          else
+            echo "✅ Thock.app is clean."
+          fi
+
+          if xattr -p com.apple.quarantine build/thock-cli; then
+            echo "Error: thock-cli still has quarantine attribute!" >&2
+            exit 1
+          else
+            echo "✅ thock-cli is clean."
+          fi
+
+          echo "Checking ad-hoc code signature..."
+
+          if codesign --verify --deep --strict build/Thock.app; then
+            echo "✅ Thock.app signature is valid."
+          else
+            echo "Error: Thock.app signature verification failed!" >&2
+            exit 1
+          fi
 
       - name: 🏷️ Zip with version
         run: |
