@@ -29,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		7709B6642D98A08C00E5E6E9 /* thock-cli */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "thock-cli"; sourceTree = "<group>"; };
+		7716DC492D9FEC9B00E50DDB /* release.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = release.yml; sourceTree = "<group>"; };
 		772D9F2D2D817942003DA1A4 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Resources; path = Thock/Resources; sourceTree = "<group>"; };
 		7762F4902D7A83BA0033AE42 /* Thock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Thock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7762F4A12D7A83BC0033AE42 /* ThockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1218,6 +1219,22 @@
 			path = cli;
 			sourceTree = "<group>";
 		};
+		7716DC4A2D9FEC9B00E50DDB /* workflows */ = {
+			isa = PBXGroup;
+			children = (
+				7716DC492D9FEC9B00E50DDB /* release.yml */,
+			);
+			path = workflows;
+			sourceTree = "<group>";
+		};
+		7716DC4B2D9FEC9B00E50DDB /* .github */ = {
+			isa = PBXGroup;
+			children = (
+				7716DC4A2D9FEC9B00E50DDB /* workflows */,
+			);
+			path = .github;
+			sourceTree = "<group>";
+		};
 		7762F4872D7A83BA0033AE42 = {
 			isa = PBXGroup;
 			children = (
@@ -1227,6 +1244,7 @@
 				7762F4AE2D7A83BC0033AE42 /* ThockUITests */,
 				7762F4912D7A83BA0033AE42 /* Products */,
 				7709B6652D98A08C00E5E6E9 /* cli */,
+				7716DC4B2D9FEC9B00E50DDB /* .github */,
 			);
 			indentWidth = 4;
 			sourceTree = "<group>";
@@ -1547,7 +1565,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"Thock/Preview Content\"";
 				DEVELOPMENT_TEAM = 2CF8T4CQ6S;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1561,7 +1579,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 1.12.3;
+				MARKETING_VERSION = 1.12.5;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kamillobinski.Thock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1578,7 +1596,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"Thock/Preview Content\"";
 				DEVELOPMENT_TEAM = 2CF8T4CQ6S;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1592,7 +1610,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 1.12.3;
+				MARKETING_VERSION = 1.12.5;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kamillobinski.Thock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
