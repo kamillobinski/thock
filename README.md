@@ -28,14 +28,10 @@
     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
+    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
@@ -57,6 +53,7 @@ Key features:
 * 📎 Menu bar utility
 * 🔊 Over 25 unique sound modes
 * 🕹️ Adjustable volume slider
+* 🪄 [Raycast extension](#acknowledgments)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -153,7 +150,13 @@ Check out the [contributing guide](./docs/CONTRIBUTING.md) for everything you ne
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Thanks to the tools and resources that helped make this project a reality!
+Thanks to the tools and folks that helped make this project a reality!
+
+**Community Contribution**
+- [@shailantani](https://github.com/shailantani) - Raycast extension<br/>
+  <sub><sup>[[Raycast Store](https://www.raycast.com/shail_antani/thock) • [Source](https://github.com/raycast/extensions/tree/main/extensions/thock)]</sup></sub>
+- [@qalonbudker](https://github.com/qalonbudker) - Pitch variation for key sounds
+- [@zenangst](https://github.com/zenangst) - Event handling, mode saving, perf improvements
 
 **Keyboard Sound Recordings**
 - [hainguyents13/mechvibes](https://github.com/hainguyents13/mechvibes/)
