@@ -11,6 +11,12 @@
     A macOS utility that adds sound effects to your keyboard.
     <br />Lightweight, native and runs in the menu bar.
     <br /><br />
+    <a href="https://github.com/kamillobinski/thock/releases/latest" target="_blank" rel="noopener noreferrer">
+      <img src="https://img.shields.io/github/v/release/kamillobinski/thock?style=rounded&color=white&labelColor=000000&label=release" alt="Release Version" />
+    </a>
+    <a href="https://deepwiki.com/kamillobinski/thock" target="_blank" rel="noopener noreferrer">
+      <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"/>
+    </a>
   </p>
 </div>
 
