@@ -16,4 +16,5 @@ enum Brand: String, CaseIterable {
     case NovelKeys = "NovelKeys"
     case Topre = "Topre"
     case Other = "Other"
+    case Custom = "Custom"
 }

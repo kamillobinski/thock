@@ -113,38 +113,66 @@ class SoundManager {
     }
     
     /// Preloads sound files from the given mode’s directory.
+    /// Supports both bundled and custom user-installed modes.
     /// - Parameter mode: The mode defining which sounds to load.
     func preloadSounds(for mode: Mode) {
         resetAudioNodes()
         
-        let fileManager = FileManager.default
-        guard let soundDirectory = Bundle.main.resourceURL?
-            .appendingPathComponent(mode.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")), isDirectory: true)
-        else {
-            print("Sound directory not found.")
+        guard let soundDirectory = resolveSoundDirectory(for: mode) else {
+            print("Sound directory not found for mode: \(mode.name)")
             return
         }
         
         do {
-            let soundFiles = try fileManager.contentsOfDirectory(atPath: soundDirectory.path)
+            let soundFiles = try FileManager.default.contentsOfDirectory(atPath: soundDirectory.path)
                 .filter { $0.hasSuffix(".mp3") || $0.hasSuffix(".wav") }
             
             for file in soundFiles {
                 let fileURL = soundDirectory.appendingPathComponent(file)
                 if let buffer = loadAudioBuffer(from: fileURL) {
-                    let player = AVAudioPlayerNode()
-                    engine.attach(player)
-                    engine.connect(player, to: mixer, format: buffer.format)
-                    
-                    audioPlayers[file] = player
-                    audioBuffers[file] = buffer
+                    attachBuffer(fileName: file, buffer: buffer)
+                } else {
+                    print("Failed to preload buffer: \(file)")
                 }
             }
-            print("Preloaded \(audioBuffers.count) sounds successfully.")
+            
+            print("Preloaded \(audioBuffers.count) sounds for mode: \(mode.name)")
         } catch {
             print("Error loading sound files: \(error)")
         }
+        
         startAudioEngine()
+    }
+    
+    /// Resolves the full path to the sound directory for a given mode.
+    /// Distinguishes between bundled modes and custom user-created ones.
+    /// - Parameter mode: The mode to resolve directory for.
+    /// - Returns: The resolved local file URL if it exists, else `nil`.
+    private func resolveSoundDirectory(for mode: Mode) -> URL? {
+        let isCustom = mode.path.hasPrefix("CustomSounds/")
+        let trimmedPath = mode.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        
+        if isCustom {
+            return FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/Thock/\(trimmedPath)", isDirectory: true)
+        } else {
+            return Bundle.main.resourceURL?
+                .appendingPathComponent(trimmedPath, isDirectory: true)
+        }
+    }
+    
+    /// Attaches a decoded audio buffer to a new audio player node,
+    /// and wires it into the engine pipeline for playback.
+    /// - Parameters:
+    ///   - fileName: The sound file’s name, used as the lookup key.
+    ///   - buffer: The preloaded audio buffer for that file.
+    private func attachBuffer(fileName: String, buffer: AVAudioPCMBuffer) {
+        let player = AVAudioPlayerNode()
+        engine.attach(player)
+        engine.connect(player, to: mixer, format: buffer.format)
+        
+        audioPlayers[fileName] = player
+        audioBuffers[fileName] = buffer
     }
     
     /// Loads an audio file into a buffer.

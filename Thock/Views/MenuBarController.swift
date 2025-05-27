@@ -210,7 +210,9 @@ class MenuBarController {
         for author in modeDatabase.getAuthors(for: brand) {
             guard let modes = modeDatabase.getModes(for: brand, author: author), !modes.isEmpty else { continue }
             
-            brandSubMenu.addItem(createMenuLabel("by \(author.rawValue)"))
+            if author.rawValue != Author.custom.rawValue {
+                brandSubMenu.addItem(createMenuLabel("by \(author.rawValue)"))
+            }
             
             for mode in modes {
                 let modeItem = NSMenuItem(title: mode.name, action: #selector(changeMode(_:)), keyEquivalent: "")

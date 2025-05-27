@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct Mode {
+struct Mode: Decodable, Equatable {
     let id: UUID
     let name: String
     let isNew: Bool
-    let path: String
+    var path: String
     
     static func == (lhs: Mode, rhs: Mode) -> Bool {
         return lhs.id == rhs.id

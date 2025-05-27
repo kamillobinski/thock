@@ -10,24 +10,42 @@ import SwiftUI
 class ModeConfigManager {
     static let shared = ModeConfigManager()
     
-    private let soundConfigFile = "config", soundConfigFileExtension: String = "json"
+    private let soundConfigFileExtension: String = "json"
     private var soundConfig: SoundConfig?
     
     private init() {}
     
-    /// Loads the sound configuration for a given mode from a JSON file.
-    /// - Parameter mode: The `Mode` whose configuration should be loaded.
+    /// Loads and decodes the sound configuration for a given mode.
+    ///
+    /// This function looks for a `config.json` file in the mode's directory—either inside the app bundle (for built-in modes)
+    /// or in the user's Application Support directory (for custom modes). It decodes the file into a `SoundConfig` object,
+    /// which is then used to retrieve sound mappings at runtime.
+    ///
+    /// - Parameter mode: The `Mode` whose configuration should be loaded. Must have a valid `.path` to a directory containing `config.json`.
+    /// - Note: If the config file is missing or fails to decode, sound mapping will silently fail (fallbacks will apply).
     func loadModeConfig(for mode: Mode) {
-        if let jsonURL = Bundle.main.url(forResource: soundConfigFile, withExtension: soundConfigFileExtension, subdirectory: mode.path),
-           let jsonData = try? Data(contentsOf: jsonURL) {
-            let decoder = JSONDecoder()
-            do {
-                soundConfig = try decoder.decode(SoundConfig.self, from: jsonData)
-            } catch {
-                print("Failed to decode sound config: \(error)")
-            }
+        let isCustom = mode.path.hasPrefix("CustomSounds/")
+        let fileURL: URL?
+        
+        if isCustom {
+            fileURL = FileManager.default
+                .homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/Thock/\(mode.path)/config.json")
         } else {
-            print("Sound config file not found!")
+            fileURL = Bundle.main.url(forResource: "config", withExtension: "json", subdirectory: mode.path)
+        }
+        
+        guard let url = fileURL else {
+            print("Sound config file not found for mode: \(mode.name)")
+            return
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            soundConfig = try JSONDecoder().decode(SoundConfig.self, from: data)
+            print("Loaded sound config for mode: \(mode.name)")
+        } catch {
+            print("Failed to decode SoundConfig for mode \(mode.name): \(error)")
         }
     }
     

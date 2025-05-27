@@ -9,4 +9,5 @@ enum Author: String, CaseIterable {
     case tplai = "tplai"
     case webdevcody = "webdevcody"
     case mechvibes = "mechvibes"
+    case custom = "custom"
 }
