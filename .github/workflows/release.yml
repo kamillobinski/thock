@@ -23,7 +23,9 @@ jobs:
         run: |
           mkdir -p build
           xcodebuild -scheme Thock -configuration Release \
+            -arch x86_64 -arch arm64 \
             -archivePath build/Thock.xcarchive archive \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
           cp -R build/Thock.xcarchive/Products/Applications/Thock.app build/Thock.app
 
