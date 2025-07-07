@@ -1,16 +1,20 @@
-//
-//  SoundEngine.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 29/03/2025.
-//
-
 import Foundation
+
+extension UserDefaults {
+    static let volumeKey = "appVolume"
+}
 
 final class SoundEngine {
     static let shared = SoundEngine()
     
-    private init() {}
+    private init() {
+        let savedVolume = UserDefaults.standard.float(forKey: UserDefaults.volumeKey)
+        if savedVolume > 0 {
+            SoundManager.shared.setVolume(savedVolume)
+        } else {
+            SoundManager.shared.setVolume(1.0)
+        }
+    }
     private var pitchVariation: Float = 0.0
     
     
@@ -45,6 +49,7 @@ final class SoundEngine {
     func setVolume(_ volume: Float) {
         print("Set volume: \(volume)")
         SoundManager.shared.setVolume(volume)
+        UserDefaults.standard.set(volume, forKey: UserDefaults.volumeKey)
     }
     
     func getVolume() -> Float {
