@@ -1,9 +1,3 @@
-//
-//  KeyTracker.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 07/03/2025.
-//
 
 import Cocoa
 
@@ -44,6 +38,11 @@ class KeyTracker {
                     let currentTimestamp = keyTracker.currentTime()
                     let elapsedTime = currentTimestamp - keyTracker.lastEventTime
                     if elapsedTime <= 10 { return Unmanaged.passUnretained(event) }
+                }
+                
+                // New check for music playback
+                if AudioMonitor.shared.isMusicPlaying() && SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
+                    return Unmanaged.passUnretained(event) // Don't play sound if music is playing and feature is enabled
                 }
 
                 defer {
