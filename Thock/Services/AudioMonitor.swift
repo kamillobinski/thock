@@ -1,59 +1,74 @@
 
 import Foundation
-import ScriptingBridge
-import os.log
 
-@objc public enum MusicPlayerState: AEKeyword {
-    case stopped = 0x6b505353        // 'kPSS'
-    case playing = 0x6b505350        // 'kPSP'
-    case paused = 0x6b505370         // 'kPSp'
-    case fastForwarding = 0x6b505346 // 'kPSF'
-    case rewinding = 0x6b505352      // 'kPSR'
-}
+/**
+ Monitors the state of the Apple Music application to determine if music is currently playing.
 
-@objc public protocol MusicApplication {
-    @objc optional var playerState: MusicPlayerState { get }
-    var isRunning: Bool { get }
-}
+ This class uses an `osascript` subprocess to query the `player state` of the Music.app.
+ This approach was chosen as a workaround for the complexities and silent failures associated with using `ScriptingBridge`,
+ especially in unsigned applications that may not correctly trigger system permissions prompts for Automation.
 
-extension SBApplication: MusicApplication {}
-
+ The monitor polls the Music app at a set interval (`10.0` seconds) to update the `isMusicAppPlaying` property.
+ */
 class AudioMonitor {
+    /// A shared singleton instance of the `AudioMonitor`.
     static let shared = AudioMonitor()
 
-    private let musicApp: MusicApplication?
-    private let logger = OSLog(subsystem: "com.kamillobinski.thock", category: "AudioMonitor")
+    /// A boolean property indicating whether music is currently playing in the Music app.
+    private(set) var isMusicAppPlaying: Bool = false
+
+    /// The timer responsible for periodically polling the Music app's player state.
+    private var timer: Timer?
 
     private init() {
-        os_log("Initializing AudioMonitor.", log: self.logger, type: .info)
-        musicApp = SBApplication(bundleIdentifier: "com.apple.Music")
-        if musicApp == nil {
-            os_log("Failed to get SBApplication instance for com.apple.Music.", log: self.logger, type: .error)
+        // Start polling on init
+        startPolling()
+        // Do the first check right after init completes
+        DispatchQueue.main.async {
+            self.isMusicAppPlaying = self.queryMusicAppIsPlaying()
         }
     }
 
-    func isMusicPlaying() -> Bool {
-        os_log("Checking if music is playing...", log: self.logger, type: .debug)
+    /// Starts the timer to periodically poll the Music app's player state.
+    private func startPolling() {
+        timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
+            self.isMusicAppPlaying = self.queryMusicAppIsPlaying()
+        }
+        RunLoop.main.add(timer!, forMode: .common)
+    }
 
-        guard let musicApp = self.musicApp else {
-            os_log("Music application instance is nil.", log: logger, type: .error)
-            return false
-        }
-        
-        guard musicApp.isRunning else {
-            os_log("Music application is not running.", log: self.logger, type: .info)
-            return false
-        }
+    /// Stops the polling timer.
+    func stopPolling() {
+        timer?.invalidate()
+        timer = nil
+    }
 
-        os_log("Music.app is running. Querying player state.", log: self.logger, type: .debug)
-        
-        if let state = musicApp.playerState {
-            os_log("Successfully retrieved player state: %{public}@", log: self.logger, type: .info, String(describing: state))
-            return state == .playing
-        } else {
-            os_log("Failed to retrieve a valid player state. It might be an unknown state or a permissions issue.", log: self.logger, type: .error)
-            os_log("Please ensure Thock has Automation permissions for Music.app in System Settings > Privacy & Security > Automation.", log: self.logger, type: .error)
+    /// Queries the Music app's player state using an `osascript` subprocess.
+    ///
+    /// - Returns: `true` if music is playing, `false` otherwise.
+    private func queryMusicAppIsPlaying() -> Bool {
+        let script = """
+        tell application "Music"
+            if it is running then
+                return (player state is playing)
+            else
+                return false
+            end if
+        end tell
+        """
+        let task = Process()
+        task.launchPath = "/usr/bin/osascript"
+        task.arguments = ["-e", script]
+
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.launch()
+        task.waitUntilExit()
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let output = String(data: data, encoding: .utf8) else {
             return false
         }
+        return output.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "true"
     }
 }
