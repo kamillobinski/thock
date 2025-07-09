@@ -26,7 +26,20 @@ class AudioMonitor {
     }
 
     func isMusicPlaying() -> Bool {
-        guard let musicApp = self.musicApp, musicApp.isRunning else { return false }
-        return musicApp.playerState == .playing
+        guard let musicApp = self.musicApp, musicApp.isRunning else {
+            return false
+        }
+
+        // Safely unwrap the optional playerState.
+        // This is the critical change. If ScriptingBridge fails to get the
+        // state (e.g., due to permissions), it will return nil. The previous
+        // implementation would just result in `false` without making it
+        // clear why. This is more robust.
+        if let currentState = musicApp.playerState {
+            return currentState == .playing
+        }
+
+        // If we can't get the state, assume it's not playing.
+        return false
     }
 }
