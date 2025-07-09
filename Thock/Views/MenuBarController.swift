@@ -21,9 +21,10 @@ class MenuBarController {
         static let quit = "Quit"
         static let version = "Version"
         static let settings = "Settings..."
-        static let openAtLogin = "Launch Thock at Login"
-        static let disableModifierKeys = "Disable Sound for Modifier Keys"
+        static let openAtLogin = "Launch Thock at login"
+        static let disableModifierKeys = "Disable sound for modifier keys"
         static let ignoreRapidKeyEvents = "Ignore rapid key events"
+        static let autoMuteOnMusicPlayback = "Auto-mute with Music"
         static let whatsNew = "What's new?"
     }
     
@@ -278,6 +279,16 @@ class MenuBarController {
         ignoreRapidKeyEventsItem.target = self
         subMenu.addItem(ignoreRapidKeyEventsItem)
         
+        // Mute when Music app is playing
+        let autoMuteOnMusicPlaybackItem = NSMenuItem(
+            title: MenuItemTitle.autoMuteOnMusicPlayback,
+            action: #selector(toggleAutoMuteOnMusicPlayback(_:)),
+            keyEquivalent: ""
+        )
+        autoMuteOnMusicPlaybackItem.state = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() ? .on : .off
+        autoMuteOnMusicPlaybackItem.target = self
+        subMenu.addItem(autoMuteOnMusicPlaybackItem)
+        
         subMenu.addItem(NSMenuItem.separator())
         
         // What's new link
@@ -344,6 +355,10 @@ class MenuBarController {
     
     @objc private func toggleIgnoreRapidKeyEventsSetting(_ sender: NSMenuItem) {
         sender.state = SettingsEngine.shared.toggleIgnoreRapidKeyEvents() ? .on : .off
+    }
+    
+    @objc private func toggleAutoMuteOnMusicPlayback(_ sender: NSMenuItem) {
+        sender.state = SettingsEngine.shared.toggleAutoMuteOnMusicPlayback() ? .on : .off
     }
     
     @objc private func openChangelog() {
