@@ -1,35 +1,32 @@
-
 import Foundation
 import ScriptingBridge
 
-@objc fileprivate protocol MusicApplication {
+@objc public enum MusicPlayerState: AEKeyword {
+    case stopped        = 0x6b505353 // 'kPSS'
+    case playing        = 0x6b505350 // 'kPSP'
+    case paused         = 0x6b505370 // 'kPSp'
+    case fastForwarding = 0x6b505346 // 'kPSF'
+    case rewinding      = 0x6b505352 // 'kPSR'
+}
+
+@objc public protocol MusicApplication {
     @objc optional var playerState: MusicPlayerState { get }
+    var isRunning: Bool { get }
 }
 
-@objc fileprivate protocol MusicTrack {
-    @objc optional var name: String { get }
-    @objc optional var artist: String { get }
-    @objc optional var album: String { get }
-}
-
-@objc fileprivate enum MusicPlayerState: SBLong long {
-    case stopped = 1718772596
-    case playing = 1869573740
-    case paused = 1885433203
-    case fastForwarding = 1701995892
-    case rewinding = 1919246196
-}
+extension SBApplication: MusicApplication {}
 
 class AudioMonitor {
     static let shared = AudioMonitor()
+
     private let musicApp: MusicApplication?
 
     private init() {
-        musicApp = SBApplication(bundleIdentifier: "com.apple.Music")
+        self.musicApp = SBApplication(bundleIdentifier: "com.apple.Music")
     }
 
     func isMusicPlaying() -> Bool {
-        guard let app = musicApp else { return false }
-        return app.playerState == .playing
+        guard let musicApp = self.musicApp, musicApp.isRunning else { return false }
+        return musicApp.playerState == .playing
     }
 }
