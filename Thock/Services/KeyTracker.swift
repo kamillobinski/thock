@@ -40,9 +40,9 @@ class KeyTracker {
                     if elapsedTime <= 10 { return Unmanaged.passUnretained(event) }
                 }
                 
-                // New check for music playback
-                if AudioMonitor.shared.isMusicPlaying() && SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
-                    return Unmanaged.passUnretained(event) // Don't play sound if music is playing and feature is enabled
+                // Mute sound if music is playing
+                if AudioMonitor.shared.isMusicAppPlaying {
+                    return Unmanaged.passUnretained(event)
                 }
 
                 defer {
