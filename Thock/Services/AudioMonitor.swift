@@ -1,13 +1,40 @@
+
 import Foundation
 import ScriptingBridge
 import os.log
 
-@objc public enum MusicPlayerState: AEKeyword {
-    case stopped        = 0x6b505353 // 'kPSS'
-    case playing        = 0x6b505350 // 'kPSP'
-    case paused         = 0x6b505370 // 'kPSp'
-    case fastForwarding = 0x6b505346 // 'kPSF'
-    case rewinding      = 0x6b505352 // 'kPSR'
+@objc public enum MusicPlayerState: RawRepresentable, Equatable {
+    case stopped
+    case playing
+    case paused
+    case fastForwarding
+    case rewinding
+    case unknown(AEKeyword)
+
+    public typealias RawValue = AEKeyword
+
+    public init(rawValue: AEKeyword) {
+        switch rawValue {
+        case 0x6b505353: self = .stopped // 'kPSS'
+        case 0x6b505350: self = .playing // 'kPSP'
+        case 0x6b505370: self = .paused // 'kPSp'
+        case 0x6b505346: self = .fastForwarding // 'kPSF'
+        case 0x6b505352: self = .rewinding // 'kPSR'
+        default:
+            self = .unknown(rawValue)
+        }
+    }
+
+    public var rawValue: AEKeyword {
+        switch self {
+        case .stopped: return 0x6b505353
+        case .playing: return 0x6b505350
+        case .paused: return 0x6b505370
+        case .fastForwarding: return 0x6b505346
+        case .rewinding: return 0x6b505352
+        case .unknown(let val): return val
+        }
+    }
 }
 
 @objc public protocol MusicApplication {
@@ -35,7 +62,7 @@ class AudioMonitor {
         os_log("Checking if music is playing...", log: self.logger, type: .debug)
 
         guard let musicApp = self.musicApp else {
-            os_log("Music application instance is nil.", log: self.logger, type: .error)
+            os_log("Music application instance is nil.", log: aelf.logger, type: .error)
             return false
         }
         
@@ -48,6 +75,9 @@ class AudioMonitor {
         let currentState = musicApp.playerState
         
         if let state = currentState {
+            if case .unknown(let rawValue) = state {
+                os_log("Received unknown player state with rawValue: %d", log: self.logger, type: .error, rawValue)
+            }
             os_log("Successfully retrieved player state: %{public}@", log: self.logger, type: .info, String(describing: state))
             return state == .playing
         } else {
