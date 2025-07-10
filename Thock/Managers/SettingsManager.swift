@@ -1,9 +1,3 @@
-//
-//  SettingsManager.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 28/03/2025.
-//
 
 import Foundation
 
@@ -13,7 +7,8 @@ final class SettingsManager {
     static let defaultOpenAtLogin: Bool = false
     static let defaultDisableModifierKeys: Bool = false
     static let defaultIgnoreRapidKeyEvents: Bool = false
-    
+    static let defaultAutoMuteOnMusicPlayback: Bool = false
+
     
     private init() {}
     
@@ -37,6 +32,12 @@ final class SettingsManager {
         get { UserDefaults.ignoreRapidKeyEvents }
         set { UserDefaults.ignoreRapidKeyEvents = newValue }
     }
+
+    /// Whether to mute keyboard sounds when music is playing.
+    var autoMuteOnMusicPlayback: Bool {
+        get { UserDefaults.autoMuteOnMusicPlayback }
+        set { UserDefaults.autoMuteOnMusicPlayback = newValue }
+    }
 }
 
 private extension UserDefaults {
@@ -44,6 +45,7 @@ private extension UserDefaults {
         static let openAtLogin = "openAtLogin"
         static let disableModifierKeys = "disableModifierKeys"
         static let ignoreRapidKeyEvents = "ignoreRapidKeyEvents"
+        static let autoMuteOnMusicPlayback = "autoMuteOnMusicPlayback"
     }
     
     static var openAtLogin: Bool {
@@ -79,6 +81,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.ignoreRapidKeyEvents)
+        }
+    }
+
+    static var autoMuteOnMusicPlayback: Bool {
+        get {
+            if standard.object(forKey: Keys.autoMuteOnMusicPlayback) == nil {
+                return SettingsManager.defaultAutoMuteOnMusicPlayback
+            }
+            return standard.bool(forKey: Keys.autoMuteOnMusicPlayback)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.autoMuteOnMusicPlayback)
         }
     }
 }

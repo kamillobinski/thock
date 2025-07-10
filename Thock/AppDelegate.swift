@@ -22,6 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         
         _ = PipeListenerService.shared
         initializeKeyTracker()
+        initializeAudioMonitor()
         
         ModeEngine.shared.loadInitialMode()
         setupMenuBar()
@@ -54,6 +55,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
             keyTracker = KeyTracker()
             keyTracker.startTrackingKeys()
         }
+    }
+    
+    /// Initializes the audio monitor to handle notifications asap from the settings engine.
+    private func initializeAudioMonitor() {
+        _ = AudioMonitor.shared
     }
     
     /// Sets up the macOS menu bar.

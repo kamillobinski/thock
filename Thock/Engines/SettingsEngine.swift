@@ -1,9 +1,3 @@
-//
-//  SettingsEngine.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 28/03/2025.
-//
 
 import Foundation
 
@@ -57,6 +51,19 @@ final class SettingsEngine {
     func isIgnoreRapidKeyEventsEnabled() -> Bool {
         print("Get ignore rapid key events state")
         return SettingsManager.shared.ignoreRapidKeyEvents
+    }
+
+    func toggleAutoMuteOnMusicPlayback() -> Bool {
+        print("Toggle auto-mute on music playback")
+        let newState = !SettingsManager.shared.autoMuteOnMusicPlayback
+        SettingsManager.shared.autoMuteOnMusicPlayback = newState
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+        return newState
+    }
+
+    func isAutoMuteOnMusicPlaybackEnabled() -> Bool {
+        print("Get auto-mute on music playback state")
+        return SettingsManager.shared.autoMuteOnMusicPlayback
     }
 }
 
