@@ -57,6 +57,7 @@ final class SettingsEngine {
         print("Toggle auto-mute on music playback")
         let newState = !SettingsManager.shared.autoMuteOnMusicPlayback
         SettingsManager.shared.autoMuteOnMusicPlayback = newState
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
         return newState
     }
 

@@ -13,36 +13,47 @@ import Foundation
 class AudioMonitor {
     /// A shared singleton instance of the `AudioMonitor`.
     static let shared = AudioMonitor()
-
+    
     /// A boolean property indicating whether music is currently playing in the Music app.
     private(set) var isMusicAppPlaying: Bool = false
-
+    
     /// The timer responsible for periodically polling the Music app's player state.
     private var timer: Timer?
-
+    
     private init() {
+        // Listen for setting changes to start/stop polling dynamically
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsChanged),
+            name: .settingsDidChange,
+            object: nil
+        )
         // Start polling on init
-        startPolling()
+        if SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
+            startPolling()
+        }
         // Do the first check right after init completes
         DispatchQueue.main.async {
             self.isMusicAppPlaying = self.queryMusicAppIsPlaying()
         }
     }
-
+    
     /// Starts the timer to periodically poll the Music app's player state.
     private func startPolling() {
-        timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
+        stopPolling() // Clearing any prev timer
+        timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
             self.isMusicAppPlaying = self.queryMusicAppIsPlaying()
         }
         RunLoop.main.add(timer!, forMode: .common)
     }
-
-    /// Stops the polling timer.
+    
+    /// Stops the polling timer and resets the player state.
     func stopPolling() {
         timer?.invalidate()
         timer = nil
+        isMusicAppPlaying = false
     }
-
+    
     /// Queries the Music app's player state using an `osascript` subprocess.
     ///
     /// - Returns: `true` if music is playing, `false` otherwise.
@@ -59,16 +70,22 @@ class AudioMonitor {
         let task = Process()
         task.launchPath = "/usr/bin/osascript"
         task.arguments = ["-e", script]
-
+        
         let pipe = Pipe()
         task.standardOutput = pipe
         task.launch()
         task.waitUntilExit()
-
+        
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         guard let output = String(data: data, encoding: .utf8) else {
             return false
         }
         return output.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "true"
+    }
+    
+    /// Handles setting changes by starting or stopping the polling timer.
+    @objc private func handleSettingsChanged() {
+        let shouldPoll = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
+        shouldPoll ? startPolling() : stopPolling()
     }
 }
