@@ -8,7 +8,7 @@ import Foundation
  This approach was chosen as a workaround for the complexities and silent failures associated with using `ScriptingBridge`,
  especially in unsigned applications that may not correctly trigger system permissions prompts for Automation.
 
- The monitor polls the Music app at a set interval (`10.0` seconds) to update the `isMusicAppPlaying` property.
+ The monitor polls the Music app at a set interval (`3.0` seconds) to update the `isMusicAppPlaying` property.
  */
 class AudioMonitor {
     /// A shared singleton instance of the `AudioMonitor`.
