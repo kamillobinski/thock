@@ -6,6 +6,8 @@
 //
 
 import AVFoundation
+import CoreAudio
+import AudioToolbox
 
 class SoundManager {
     static let shared = SoundManager()
@@ -192,5 +194,45 @@ class SoundManager {
             print("Error loading audio buffer: \(error)")
             return nil
         }
+    }
+    
+    /// Returns the UID of the current output device (or "default" if not found).
+    func getCurrentOutputDeviceUID() -> String {
+        var defaultDeviceID = AudioDeviceID(0)
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var dataSize = UInt32(MemoryLayout<AudioDeviceID>.size)
+        let status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &defaultDeviceID
+        )
+        guard status == noErr else { return "default" }
+
+        var deviceUID: CFString = "default" as CFString
+        var uidSize = UInt32(MemoryLayout<CFString?>.size)
+        var uidAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyDeviceUID,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        let uidStatus = AudioObjectGetPropertyData(
+            defaultDeviceID,
+            &uidAddress,
+            0,
+            nil,
+            &uidSize,
+            &deviceUID
+        )
+        if uidStatus == noErr, let swiftUID = deviceUID as String? {
+            return swiftUID
+        }
+        return "default"
     }
 }

@@ -2,18 +2,17 @@ import Foundation
 
 extension UserDefaults {
     static let volumeKey = "appVolume"
+    static let perDeviceVolumeKey = "perDeviceVolume"
 }
 
 final class SoundEngine {
     static let shared = SoundEngine()
     
     private init() {
-        let savedVolume = UserDefaults.standard.float(forKey: UserDefaults.volumeKey)
-        if savedVolume > 0 {
-            SoundManager.shared.setVolume(savedVolume)
-        } else {
-            SoundManager.shared.setVolume(1.0)
-        }
+        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
+        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
+        let savedVolume = perDeviceVolumes[deviceUID] ?? 1.0
+        SoundManager.shared.setVolume(savedVolume)
     }
     private var pitchVariation: Float = 0.0
     
@@ -49,12 +48,17 @@ final class SoundEngine {
     func setVolume(_ volume: Float) {
         print("Set volume: \(volume)")
         SoundManager.shared.setVolume(volume)
-        UserDefaults.standard.set(volume, forKey: UserDefaults.volumeKey)
+        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
+        var perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
+        perDeviceVolumes[deviceUID] = volume
+        UserDefaults.standard.set(perDeviceVolumes, forKey: UserDefaults.perDeviceVolumeKey)
     }
     
     func getVolume() -> Float {
         print("Get volume")
-        return SoundManager.shared.getVolume()
+        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
+        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
+        return perDeviceVolumes[deviceUID] ?? SoundManager.shared.getVolume()
     }
     
     func setPitchVariation(_ variation: Float) {
