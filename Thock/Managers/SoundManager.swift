@@ -6,6 +6,8 @@
 //
 
 import AVFoundation
+import CoreAudio
+import AudioToolbox
 
 class SoundManager {
     static let shared = SoundManager()
@@ -54,6 +56,14 @@ class SoundManager {
         pitchNode.pitch = pitch
     }
     
+    /// Applies the saved volume for the current output device.
+    func applyPerDeviceVolume() {
+        let deviceUID = getCurrentOutputDeviceUID()
+        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
+        let savedVolume = perDeviceVolumes[deviceUID] ?? 1.0
+        mixer.outputVolume = savedVolume
+    }
+    
     private func setupAudioEngine() {
         mixer.outputVolume = 0.5
         engine.attach(pitchNode)
@@ -99,6 +109,9 @@ class SoundManager {
         }
         
         startAudioEngine()
+        
+        // Apply per-device volume after reconfiguring the engine
+        applyPerDeviceVolume()
     }
     
     /// Stops and detaches all existing audio nodes to prevent memory leaks.
@@ -192,5 +205,45 @@ class SoundManager {
             print("Error loading audio buffer: \(error)")
             return nil
         }
+    }
+    
+    /// Returns the UID of the current output device (or "default" if not found).
+    func getCurrentOutputDeviceUID() -> String {
+        var defaultDeviceID = AudioDeviceID(0)
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var dataSize = UInt32(MemoryLayout<AudioDeviceID>.size)
+        let status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &defaultDeviceID
+        )
+        guard status == noErr else { return "default" }
+
+        var deviceUID: CFString = "default" as CFString
+        var uidSize = UInt32(MemoryLayout<CFString?>.size)
+        var uidAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyDeviceUID,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        let uidStatus = AudioObjectGetPropertyData(
+            defaultDeviceID,
+            &uidAddress,
+            0,
+            nil,
+            &uidSize,
+            &deviceUID
+        )
+        if uidStatus == noErr, let swiftUID = deviceUID as String? {
+            return swiftUID
+        }
+        return "default"
     }
 }
