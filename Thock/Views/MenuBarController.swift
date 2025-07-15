@@ -24,7 +24,7 @@ class MenuBarController {
         static let openAtLogin = "Launch Thock at login"
         static let disableModifierKeys = "Disable sound for modifier keys"
         static let ignoreRapidKeyEvents = "Ignore rapid key events"
-        static let autoMuteOnMusicPlayback = "Auto-mute with Music"
+        static let autoMuteOnMusicPlayback = "Auto-mute with Music and Spotify"
         static let whatsNew = "What's new?"
     }
     
