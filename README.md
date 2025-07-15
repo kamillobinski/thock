@@ -60,6 +60,8 @@ Key features:
 * 🔊 Over 25 unique sound modes
 * 🕹️ Adjustable volume slider
 * 🪄 [Raycast extension](#acknowledgments)
+* 🙉 [Custom soundpacks](https://github.com/kamillobinski/thock/blob/main/docs/CUSTOM-SOUNDS.md)
+* ⚙️ Settings (auto-mute, launch at login, etc)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
