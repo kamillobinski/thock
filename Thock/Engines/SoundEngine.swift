@@ -9,10 +9,7 @@ final class SoundEngine {
     static let shared = SoundEngine()
     
     private init() {
-        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
-        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
-        let savedVolume = perDeviceVolumes[deviceUID] ?? 1.0
-        SoundManager.shared.setVolume(savedVolume)
+        SoundManager.shared.applyPerDeviceVolume()
     }
     private var pitchVariation: Float = 0.0
     

@@ -56,6 +56,14 @@ class SoundManager {
         pitchNode.pitch = pitch
     }
     
+    /// Applies the saved volume for the current output device.
+    func applyPerDeviceVolume() {
+        let deviceUID = getCurrentOutputDeviceUID()
+        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
+        let savedVolume = perDeviceVolumes[deviceUID] ?? 1.0
+        mixer.outputVolume = savedVolume
+    }
+    
     private func setupAudioEngine() {
         mixer.outputVolume = 0.5
         engine.attach(pitchNode)
@@ -101,6 +109,9 @@ class SoundManager {
         }
         
         startAudioEngine()
+        
+        // Apply per-device volume after reconfiguring the engine
+        applyPerDeviceVolume()
     }
     
     /// Stops and detaches all existing audio nodes to prevent memory leaks.
