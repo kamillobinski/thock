@@ -78,16 +78,18 @@ my_mechvibes_pack/
 3. Tell it your MechVibes JSON filename when it asks (yes, like `config.json`).
 4. Watch it spit out a new folder named something like `my_mechvibes_pack_thock_xxxxxxxx/`.
 5. Go to this directory:
-```sh
+
+    ```sh
     ~/Library/Application Support/thock/
     ```
-6. Create a folder called CustomSounds and drag that fresh folder from step 4 into (the CustomSounds folder):
+
+7. Create a folder called CustomSounds and drag that fresh folder from step 4 into (the CustomSounds folder):
 
     ```sh
     ~/Library/Application Support/thock/CustomSounds/
     ```
 
-7. Relaunch Thock, select your pack under Custom, and let your keyboard finally sound right.
+8. Relaunch Thock, select your pack under Custom, and let your keyboard finally sound right.
 
 <p align="right">(<a href="#soundpack-converters-top">back to top</a>)</p>
 
