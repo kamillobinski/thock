@@ -26,6 +26,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         
         ModeEngine.shared.loadInitialMode()
         setupMenuBar()
+
+        AppUpdater.shared.checkForUpdates { result in
+            switch result {
+            case .success(let isUpdateAvailable):
+                self.menuBarController.setUpdateAvailable(isUpdateAvailable)
+            case .failure(let error):
+                print("Error checking for updates: \(error.localizedDescription)")
+            }
+        }
     }
     
     /// Quits the application cleanly.

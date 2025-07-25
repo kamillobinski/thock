@@ -12,6 +12,7 @@ class MenuBarController {
     private var menu: NSMenu
     private var statusBarItem: NSStatusItem
     private weak var delegate: MenuBarControllerDelegate?
+    private var hasUpdate: Bool = false
     
     private enum MenuItemTitle {
         static let app = AppInfoHelper.appName
@@ -25,7 +26,10 @@ class MenuBarController {
         static let disableModifierKeys = "Disable sound for modifier keys"
         static let ignoreRapidKeyEvents = "Ignore rapid key events"
         static let autoMuteOnMusicPlayback = "Auto-mute with Music and Spotify"
-        static let whatsNew = "What's new?"
+        static let releaseNotes = "About this version"
+        static let updateAvailable = "New Version Is Available!"
+        static let updateNow = "↺ Update Now"
+        static let checkForUpdates = "Check for updates..."
     }
     
     // MARK: - Init
@@ -34,7 +38,9 @@ class MenuBarController {
         self.menu = NSMenu()
         self.statusBarItem = statusBarItem
         self.delegate = delegate
-        setupMenu()
+        DispatchQueue.main.async {
+            self.setupMenu()
+        }
         
         // StatusBarItem left/right click event
         if let button = statusBarItem.button {
@@ -57,6 +63,13 @@ class MenuBarController {
         return menu
     }
     
+    public func setUpdateAvailable(_ isAvailable: Bool) {
+        self.hasUpdate = isAvailable
+        DispatchQueue.main.async {
+            self.setupMenu()
+        }
+    }
+
     /// Updates the menu bar icon based on app state.
     func updateMenuBarIcon(for state: Bool) {
         statusBarItem.button?.image = NSImage(named: "MenuBarIcon")
@@ -80,6 +93,9 @@ class MenuBarController {
         addPitchButtonRowItem()
         addSoundModesMenu()
         addQuickSettingsMenu()
+        if hasUpdate {
+            addUpdateMenuItem()
+        }
         addQuitMenuItem()
     }
     
@@ -115,6 +131,83 @@ class MenuBarController {
         menu.addItem(settingsItem)
         menu.setSubmenu(subMenu, for: settingsItem)
         menu.addItem(NSMenuItem.separator())
+    }
+    
+    private func addUpdateMenuItem() {
+        let updateMenuItem = NSMenuItem(
+            title: MenuItemTitle.updateNow,
+            action: #selector(copyUpgradeCommand),
+            keyEquivalent: ""
+        )
+        updateMenuItem.target = self
+        
+        menu.addItem(createMenuLabel(MenuItemTitle.updateAvailable))
+        menu.addItem(updateMenuItem)
+        menu.addItem(NSMenuItem.separator())
+    }
+
+    @objc private func copyUpgradeCommand() {
+        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString("brew upgrade thock", forType: .string)
+            
+            // Simulate Command+V to paste the command
+            let source = CGEventSource(stateID: .combinedSessionState)
+            let cmdd = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: true) // CMD down
+            let cmdV = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // V down (correct code)
+            let cmdVUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false) // V up
+            let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: false) // CMD up
+            
+            // Add Command modifier flag to the V key events
+            cmdV?.flags = .maskCommand
+            cmdVUp?.flags = .maskCommand
+            
+            cmdd?.post(tap: .cgAnnotatedSessionEventTap)
+            cmdV?.post(tap: .cgAnnotatedSessionEventTap)
+            cmdVUp?.post(tap: .cgAnnotatedSessionEventTap)
+            cmdUp?.post(tap: .cgAnnotatedSessionEventTap)
+
+            // Simulate Return key to execute the command
+            let returnDown = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: true)
+            let returnUp = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: false)
+            returnDown?.post(tap: .cgAnnotatedSessionEventTap)
+            returnUp?.post(tap: .cgAnnotatedSessionEventTap)
+        }
+    }
+    
+    @objc private func checkForUpdates() {
+        AppUpdater.shared.checkForUpdates { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let isUpdateAvailable):
+                    self?.setUpdateAvailable(isUpdateAvailable)
+                    
+                    let alert = NSAlert()
+                    if isUpdateAvailable {
+                        alert.messageText = "Update Available!"
+                        alert.informativeText = "A new version of Thock is available. Check the menu bar for the update option."
+                        alert.alertStyle = .informational
+                    } else {
+                        alert.messageText = "No Updates Available"
+                        alert.informativeText = "You're already running the latest version of Thock."
+                        alert.alertStyle = .informational
+                    }
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                    
+                case .failure(let error):
+                    let alert = NSAlert()
+                    alert.messageText = "Update Check Failed"
+                    alert.informativeText = "Unable to check for updates: \(error.localizedDescription)"
+                    alert.alertStyle = .warning
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+            }
+        }
     }
     
     /// Adds a quit application menu item.
@@ -291,17 +384,6 @@ class MenuBarController {
         
         subMenu.addItem(NSMenuItem.separator())
         
-        // What's new link
-        let whatsNewItem = NSMenuItem(
-            title: MenuItemTitle.whatsNew,
-            action: #selector(openChangelog),
-            keyEquivalent: ""
-        )
-        whatsNewItem.target = self
-        subMenu.addItem(whatsNewItem)
-        
-        subMenu.addItem(NSMenuItem.separator())
-        
         // App version
         let versionItem = NSMenuItem(
             title: "\(MenuItemTitle.version) \(AppInfoHelper.appVersion)",
@@ -309,6 +391,26 @@ class MenuBarController {
             keyEquivalent: ""
         ).disabled()
         subMenu.addItem(versionItem)
+        
+        // What's new link
+        let releaseNotesItem = NSMenuItem(
+            title: MenuItemTitle.releaseNotes,
+            action: #selector(openChangelog),
+            keyEquivalent: ""
+        )
+        releaseNotesItem.target = self
+        subMenu.addItem(releaseNotesItem)
+        
+        subMenu.addItem(NSMenuItem.separator())
+        
+        // Check for updates
+        let checkUpdatesItem = NSMenuItem(
+            title: MenuItemTitle.checkForUpdates,
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
+        )
+        checkUpdatesItem.target = self
+        subMenu.addItem(checkUpdatesItem)
         
         return subMenu
     }
@@ -323,7 +425,9 @@ class MenuBarController {
     
     private func handleRightClick(sender: NSStatusBarButton) {
         toggleSound()
-        setupMenu()
+        DispatchQueue.main.async {
+            self.setupMenu()
+        }
     }
     
     // MARK: - Actions
@@ -342,7 +446,9 @@ class MenuBarController {
     }
     
     @objc private func handleSettingsUpdate() {
-        setupMenu()
+        DispatchQueue.main.async {
+            self.setupMenu()
+        }
     }
     
     @objc private func toggleOpenAtLogin(_ sender: NSMenuItem) {
