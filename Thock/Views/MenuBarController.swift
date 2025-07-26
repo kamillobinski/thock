@@ -152,7 +152,7 @@ class MenuBarController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
-            pasteboard.setString("brew upgrade thock", forType: .string)
+            pasteboard.setString("brew update && brew upgrade thock", forType: .string)
             
             // Simulate Command+V to paste the command
             let source = CGEventSource(stateID: .combinedSessionState)
