@@ -22,6 +22,7 @@ class MenuBarController {
         static let quit = "Quit"
         static let version = "Version"
         static let settings = "Settings..."
+        static let globalShortcuts = "Global Shortcuts..."
         static let openAtLogin = "Launch Thock at login"
         static let disableModifierKeys = "Disable sound for modifier keys"
         static let ignoreRapidKeyEvents = "Ignore rapid key events"
@@ -92,6 +93,7 @@ class MenuBarController {
         addVolumeSliderItem()
         addPitchButtonRowItem()
         addSoundModesMenu()
+        addGlobalShortcutsMenuItem()
         addQuickSettingsMenu()
         if hasUpdate {
             addUpdateMenuItem()
@@ -130,6 +132,18 @@ class MenuBarController {
         let subMenu = createQuickSettingsSubmenu()
         menu.addItem(settingsItem)
         menu.setSubmenu(subMenu, for: settingsItem)
+        menu.addItem(NSMenuItem.separator())
+    }
+    
+    private func addGlobalShortcutsMenuItem() {
+        let shortcutsItem = NSMenuItem(
+            title: MenuItemTitle.globalShortcuts,
+            action: #selector(openGlobalShortcutsSettings),
+            keyEquivalent: ","
+        )
+        shortcutsItem.keyEquivalentModifierMask = [.command]
+        shortcutsItem.target = self
+        menu.addItem(shortcutsItem)
         menu.addItem(NSMenuItem.separator())
     }
     
@@ -481,6 +495,25 @@ class MenuBarController {
     
     @objc private func quitApp() {
         delegate?.quitApp()
+    }
+    
+    @objc private func openGlobalShortcutsSettings() {
+        openSettingsWindow()
+    }
+    
+    private func openSettingsWindow() {
+        let settingsView = SettingsWindow()
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.center()
+        window.title = "Thock Settings"
+        window.contentView = NSHostingView(rootView: settingsView)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
