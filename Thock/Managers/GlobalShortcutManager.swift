@@ -1,6 +1,7 @@
 import Foundation
 import KeyboardShortcuts
 import Cocoa
+import UserNotifications
 
 class GlobalShortcutManager {
     static let shared = GlobalShortcutManager()
@@ -8,6 +9,11 @@ class GlobalShortcutManager {
     private init() {}
     
     func setupGlobalShortcuts() {
+        // Set default shortcut if none exists
+        if KeyboardShortcuts.getShortcut(for: .toggleThock) == nil {
+            KeyboardShortcuts.setShortcut(.init(.t, modifiers: [.command, .shift]), for: .toggleThock)
+        }
+        
         KeyboardShortcuts.onKeyDown(for: .toggleThock) { [weak self] in
             self?.handleToggleShortcut()
         }
@@ -28,17 +34,35 @@ class GlobalShortcutManager {
     }
     
     private func showToggleNotification(enabled: Bool) {
-        let notification = NSUserNotification()
-        notification.title = "Thock"
-        notification.informativeText = enabled ? "Enabled" : "Disabled"
-        notification.soundName = nil
-        notification.deliveryDate = Date()
+        let center = UNUserNotificationCenter.current()
         
-        NSUserNotificationCenter.default.deliver(notification)
-        
-        // Remove notification after 1 second
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            NSUserNotificationCenter.default.removeDeliveredNotification(notification)
+        // Request authorization if not already granted
+        center.requestAuthorization(options: [.alert, .sound]) { granted, error in
+            guard granted else { return }
+            
+            let content = UNMutableNotificationContent()
+            content.title = "Thock"
+            content.body = enabled ? "Enabled" : "Disabled"
+            content.sound = nil
+            content.interruptionLevel = .passive
+            
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: "thock-toggle-\(Date().timeIntervalSince1970)",
+                content: content,
+                trigger: trigger
+            )
+            
+            center.add(request) { error in
+                if let error = error {
+                    print("Error showing notification: \(error)")
+                }
+            }
+            
+            // Remove notification after 1 second
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                center.removeAllDeliveredNotifications()
+            }
         }
     }
 }

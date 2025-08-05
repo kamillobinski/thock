@@ -7,6 +7,7 @@
 
 import Cocoa
 import AppKit
+import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private var statusBarItem: NSStatusItem!
@@ -18,6 +19,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard requestAccessibilityPermissions() else {
             exit(1)
+        }
+        
+        // Request notification permissions for UserNotifications
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("Error requesting notification permissions: \(error)")
+            }
         }
         
         _ = PipeListenerService.shared
