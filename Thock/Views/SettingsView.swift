@@ -30,7 +30,9 @@ struct SettingsView: View {
             HStack {
                 Spacer()
                 Button("Close") {
-                    NSApplication.shared.keyWindow?.close()
+                    if let window = NSApplication.shared.keyWindow ?? NSApplication.shared.windows.first(where: { $0.contentView is NSHostingView<SettingsWindow> }) {
+                        window.close()
+                    }
                 }
                 .keyboardShortcut(.cancelAction)
             }

@@ -502,6 +502,13 @@ class MenuBarController {
     }
     
     private func openSettingsWindow() {
+        // Check if settings window already exists
+        if let existingWindow = NSApplication.shared.windows.first(where: { $0.contentView is NSHostingView<SettingsWindow> }) {
+            existingWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        
         let settingsView = SettingsWindow()
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
@@ -512,6 +519,7 @@ class MenuBarController {
         window.center()
         window.title = "Thock Settings"
         window.contentView = NSHostingView(rootView: settingsView)
+        window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
