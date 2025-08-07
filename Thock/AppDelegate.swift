@@ -17,8 +17,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     // MARK: - App Lifecycle
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard requestAccessibilityPermissions() else {
-            exit(1)
+        if !requestAccessibilityPermissions() {
+            showPermissionRequiredDialog()
+            return
         }
         
         // Request notification permissions for UserNotifications
@@ -62,9 +63,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     /// Checks and requests accessibility permissions.
     private func requestAccessibilityPermissions() -> Bool {
-        let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        let options = [promptKey: true] as CFDictionary
-        return AXIsProcessTrustedWithOptions(options)
+        // First check if permissions were given
+        if AXIsProcessTrusted() {
+            return true
+        }
+        
+        // Check permissions without showing system dialog (we have our own)
+        return AXIsProcessTrusted()
     }
     
     /// Initializes and starts tracking keyboard events.
@@ -90,6 +95,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     /// Sets up global keyboard shortcuts.
     private func setupGlobalShortcuts() {
         GlobalShortcutManager.shared.setupGlobalShortcuts()
+    }
+    
+    /// Shows a dialog explaining why accessibility permissions are required and exits the app.
+    private func showPermissionRequiredDialog() {
+        let alert = NSAlert()
+        alert.messageText = "Accessibility Permissions Required"
+        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds. Without these permissions, the app cannot function.\n\nPlease grant accessibility permissions in System Preferences > Security & Privacy > Privacy > Accessibility, then restart the app."
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "Open System Preferences")
+        alert.addButton(withTitle: "Quit")
+        
+        let response = alert.runModal()
+        
+        if response == .alertFirstButtonReturn {
+            // Open System Preferences to Accessibility
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+        }
+        
+        NSApplication.shared.terminate(nil)
     }
 }
 
