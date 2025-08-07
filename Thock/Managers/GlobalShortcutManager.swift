@@ -23,11 +23,6 @@ class GlobalShortcutManager {
         DispatchQueue.main.async {
             let newState = AppEngine.shared.toggleIsEnabled()
             
-            // Update the menu bar icon
-            if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-                appDelegate.menuBarController?.updateMenuBarIcon(for: newState)
-            }
-            
             // Show a subtle notification
             self.showToggleNotification(enabled: newState)
         }
@@ -60,7 +55,7 @@ class GlobalShortcutManager {
             }
             
             // Remove notification after 1 second
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                 center.removeAllDeliveredNotifications()
             }
         }

@@ -56,6 +56,13 @@ class MenuBarController {
             name: .settingsDidChange,
             object: nil
         )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppStateUpdate),
+            name: .appStateDidChange,
+            object: nil
+        )
     }
     
     // MARK: - Public API
@@ -462,6 +469,13 @@ class MenuBarController {
     @objc private func handleSettingsUpdate() {
         DispatchQueue.main.async {
             self.setupMenu()
+        }
+    }
+    
+    @objc private func handleAppStateUpdate() {
+        DispatchQueue.main.async {
+            self.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
+            self.setupMenu()  // Rebuild menu to update toggle button state
         }
     }
     

@@ -26,6 +26,7 @@ final class AppEngine {
     func setEnabled(_ enabled: Bool) -> Bool {
         print("Set enabled: \(enabled)")
         AppStateManager.shared.isEnabled = enabled
+        NotificationCenter.default.post(name: .appStateDidChange, object: nil)
         return enabled
     }
 }

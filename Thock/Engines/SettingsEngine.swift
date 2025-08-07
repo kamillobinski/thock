@@ -69,4 +69,5 @@ final class SettingsEngine {
 
 extension Notification.Name {
     static let settingsDidChange = Notification.Name("settingsDidChange")
+    static let appStateDidChange = Notification.Name("appStateDidChange")
 }
