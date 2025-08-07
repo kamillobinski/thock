@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6D5C1ECA2E36A6A500ABE204 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 6D5C1EC92E36A6A500ABE204 /* KeyboardShortcuts */; };
 		772D9F2E2D817943003DA1A4 /* Resources in Resources */ = {isa = PBXBuildFile; fileRef = 772D9F2D2D817942003DA1A4 /* Resources */; };
 /* End PBXBuildFile section */
 
@@ -1191,6 +1192,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6D5C1ECA2E36A6A500ABE204 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1211,6 +1213,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6D5C1EC72E36A66B00ABE204 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		7709B6652D98A08C00E5E6E9 /* cli */ = {
 			isa = PBXGroup;
 			children = (
@@ -1245,6 +1254,7 @@
 				7762F4912D7A83BA0033AE42 /* Products */,
 				7709B6652D98A08C00E5E6E9 /* cli */,
 				7716DC4B2D9FEC9B00E50DDB /* .github */,
+				6D5C1EC72E36A66B00ABE204 /* Frameworks */,
 			);
 			indentWidth = 4;
 			sourceTree = "<group>";
@@ -1280,6 +1290,7 @@
 			);
 			name = Thock;
 			packageProductDependencies = (
+				6D5C1EC92E36A6A500ABE204 /* KeyboardShortcuts */,
 			);
 			productName = Tapp;
 			productReference = 7762F4902D7A83BA0033AE42 /* Thock.app */;
@@ -1363,6 +1374,9 @@
 			);
 			mainGroup = 7762F4872D7A83BA0033AE42;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6D5C1EC82E36A69500ABE204 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7762F4912D7A83BA0033AE42 /* Products */;
 			projectDirPath = "";
@@ -1563,12 +1577,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Thock/Thock.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 22;
 				DEVELOPMENT_ASSET_PATHS = "\"Thock/Preview Content\"";
-				DEVELOPMENT_TEAM = 2CF8T4CQ6S;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1584,6 +1598,7 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kamillobinski.Thock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -1729,6 +1744,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6D5C1EC82E36A69500ABE204 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6D5C1EC92E36A6A500ABE204 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D5C1EC82E36A69500ABE204 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7762F4882D7A83BA0033AE42 /* Project object */;
 }

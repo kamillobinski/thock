@@ -7,10 +7,11 @@
 
 import Cocoa
 import AppKit
+import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private var statusBarItem: NSStatusItem!
-    private var menuBarController: MenuBarController!
+    var menuBarController: MenuBarController!
     private var keyTracker: KeyTracker!
     
     // MARK: - App Lifecycle
@@ -20,12 +21,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
             exit(1)
         }
         
+        // Request notification permissions for UserNotifications
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("Error requesting notification permissions: \(error)")
+            }
+        }
+        
         _ = PipeListenerService.shared
         initializeKeyTracker()
         initializeAudioMonitor()
         
         ModeEngine.shared.loadInitialMode()
         setupMenuBar()
+        setupGlobalShortcuts()
 
         AppUpdater.shared.checkForUpdates { result in
             switch result {
@@ -76,6 +85,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         menuBarController = MenuBarController(statusBarItem: statusBarItem, delegate: self)
         menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
+    }
+    
+    /// Sets up global keyboard shortcuts.
+    private func setupGlobalShortcuts() {
+        GlobalShortcutManager.shared.setupGlobalShortcuts()
     }
 }
 
