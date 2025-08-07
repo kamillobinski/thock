@@ -482,7 +482,7 @@ class MenuBarController {
     }
     
     @objc private func openChangelog() {
-        if let url = URL(string: "https://github.com/kamillobinski/thock/releases/latest") {
+        if let url = URL(string: "https://github.com/kamillobinski/thock/releases/tag/\(AppInfoHelper.appVersion)") {
             NSWorkspace.shared.open(url)
         }
     }
