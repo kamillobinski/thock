@@ -21,8 +21,8 @@ class MenuBarController {
         static let pitchTooltip = "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
         static let quit = "Quit"
         static let version = "Version"
+        static let quickSettings = "Quick Options..."
         static let settings = "Settings..."
-        static let globalShortcuts = "Global Shortcuts..."
         static let openAtLogin = "Launch Thock at login"
         static let disableModifierKeys = "Disable sound for modifier keys"
         static let ignoreRapidKeyEvents = "Ignore rapid key events"
@@ -100,8 +100,8 @@ class MenuBarController {
         addVolumeSliderItem()
         addPitchButtonRowItem()
         addSoundModesMenu()
-        addGlobalShortcutsMenuItem()
         addQuickSettingsMenu()
+        addSettingsMenuItem()
         if hasUpdate {
             addUpdateMenuItem()
         }
@@ -135,22 +135,21 @@ class MenuBarController {
     }
     
     private func addQuickSettingsMenu() {
-        let settingsItem = NSMenuItem(title: MenuItemTitle.settings, action: nil, keyEquivalent: "")
+        let settingsItem = NSMenuItem(title: MenuItemTitle.quickSettings, action: nil, keyEquivalent: "")
         let subMenu = createQuickSettingsSubmenu()
         menu.addItem(settingsItem)
         menu.setSubmenu(subMenu, for: settingsItem)
-        menu.addItem(NSMenuItem.separator())
     }
     
-    private func addGlobalShortcutsMenuItem() {
-        let shortcutsItem = NSMenuItem(
-            title: MenuItemTitle.globalShortcuts,
-            action: #selector(openGlobalShortcutsSettings),
+    private func addSettingsMenuItem() {
+        let settingsItem = NSMenuItem(
+            title: MenuItemTitle.settings,
+            action: #selector(openSettings),
             keyEquivalent: ","
         )
-        shortcutsItem.keyEquivalentModifierMask = [.command]
-        shortcutsItem.target = self
-        menu.addItem(shortcutsItem)
+        settingsItem.keyEquivalentModifierMask = [.command]
+        settingsItem.target = self
+        menu.addItem(settingsItem)
         menu.addItem(NSMenuItem.separator())
     }
     
@@ -511,7 +510,7 @@ class MenuBarController {
         delegate?.quitApp()
     }
     
-    @objc private func openGlobalShortcutsSettings() {
+    @objc private func openSettings() {
         openSettingsWindow()
     }
     
@@ -525,13 +524,13 @@ class MenuBarController {
         
         let settingsView = SettingsWindow()
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
-            styleMask: [.titled, .closable],
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 300),
+            styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.center()
-        window.title = "Thock Settings"
+        window.title = "Settings"
         window.contentView = NSHostingView(rootView: settingsView)
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
