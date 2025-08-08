@@ -101,7 +101,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private func showPermissionRequiredDialog() {
         let alert = NSAlert()
         alert.messageText = "Accessibility Permissions Required"
-        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds. Without these permissions, the app cannot function.\n\nPlease grant accessibility permissions in System Preferences > Security & Privacy > Privacy > Accessibility, then restart the app."
+        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds. Without these permissions, the app cannot function."
         alert.alertStyle = .critical
         alert.addButton(withTitle: "Open System Preferences")
         alert.addButton(withTitle: "Quit")
