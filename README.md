@@ -5,7 +5,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="Thock/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="80" height="80">
+  <img src="Thock/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" alt="Logo" width="100" height="100">
   <h3 align="center">Thock</h3>
   <p align="center">
     A macOS utility that adds sound effects to your keyboard.
@@ -13,6 +13,9 @@
     <br /><br />
     <a href="https://github.com/kamillobinski/thock/releases/latest" target="_blank" rel="noopener noreferrer">
       <img src="https://img.shields.io/github/v/release/kamillobinski/thock?style=rounded&color=white&labelColor=000000&label=release" alt="Release Version" />
+    </a>
+    <a href="#" target="_blank" rel="noopener noreferrer">
+      <img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/kamillobinski/thock/total?style=rounded&color=white&labelColor=000000">
     </a>
     <a href="https://deepwiki.com/kamillobinski/thock" target="_blank" rel="noopener noreferrer">
       <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"/>
@@ -59,8 +62,9 @@ Key features:
 * 📎 Menu bar utility
 * 🔊 Over 25 unique sound modes
 * 🕹️ Adjustable volume slider
-* 🪄 [Raycast extension](#acknowledgments)
+* 🪄 [Raycast extension](https://www.raycast.com/shail_antani/thock)
 * 🙉 [Custom soundpacks](https://github.com/kamillobinski/thock/blob/main/docs/CUSTOM-SOUNDS.md)
+* 💅 [Soundpack Converters](https://github.com/kamillobinski/thock/blob/main/docs/SOUNDPACK-CONVERTERS.md)
 * ⚙️ Settings (auto-mute, launch at login, etc)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -158,18 +162,15 @@ Check out the [contributing guide](./docs/CONTRIBUTING.md) for everything you ne
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Thanks to the tools and folks that helped make this project a reality!
+Thanks to the folks that helped make this project a reality!
 
 **Community Contribution**
-- [@shailantani](https://github.com/shailantani) - Raycast extension<br/>
-  <sub><sup>[[Raycast Store](https://www.raycast.com/shail_antani/thock) • [Source](https://github.com/raycast/extensions/tree/main/extensions/thock)]</sup></sub>
+
+- [@SouhailBlmn](https://github.com/SouhailBlmn) - Volume persistence across output devices, global shortcut to toggle the app
+- [@shailantani](https://github.com/shailantani) - Raycast extension ([source code](https://github.com/raycast/extensions/tree/main/extensions/thock))
 - [@qalonbudker](https://github.com/qalonbudker) - Pitch variation for key sounds
 - [@zenangst](https://github.com/zenangst) - Event handling, mode saving, perf improvements
-
-**Keyboard Sound Recordings**
-- [hainguyents13/mechvibes](https://github.com/hainguyents13/mechvibes/)
-- [tplai/kbsim](https://github.com/tplai/kbsim)
-- [webdevcody/type-joy](https://github.com/webdevcody/type-joy)
+- [@iamsoum](https://github.com/iamsoum) - Updated the sound pack conversion instructions for improved clarity and step-by-step guidance
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
