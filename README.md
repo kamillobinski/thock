@@ -5,7 +5,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="Thock/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="80" height="80">
+  <img src="Thock/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" alt="Logo" width="100" height="100">
   <h3 align="center">Thock</h3>
   <p align="center">
     A macOS utility that adds sound effects to your keyboard.
