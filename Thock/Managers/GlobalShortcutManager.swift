@@ -10,9 +10,9 @@ class GlobalShortcutManager {
     
     func setupGlobalShortcuts() {
         // Set default shortcut if none exists
-        if KeyboardShortcuts.getShortcut(for: .toggleThock) == nil {
-            KeyboardShortcuts.setShortcut(.init(.t, modifiers: [.command, .shift]), for: .toggleThock)
-        }
+        //        if KeyboardShortcuts.getShortcut(for: .toggleThock) == nil {
+        //            KeyboardShortcuts.setShortcut(.init(.t, modifiers: [.command, .shift]), for: .toggleThock)
+        //        }
         
         KeyboardShortcuts.onKeyDown(for: .toggleThock) { [weak self] in
             self?.handleToggleShortcut()
