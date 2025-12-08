@@ -1,4 +1,4 @@
-name: 🚀 Thock Release
+name: Thock Release
 
 on:
   push:
@@ -7,19 +7,19 @@ on:
 
 jobs:
   release:
-    name: 🔨 Build, Release & Bump Homebrew
-    runs-on: macos-latest
+    name: Build, Release & Bump Homebrew
+    runs-on: macos-26
 
     steps:
-      - name: 🧾 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🛠️ Set up Xcode
+      - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.0'
+          xcode-version: '26.2-beta'
 
-      - name: 📦 Build Archive
+      - name: Build Archive
         run: |
           mkdir -p build
           xcodebuild -scheme Thock -configuration Release \
@@ -29,18 +29,18 @@ jobs:
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
           cp -R build/Thock.xcarchive/Products/Applications/Thock.app build/Thock.app
 
-      - name: ➕ Add CLI
+      - name: Add CLI
         run: cp cli/thock-cli build/thock-cli
         
-      - name: 🧹 Clean quarantine attributes
+      - name: Clean quarantine attributes
         run: |
           xattr -cr build/Thock.app
           xattr -cr build/thock-cli
 
-      - name: 🖋️ Ad-hoc sign the app
+      - name: Ad-hoc sign the app
         run: codesign --force --deep --sign - build/Thock.app
 
-      - name: 🔍 Verify quarantine removal and signature
+      - name: Verify quarantine removal and signature
         run: |
           echo "Checking for quarantine attributes..."
 
@@ -67,7 +67,7 @@ jobs:
             exit 1
           fi
 
-      - name: 🏷️ Zip with version
+      - name: Zip with version
         run: |
           cd build
           ZIP_NAME="Thock-${{ github.ref_name }}.zip"
@@ -75,19 +75,19 @@ jobs:
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
           echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
 
-      - name: 🧮 Get SHA256
+      - name: Get SHA256
         id: sha
         run: |
           HASH=$(shasum -a 256 "build/$ZIP_NAME" | awk '{ print $1 }')
           echo "sha=$HASH" >> $GITHUB_OUTPUT
 
-      - name: 🚀 Upload release artifact
+      - name: Upload release artifact
         uses: softprops/action-gh-release@v1
         with:
           files: build/${{ env.ZIP_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🧪 Update Homebrew tap
+      - name: Update Homebrew tap
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
         run: |
