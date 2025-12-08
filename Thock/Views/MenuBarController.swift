@@ -149,6 +149,8 @@ class MenuBarController {
         )
         settingsItem.keyEquivalentModifierMask = [.command]
         settingsItem.target = self
+        settingsItem.image = NSImage()
+        settingsItem.image = nil
         menu.addItem(settingsItem)
         menu.addItem(NSMenuItem.separator())
     }
