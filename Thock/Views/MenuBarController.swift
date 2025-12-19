@@ -455,8 +455,11 @@ class MenuBarController {
     // MARK: - Actions
     
     @objc private func onStatusBarIconClick(sender: NSStatusBarButton) {
-        guard let event = NSApp.currentEvent else { return }
-        
+        guard let event = NSApp.currentEvent else {
+            handleLeftClick(sender: sender)
+            return
+        }
+
         switch event.type {
         case .rightMouseUp:
             handleRightClick(sender: sender)
