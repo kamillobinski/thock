@@ -17,34 +17,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     // MARK: - App Lifecycle
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        setupMenuBar()
         if !requestAccessibilityPermissions() {
             showPermissionRequiredDialog()
             return
         }
-        
-        // Request notification permissions for UserNotifications
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
-            if let error = error {
-                print("Error requesting notification permissions: \(error)")
-            }
-        }
-        
-        _ = PipeListenerService.shared
-        initializeKeyTracker()
-        initializeAudioMonitor()
-        
-        ModeEngine.shared.loadInitialMode()
-        setupMenuBar()
-        setupGlobalShortcuts()
-
-        AppUpdater.shared.checkForUpdates { result in
-            switch result {
-            case .success(let isUpdateAvailable):
-                self.menuBarController.setUpdateAvailable(isUpdateAvailable)
-            case .failure(let error):
-                print("Error checking for updates: \(error.localizedDescription)")
-            }
-        }
+        continueAppInitialization()
     }
     
     /// Quits the application cleanly.
@@ -97,11 +75,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         GlobalShortcutManager.shared.setupGlobalShortcuts()
     }
     
-    /// Shows a dialog explaining why accessibility permissions are required and exits the app.
+    /// Shows a dialog explaining why accessibility permissions are required and waits for them.
     private func showPermissionRequiredDialog() {
         let alert = NSAlert()
         alert.messageText = "Accessibility Permissions Required"
-        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds. Without these permissions, the app cannot function."
+        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds. \n\nSeeing this after an update?\n - Click 'Open System Preferences'. \n - Remove the old entry.\n - Quit and relaunch the app.\n - Enable the new entry."
         alert.alertStyle = .critical
         alert.addButton(withTitle: "Open System Preferences")
         alert.addButton(withTitle: "Quit")
@@ -111,9 +89,77 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         if response == .alertFirstButtonReturn {
             // Open System Preferences to Accessibility
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+            self.showWaitingAlert()
+        } else {
+            // User chose Quit
+            NSApplication.shared.terminate(nil)
+        }
+    }
+    
+    /// Shows a waiting alert while polling for permissions.
+    private func showWaitingAlert() {
+        let waitingAlert = NSAlert()
+        waitingAlert.messageText = "Accessibility Permissions Required"
+        waitingAlert.informativeText = "Waiting for permissions..."
+        waitingAlert.alertStyle = .informational
+        waitingAlert.addButton(withTitle: "Quit")
+        
+        // Track whether permissions were granted
+        var permissionsGranted = false
+        
+        let pollingQueue = DispatchQueue.global(qos: .userInitiated)
+        pollingQueue.async {
+            while true {
+                if AXIsProcessTrusted() {
+                    // Permissions granted
+                    permissionsGranted = true
+                    DispatchQueue.main.async {
+                        NSApp.abortModal()
+                        self.continueAppInitialization()
+                    }
+                    return
+                }
+                Thread.sleep(forTimeInterval: 1.0)
+            }
         }
         
-        NSApplication.shared.terminate(nil)
+        // Show the waiting alert (blocks until quit or aborted)
+        let response = waitingAlert.runModal()
+        
+        // Only quit if user clicked Quit (not if permissions were granted)
+        if !permissionsGranted {
+            NSApplication.shared.terminate(nil)
+        }
+    }
+    
+    /// Continues app initialization after permissions are granted.
+    private func continueAppInitialization() {
+        // Request notification permissions
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("Error requesting notification permissions: \(error)")
+            }
+        }
+        
+        _ = PipeListenerService.shared
+        initializeKeyTracker()
+        initializeAudioMonitor()
+        
+        ModeEngine.shared.loadInitialMode()
+        
+        // Update the icon
+        menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
+        
+        setupGlobalShortcuts()
+        
+        AppUpdater.shared.checkForUpdates { result in
+            switch result {
+            case .success(let isUpdateAvailable):
+                self.menuBarController.setUpdateAvailable(isUpdateAvailable)
+            case .failure(let error):
+                print("Error checking for updates: \(error.localizedDescription)")
+            }
+        }
     }
 }
 
