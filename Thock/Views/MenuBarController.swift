@@ -77,7 +77,7 @@ class MenuBarController {
             self.setupMenu()
         }
     }
-
+    
     /// Updates the menu bar icon based on app state.
     func updateMenuBarIcon(for state: Bool) {
         statusBarItem.button?.image = NSImage(named: "MenuBarIcon")
@@ -167,10 +167,10 @@ class MenuBarController {
         menu.addItem(updateMenuItem)
         menu.addItem(NSMenuItem.separator())
     }
-
+    
     @objc private func copyUpgradeCommand() {
         NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
-
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
@@ -191,7 +191,7 @@ class MenuBarController {
             cmdV?.post(tap: .cgAnnotatedSessionEventTap)
             cmdVUp?.post(tap: .cgAnnotatedSessionEventTap)
             cmdUp?.post(tap: .cgAnnotatedSessionEventTap)
-
+            
             // Simulate Return key to execute the command
             let returnDown = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: true)
             let returnUp = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: false)
@@ -459,7 +459,7 @@ class MenuBarController {
             handleLeftClick(sender: sender)
             return
         }
-
+        
         switch event.type {
         case .rightMouseUp:
             handleRightClick(sender: sender)
@@ -521,21 +521,24 @@ class MenuBarController {
     
     private func openSettingsWindow() {
         // Check if settings window already exists
-        if let existingWindow = NSApplication.shared.windows.first(where: { $0.contentView is NSHostingView<SettingsWindow> }) {
+        if let existingWindow = NSApplication.shared.windows.first(where: { $0.contentView is NSHostingView<SettingsView> }) {
             existingWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
         
-        let settingsView = SettingsWindow()
+        let settingsView = SettingsView()
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 300),
-            styleMask: [.titled, .closable, .resizable],
+            styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.center()
         window.title = "Settings"
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.toolbarStyle = .unified
         window.contentView = NSHostingView(rootView: settingsView)
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
