@@ -1,4 +1,3 @@
-
 import Cocoa
 
 class KeyTracker {
@@ -32,6 +31,10 @@ class KeyTracker {
                 let keyTracker = Unmanaged<KeyTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
+                // Start latency measurement
+                let latencyId = startLatencyMeasurement()
+                recordLatencyCheckpoint(latencyId, point: .keyEventReceived)
+
                 if SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled() {
                     // Ignore events that are too close to each other.
                     defer { keyTracker.lastEventTime = keyTracker.currentTime() }
@@ -49,20 +52,20 @@ class KeyTracker {
                     switch type {
                     case .keyDown where !keyTracker.pressedKeys.contains(keyCode):
                         keyTracker.pressedKeys.insert(keyCode)
-                        SoundEngine.shared.play(for: keyCode, isKeyDown: true)
+                        SoundEngine.shared.play(for: keyCode, isKeyDown: true, latencyId: latencyId)
 
                     case .keyUp:
                         keyTracker.pressedKeys.remove(keyCode)
-                        SoundEngine.shared.play(for: keyCode, isKeyDown: false)
+                        SoundEngine.shared.play(for: keyCode, isKeyDown: false, latencyId: latencyId)
 
                     case .flagsChanged:
                         // Respect the user setting to ignore modifier key sounds
                         if !SettingsEngine.shared.isModifierKeySoundDisabled() {
                             if keyTracker.pressedKeys.remove(keyCode) == nil {
                                 keyTracker.pressedKeys.insert(keyCode)
-                                SoundEngine.shared.play(for: keyCode, isKeyDown: true)
+                                SoundEngine.shared.play(for: keyCode, isKeyDown: true, latencyId: latencyId)
                             } else {
-                                SoundEngine.shared.play(for: keyCode, isKeyDown: false)
+                                SoundEngine.shared.play(for: keyCode, isKeyDown: false, latencyId: latencyId)
                             }
                         }
                     default:

@@ -1,10 +1,3 @@
-//
-//  SoundManager.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 07/03/2025.
-//
-
 import AVFoundation
 import CoreAudio
 import AudioToolbox
@@ -30,18 +23,24 @@ class SoundManager {
     }
     
     /// Plays a preloaded sound.
-    /// - Parameter name: The name of the file to play.
-    func play(sound name: String) {
+    /// - Parameters:
+    ///   - name: The name of the file to play.
+    ///   - latencyId: Optional UUID for latency measurement tracking.
+    func play(sound name: String, latencyId: UUID? = nil) {
         guard let buffer = audioBuffers[name], let player = audioPlayers[name] else {
             print("Sound not found: \(name)")
             return
         }
         
+        recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
         player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
         
         if !player.isPlaying {
             player.play()
         }
+        
+        recordLatencyCheckpoint(latencyId, point: .playbackStarted)
+        completeLatencyMeasurement(latencyId)
     }
     
     func setVolume(_ newValue: Float) {
@@ -65,6 +64,9 @@ class SoundManager {
     }
     
     private func setupAudioEngine() {
+        // Configure for low-latency audio playback
+        configureLowLatencyAudio()
+        
         mixer.outputVolume = 0.5
         engine.attach(pitchNode)
         engine.attach(mixer)
@@ -73,6 +75,50 @@ class SoundManager {
         engine.connect(pitchNode, to: engine.outputNode, format: nil)
         
         startAudioEngine()
+    }
+    
+    /// Configures the audio device for low-latency playback.
+    /// Reduces buffer size to minimize delay between key press and sound output.
+    private func configureLowLatencyAudio() {
+        var defaultDeviceID = AudioDeviceID(0)
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var dataSize = UInt32(MemoryLayout<AudioDeviceID>.size)
+        
+        let status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &defaultDeviceID
+        )
+        
+        guard status == noErr else {
+            return
+        }
+        
+        // 128 frames for low latency
+        var bufferSize: UInt32 = 128
+        var bufferAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyBufferFrameSize,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        let bufferStatus = AudioObjectSetPropertyData(
+            defaultDeviceID,
+            &bufferAddress,
+            0,
+            nil,
+            UInt32(MemoryLayout<UInt32>.size),
+            &bufferSize
+        )
+        
+        if bufferStatus == noErr { measureHardwareLatency(deviceID: defaultDeviceID) }
     }
     
     private func startAudioEngine() {
@@ -89,6 +135,9 @@ class SoundManager {
     @objc private func handleEngineConfigChange(notification: Notification) {
         engine.stop()
         engine.reset()
+        
+        // Configure new device for low latency
+        configureLowLatencyAudio()
         
         // Detach and reattach mixer
         engine.detach(mixer)
@@ -144,12 +193,13 @@ class SoundManager {
                 let fileURL = soundDirectory.appendingPathComponent(file)
                 if let buffer = loadAudioBuffer(from: fileURL) {
                     attachBuffer(fileName: file, buffer: buffer)
-                } else {
+                }
+                else {
                     print("Failed to preload buffer: \(file)")
                 }
             }
             
-            print("Preloaded \(audioBuffers.count) sounds for mode: \(mode.name)")
+//            print("Preloaded \(audioBuffers.count) sounds for mode: \(mode.name)")
         } catch {
             print("Error loading sound files: \(error)")
         }
@@ -225,7 +275,7 @@ class SoundManager {
             &defaultDeviceID
         )
         guard status == noErr else { return "default" }
-
+        
         var deviceUID: CFString = "default" as CFString
         var uidSize = UInt32(MemoryLayout<CFString?>.size)
         var uidAddress = AudioObjectPropertyAddress(
