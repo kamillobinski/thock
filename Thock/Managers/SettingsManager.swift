@@ -8,7 +8,8 @@ final class SettingsManager {
     static let defaultDisableModifierKeys: Bool = false
     static let defaultIgnoreRapidKeyEvents: Bool = false
     static let defaultAutoMuteOnMusicPlayback: Bool = false
-
+    static let defaultIdleTimeoutSeconds: TimeInterval = 10.0
+    
     
     private init() {}
     
@@ -32,11 +33,18 @@ final class SettingsManager {
         get { UserDefaults.ignoreRapidKeyEvents }
         set { UserDefaults.ignoreRapidKeyEvents = newValue }
     }
-
+    
     /// Whether to mute keyboard sounds when music is playing.
     var autoMuteOnMusicPlayback: Bool {
         get { UserDefaults.autoMuteOnMusicPlayback }
         set { UserDefaults.autoMuteOnMusicPlayback = newValue }
+    }
+    
+    /// Number of seconds of inactivity before stopping the audio queue to save CPU.
+    /// Set to 0 to disable idle timeout (queue always runs).
+    var idleTimeoutSeconds: TimeInterval {
+        get { UserDefaults.idleTimeoutSeconds }
+        set { UserDefaults.idleTimeoutSeconds = newValue }
     }
 }
 
@@ -46,6 +54,7 @@ private extension UserDefaults {
         static let disableModifierKeys = "disableModifierKeys"
         static let ignoreRapidKeyEvents = "ignoreRapidKeyEvents"
         static let autoMuteOnMusicPlayback = "autoMuteOnMusicPlayback"
+        static let idleTimeoutSeconds = "idleTimeoutSeconds"
     }
     
     static var openAtLogin: Bool {
@@ -83,7 +92,7 @@ private extension UserDefaults {
             standard.set(newValue, forKey: Keys.ignoreRapidKeyEvents)
         }
     }
-
+    
     static var autoMuteOnMusicPlayback: Bool {
         get {
             if standard.object(forKey: Keys.autoMuteOnMusicPlayback) == nil {
@@ -93,6 +102,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.autoMuteOnMusicPlayback)
+        }
+    }
+    
+    static var idleTimeoutSeconds: TimeInterval {
+        get {
+            if standard.object(forKey: Keys.idleTimeoutSeconds) == nil {
+                return SettingsManager.defaultIdleTimeoutSeconds
+            }
+            return standard.double(forKey: Keys.idleTimeoutSeconds)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.idleTimeoutSeconds)
         }
     }
 }

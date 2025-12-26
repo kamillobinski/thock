@@ -135,6 +135,7 @@ struct SoundSettingsView: View {
     @State private var disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
     @State private var ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
     @State private var autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
+    @State private var idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 30) {
@@ -184,6 +185,29 @@ struct SoundSettingsView: View {
                 )
             }
             
+            SettingsSectionView(title: "Performance") {
+                SettingsRowView(
+                    title: "Reduce CPU when idle",
+                    subtitle: "Stops engine and adds a tiny delay on first sound after",
+                    control: AnyView(
+                        Picker("", selection: $idleTimeoutSeconds) {
+                            Text("5 seconds").tag(5.0)
+                            Text("10 seconds").tag(10.0)
+                            Text("30 seconds").tag(30.0)
+                            Text("1 minute").tag(60.0)
+                            Text("5 minute").tag(300.0)
+                            Text("Never").tag(0.0)
+                        }
+                            .pickerStyle(.menu)
+                            .controlSize(.small)
+                            .labelsHidden()
+                            .onChange(of: idleTimeoutSeconds) { newValue in
+                                SettingsEngine.shared.setIdleTimeoutSeconds(newValue)
+                            }
+                    )
+                )
+            }
+            
             Spacer()
         }
         .padding(.top, 30)
@@ -193,6 +217,7 @@ struct SoundSettingsView: View {
             disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
             ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
+            idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
         }
     }
 }

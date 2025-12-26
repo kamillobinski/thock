@@ -79,6 +79,15 @@ final class SettingsEngine {
         SettingsManager.shared.autoMuteOnMusicPlayback = enabled
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
+
+    func getIdleTimeoutSeconds() -> TimeInterval {
+        return SettingsManager.shared.idleTimeoutSeconds
+    }
+
+    func setIdleTimeoutSeconds(_ seconds: TimeInterval) {
+        SettingsManager.shared.idleTimeoutSeconds = seconds
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
 }
 
 extension Notification.Name {

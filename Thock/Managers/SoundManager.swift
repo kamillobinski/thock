@@ -21,6 +21,8 @@ final class SoundManager {
     private var audioQueue: AudioQueueRef?
     private let numberOfBuffers = 3
     private var audioBuffers: [AudioQueueBufferRef] = []
+    private var isQueueRunning = false
+    private var idleTimeoutTimer: DispatchSourceTimer?
     
     // MARK: - Audio Format
     private var sampleRate: Float64 = 44100.0
@@ -34,6 +36,9 @@ final class SoundManager {
     private var soundLibrary: [String: PCMSound] = [:]
     private var activeSounds: [ActiveSound] = []
     private let activeSoundsLock = NSLock()
+    
+    // MARK: - Idle State Tracking
+    private var idleCallbackCount: Int = 0
     
     // MARK: - Volume Control
     private var volume: Float = 0.5
@@ -69,12 +74,84 @@ final class SoundManager {
         setupAudioFormat()
         configureLowLatencyAudio()
         createAudioQueue()
+        
+        // Listen for settings changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsChange),
+            name: .settingsDidChange,
+            object: nil
+        )
+    }
+    
+    @objc private func handleSettingsChange() {
+        // Reset idle timer with new timeout value
+        if isQueueRunning {
+            resetIdleTimer()
+        }
     }
     
     deinit {
+        NotificationCenter.default.removeObserver(self)
+        idleTimeoutTimer?.cancel()
         if let queue = audioQueue {
             AudioQueueStop(queue, true)
             AudioQueueDispose(queue, true)
+        }
+    }
+    
+    // MARK: - Idle Timeout Management
+    
+    private func setupIdleTimeoutTimer() {
+        let timeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
+        
+        // 0 means nevaa
+        guard timeoutSeconds > 0 else {
+            idleTimeoutTimer = nil
+            return
+        }
+        
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        timer.schedule(deadline: .now() + timeoutSeconds, repeating: .never)
+        timer.setEventHandler { [weak self] in
+            self?.stopQueueIfIdle()
+        }
+        timer.resume()
+        idleTimeoutTimer = timer
+    }
+    
+    private func resetIdleTimer() {
+        idleTimeoutTimer?.cancel()
+        setupIdleTimeoutTimer()
+    }
+    
+    private func stopQueueIfIdle() {
+        activeSoundsLock.lock()
+        let shouldStop = activeSounds.isEmpty && isQueueRunning
+        activeSoundsLock.unlock()
+        
+        guard shouldStop, let queue = audioQueue else { return }
+        
+        let status = AudioQueueStop(queue, false)
+        if status == noErr {
+            isQueueRunning = false
+            let timeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
+            Logger.audio.info("Audio queue stopped after \(timeoutSeconds)s idle")
+        } else {
+            Logger.audio.error("Failed to stop audio queue: \(status)")
+        }
+    }
+    
+    private func restartQueue() {
+        guard !isQueueRunning, let queue = audioQueue else { return }
+        
+        let status = AudioQueueStart(queue, nil)
+        if status == noErr {
+            isQueueRunning = true
+            resetIdleTimer()
+            Logger.audio.info("Audio queue restarted")
+        } else {
+            Logger.audio.error("Failed to restart audio queue: \(status)")
         }
     }
     
@@ -202,7 +279,9 @@ final class SoundManager {
             return
         }
         
+        isQueueRunning = true
         isReady = true
+        setupIdleTimeoutTimer()
         Logger.audio.info("Audio system initialized successfully")
     }
     
@@ -220,11 +299,28 @@ final class SoundManager {
         let bufferData = buffer.pointee.mAudioData
         let outputBuffer = bufferData.assumingMemoryBound(to: Float.self)
         
+        // Check for active sounds
+        activeSoundsLock.lock()
+        
+        if activeSounds.isEmpty {
+            // No active sounds, output silence and return early
+            let shouldClear = idleCallbackCount < numberOfBuffers
+            idleCallbackCount += 1
+            activeSoundsLock.unlock()
+            
+            if shouldClear {
+                memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
+            }
+            
+            buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
+            AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+            return
+        }
+        
+        idleCallbackCount = 0
+        
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
-        
-        // Mix all active sounds
-        activeSoundsLock.lock()
         
         // Read volume without lock, one-buffer-cycle delay is ookayish
         let currentVolume = volume
@@ -286,6 +382,14 @@ final class SoundManager {
         guard let pcmSound = soundLibrary[name] else {
             Logger.audio.warning("Sound file not found: '\(name)'")
             return
+        }
+        
+        // Restart queue if stopped due to idle timeout
+        if !isQueueRunning {
+            restartQueue()
+        } else {
+            // Running, reset timer
+            resetIdleTimer()
         }
         
         if ENABLE_LATENCY_MEASUREMENT {
