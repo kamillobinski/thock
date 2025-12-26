@@ -1,108 +1,138 @@
+import Foundation
+import AudioToolbox
 import AVFoundation
 import CoreAudio
-import AudioToolbox
+import OSLog
+import Accelerate
 
-class SoundManager {
+// MARK: - Global Configuration
+let AUDIO_BUFFER_SIZE: UInt32 = 256
+
+final class SoundManager {
     static let shared = SoundManager()
     
-    private var engine = AVAudioEngine()
-    private var audioPlayers: [String: AVAudioPlayerNode] = [:]
-    private var audioBuffers: [String: AVAudioPCMBuffer] = [:]
+    // MARK: - Constants
+    private static let defaultDeviceUID = "default"
     
-    private let mixer = AVAudioMixerNode()
-    private let pitchNode = AVAudioUnitTimePitch()
+    // MARK: - State
+    private(set) var isReady = false
     
-    init() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleEngineConfigChange),
-            name: .AVAudioEngineConfigurationChange,
-            object: engine
-        )
-        setupAudioEngine()
+    // MARK: - Audio Queue State
+    private var audioQueue: AudioQueueRef?
+    private let numberOfBuffers = 3
+    private var audioBuffers: [AudioQueueBufferRef] = []
+    
+    // MARK: - Audio Format
+    private var sampleRate: Float64 = 44100.0
+    private let channelCount: UInt32 = 2
+    private let bitsPerChannel: UInt32 = 32
+    private let framesPerBuffer: UInt32 = AUDIO_BUFFER_SIZE
+    
+    private var audioFormat = AudioStreamBasicDescription()
+    
+    // MARK: - Sound Storage
+    private var soundLibrary: [String: PCMSound] = [:]
+    private var activeSounds: [ActiveSound] = []
+    private let activeSoundsLock = NSLock()
+    
+    // MARK: - Volume Control
+    private var volume: Float = 0.5
+    private let volumeLock = NSLock()
+    
+    // MARK: - Models
+    private struct PCMSound {
+        let data: [Float]
+        let frameCount: Int
     }
     
-    /// Plays a preloaded sound.
-    /// - Parameters:
-    ///   - name: The name of the file to play.
-    ///   - latencyId: Optional UUID for latency measurement tracking.
-    func play(sound name: String, latencyId: UUID? = nil) {
-        guard let buffer = audioBuffers[name], let player = audioPlayers[name] else {
-            print("Sound not found: \(name)")
+    private class ActiveSound {
+        let pcmData: [Float]
+        let frameCount: Int
+        var currentFrame: Int = 0
+        let latencyId: UUID?
+        var hasReportedPlayback: Bool = false
+        
+        init(pcmData: [Float], frameCount: Int, latencyId: UUID?) {
+            self.pcmData = pcmData
+            self.frameCount = frameCount
+            self.latencyId = latencyId
+        }
+        
+        var isFinished: Bool {
+            currentFrame >= frameCount
+        }
+    }
+    
+    // MARK: - Initialization
+    private init() {
+        detectHardwareSampleRate()
+        setupAudioFormat()
+        configureLowLatencyAudio()
+        createAudioQueue()
+    }
+    
+    deinit {
+        if let queue = audioQueue {
+            AudioQueueStop(queue, true)
+            AudioQueueDispose(queue, true)
+        }
+    }
+    
+    // MARK: - Audio Format Setup
+    private func detectHardwareSampleRate() {
+        guard let defaultDeviceID = getDefaultOutputDeviceID() else {
+            Logger.audio.warning("Default output device unavailable, using 44.1kHz fallback")
             return
         }
         
-        recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
-        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
-        
-        if !player.isPlaying {
-            player.play()
-        }
-        
-        recordLatencyCheckpoint(latencyId, point: .playbackStarted)
-        completeLatencyMeasurement(latencyId)
-    }
-    
-    func setVolume(_ newValue: Float) {
-        mixer.outputVolume = newValue
-    }
-    
-    func getVolume() -> Float {
-        return mixer.outputVolume
-    }
-    
-    func setGlobalPitch(_ pitch: Float) {
-        pitchNode.pitch = pitch
-    }
-    
-    /// Applies the saved volume for the current output device.
-    func applyPerDeviceVolume() {
-        let deviceUID = getCurrentOutputDeviceUID()
-        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
-        let savedVolume = perDeviceVolumes[deviceUID] ?? 1.0
-        mixer.outputVolume = savedVolume
-    }
-    
-    private func setupAudioEngine() {
-        // Configure for low-latency audio playback
-        configureLowLatencyAudio()
-        
-        mixer.outputVolume = 0.5
-        engine.attach(pitchNode)
-        engine.attach(mixer)
-        
-        engine.connect(mixer, to: pitchNode, format: nil)
-        engine.connect(pitchNode, to: engine.outputNode, format: nil)
-        
-        startAudioEngine()
-    }
-    
-    /// Configures the audio device for low-latency playback.
-    /// Reduces buffer size to minimize delay between key press and sound output.
-    private func configureLowLatencyAudio() {
-        var defaultDeviceID = AudioDeviceID(0)
-        var propertyAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+        // Query nominal sample rate
+        var nominalSampleRate: Float64 = 44100.0
+        var sampleRateAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyNominalSampleRate,
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
-        var dataSize = UInt32(MemoryLayout<AudioDeviceID>.size)
+        var sampleRateSize = UInt32(MemoryLayout<Float64>.size)
         
-        let status = AudioObjectGetPropertyData(
-            AudioObjectID(kAudioObjectSystemObject),
-            &propertyAddress,
+        let sampleRateStatus = AudioObjectGetPropertyData(
+            defaultDeviceID,
+            &sampleRateAddress,
             0,
             nil,
-            &dataSize,
-            &defaultDeviceID
+            &sampleRateSize,
+            &nominalSampleRate
         )
         
-        guard status == noErr else {
+        if sampleRateStatus == noErr {
+            sampleRate = nominalSampleRate
+            Logger.audio.info("Hardware sample rate detected: \(String(format: "%.1f Hz", self.sampleRate))")
+        } else {
+            Logger.audio.warning("Sample rate query failed, using 44.1kHz fallback")
+        }
+    }
+    
+    private func setupAudioFormat() {
+        audioFormat = AudioStreamBasicDescription(
+            mSampleRate: sampleRate,
+            mFormatID: kAudioFormatLinearPCM,
+            mFormatFlags: kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked,
+            mBytesPerPacket: UInt32(MemoryLayout<Float>.size) * channelCount,
+            mFramesPerPacket: 1,
+            mBytesPerFrame: UInt32(MemoryLayout<Float>.size) * channelCount,
+            mChannelsPerFrame: channelCount,
+            mBitsPerChannel: bitsPerChannel,
+            mReserved: 0
+        )
+    }
+    
+    // MARK: - Low-Latency Configuration
+    private func configureLowLatencyAudio() {
+        guard let defaultDeviceID = getDefaultOutputDeviceID() else {
+            Logger.audio.error("Cannot configure audio: default output device unavailable")
             return
         }
         
-        // 128 frames for low latency
-        var bufferSize: UInt32 = 128
+        var bufferSize: UInt32 = AUDIO_BUFFER_SIZE
         var bufferAddress = AudioObjectPropertyAddress(
             mSelector: kAudioDevicePropertyBufferFrameSize,
             mScope: kAudioObjectPropertyScopeGlobal,
@@ -118,70 +148,178 @@ class SoundManager {
             &bufferSize
         )
         
-        if bufferStatus == noErr { measureHardwareLatency(deviceID: defaultDeviceID) }
+        if bufferStatus == noErr {
+            let latencyMs = (Double(AUDIO_BUFFER_SIZE) / sampleRate) * 1000.0
+            Logger.audio.info("Hardware buffer configured: \(AUDIO_BUFFER_SIZE) frames (~\(String(format: "%.1f", latencyMs))ms)")
+        }
+        
+        measureHardwareLatency(deviceID: defaultDeviceID)
     }
     
-    private func startAudioEngine() {
-        do {
-            if !engine.isRunning {
-                try engine.start()
+    // MARK: - Audio Queue Creation
+    private func createAudioQueue() {
+        let selfPointer = Unmanaged.passUnretained(self).toOpaque()
+        
+        let status = AudioQueueNewOutput(
+            &audioFormat,
+            audioQueueCallback,
+            selfPointer,
+            CFRunLoopGetCurrent(),
+            CFRunLoopMode.commonModes.rawValue,
+            0,
+            &audioQueue
+        )
+        
+        guard status == noErr, let queue = audioQueue else {
+            Logger.audio.error("Audio queue creation failed with status: \(status)")
+            return
+        }
+        
+        // Allocate buffers
+        let bufferSize = framesPerBuffer * audioFormat.mBytesPerFrame
+        for _ in 0..<numberOfBuffers {
+            var buffer: AudioQueueBufferRef?
+            let allocStatus = AudioQueueAllocateBuffer(queue, bufferSize, &buffer)
+            if allocStatus == noErr, let buffer = buffer {
+                audioBuffers.append(buffer)
+                // Prime the buffer
+                primeBuffer(buffer, queue: queue)
+            } else {
+                Logger.audio.error("Buffer allocation failed with status: \(allocStatus)")
             }
-        } catch {
-            print("Error starting AVAudioEngine: \(error)")
-        }
-    }
-    
-    /// Handles output device change.
-    @objc private func handleEngineConfigChange(notification: Notification) {
-        engine.stop()
-        engine.reset()
-        
-        // Configure new device for low latency
-        configureLowLatencyAudio()
-        
-        // Detach and reattach mixer
-        engine.detach(mixer)
-        engine.detach(pitchNode)
-        
-        engine.attach(pitchNode)
-        engine.attach(mixer)
-        
-        engine.connect(mixer, to: pitchNode, format: nil)
-        engine.connect(pitchNode, to: engine.outputNode, format: nil)
-        
-        // Reattach all players
-        for (fileName, buffer) in audioBuffers {
-            let player = AVAudioPlayerNode()
-            engine.attach(player)
-            engine.connect(player, to: mixer, format: buffer.format)
-            audioPlayers[fileName] = player
         }
         
-        startAudioEngine()
-        
-        // Apply per-device volume after reconfiguring the engine
-        applyPerDeviceVolume()
-    }
-    
-    /// Stops and detaches all existing audio nodes to prevent memory leaks.
-    private func resetAudioNodes() {
-        for player in audioPlayers.values {
-            player.stop()
-            engine.detach(player)
+        // Verify allocated all buffers
+        guard audioBuffers.count == numberOfBuffers else {
+            Logger.audio.error("Incomplete buffer allocation: \(self.audioBuffers.count)/\(self.numberOfBuffers)")
+            return
         }
         
-        audioPlayers.removeAll()
-        audioBuffers.removeAll()
+        // Start the queue
+        let startStatus = AudioQueueStart(queue, nil)
+        guard startStatus == noErr else {
+            Logger.audio.error("Audio queue start failed with status: \(startStatus)")
+            return
+        }
+        
+        isReady = true
+        Logger.audio.info("Audio system initialized successfully")
     }
     
-    /// Preloads sound files from the given mode’s directory.
-    /// Supports both bundled and custom user-installed modes.
-    /// - Parameter mode: The mode defining which sounds to load.
+    // MARK: - Audio Callback
+    private let audioQueueCallback: AudioQueueOutputCallback = { userData, queue, buffer in
+        guard let userData = userData else { return }
+        let manager = Unmanaged<SoundManager>.fromOpaque(userData).takeUnretainedValue()
+        manager.fillBuffer(buffer, queue: queue)
+    }
+    
+    private func fillBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
+        let frameCount = Int(framesPerBuffer)
+        
+        // Get buffer pointer
+        let bufferData = buffer.pointee.mAudioData
+        let outputBuffer = bufferData.assumingMemoryBound(to: Float.self)
+        
+        // Zero out buffer
+        memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
+        
+        // Mix all active sounds
+        activeSoundsLock.lock()
+        
+        // Read volume without lock, one-buffer-cycle delay is ookayish
+        let currentVolume = volume
+        
+        for sound in activeSounds {
+            let remainingFrames = sound.frameCount - sound.currentFrame
+            let framesToCopy = min(frameCount, remainingFrames)
+            
+            // Report playback started on first render
+            if ENABLE_LATENCY_MEASUREMENT && !sound.hasReportedPlayback {
+                sound.hasReportedPlayback = true
+                recordLatencyCheckpoint(sound.latencyId, point: .playbackStarted)
+                completeLatencyMeasurement(sound.latencyId)
+            }
+            
+            if framesToCopy > 0 {
+                let startSample = sound.currentFrame * Int(channelCount)
+                let sampleCount = framesToCopy * Int(channelCount)
+                
+                sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
+                    var volumeScalar = currentVolume
+                    vDSP_vsma(
+                        pcmBuffer.baseAddress!.advanced(by: startSample), 1,   // A: source audio
+                        &volumeScalar,                                         // B: volume scalar
+                        outputBuffer, 1,                                       // C: current buffer
+                        outputBuffer, 1,                                       // D: output (same buffer)
+                        vDSP_Length(sampleCount)                               // N: sample count
+                    )
+                }
+                
+                sound.currentFrame += framesToCopy
+            }
+        }
+        
+        activeSounds.removeAll(where: { $0.isFinished })
+        activeSoundsLock.unlock()
+        
+        // Set buffer size and enqueue
+        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
+        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+    }
+    
+    private func primeBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
+        // Fill with silence and enqueue
+        let bufferData = buffer.pointee.mAudioData
+        memset(bufferData, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
+        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
+        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+    }
+    
+    // MARK: - Public API
+    
+    func play(sound name: String, latencyId: UUID? = nil) {
+        guard isReady else {
+            Logger.audio.warning("Playback blocked: audio system not ready")
+            return
+        }
+        
+        guard let pcmSound = soundLibrary[name] else {
+            Logger.audio.warning("Sound file not found: '\(name)'")
+            return
+        }
+        
+        if ENABLE_LATENCY_MEASUREMENT {
+            recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
+        }
+        
+        let activeSound = ActiveSound(
+            pcmData: pcmSound.data,
+            frameCount: pcmSound.frameCount,
+            latencyId: latencyId
+        )
+        
+        activeSoundsLock.lock()
+        activeSounds.append(activeSound)
+        activeSoundsLock.unlock()
+    }
+    
+    func setVolume(_ newVolume: Float) {
+        volumeLock.lock()
+        volume = max(0.0, min(1.0, newVolume))
+        volumeLock.unlock()
+    }
+    
+    func getVolume() -> Float {
+        volumeLock.lock()
+        defer { volumeLock.unlock() }
+        return volume
+    }
+    
     func preloadSounds(for mode: Mode) {
-        resetAudioNodes()
+        soundLibrary.removeAll()
         
         guard let soundDirectory = resolveSoundDirectory(for: mode) else {
-            print("Sound directory not found for mode: \(mode.name)")
+            Logger.audio.error("Sound directory not found for mode: '\(mode.name)'")
             return
         }
         
@@ -191,74 +329,85 @@ class SoundManager {
             
             for file in soundFiles {
                 let fileURL = soundDirectory.appendingPathComponent(file)
-                if let buffer = loadAudioBuffer(from: fileURL) {
-                    attachBuffer(fileName: file, buffer: buffer)
-                }
-                else {
-                    print("Failed to preload buffer: \(file)")
+                if let pcmSound = loadPCMSound(from: fileURL) {
+                    soundLibrary[file] = pcmSound
                 }
             }
             
-//            print("Preloaded \(audioBuffers.count) sounds for mode: \(mode.name)")
+            Logger.audio.info("Preloaded \(self.soundLibrary.count) sounds for mode: '\(mode.name)'")
         } catch {
-            print("Error loading sound files: \(error)")
-        }
-        
-        startAudioEngine()
-    }
-    
-    /// Resolves the full path to the sound directory for a given mode.
-    /// Distinguishes between bundled modes and custom user-created ones.
-    /// - Parameter mode: The mode to resolve directory for.
-    /// - Returns: The resolved local file URL if it exists, else `nil`.
-    private func resolveSoundDirectory(for mode: Mode) -> URL? {
-        let isCustom = mode.path.hasPrefix("CustomSounds/")
-        let trimmedPath = mode.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        
-        if isCustom {
-            return FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Application Support/Thock/\(trimmedPath)", isDirectory: true)
-        } else {
-            return Bundle.main.resourceURL?
-                .appendingPathComponent(trimmedPath, isDirectory: true)
+            Logger.audio.error("Failed to load sound files: \(error.localizedDescription)")
         }
     }
     
-    /// Attaches a decoded audio buffer to a new audio player node,
-    /// and wires it into the engine pipeline for playback.
-    /// - Parameters:
-    ///   - fileName: The sound file’s name, used as the lookup key.
-    ///   - buffer: The preloaded audio buffer for that file.
-    private func attachBuffer(fileName: String, buffer: AVAudioPCMBuffer) {
-        let player = AVAudioPlayerNode()
-        engine.attach(player)
-        engine.connect(player, to: mixer, format: buffer.format)
-        
-        audioPlayers[fileName] = player
-        audioBuffers[fileName] = buffer
-    }
+    // MARK: - Sound Loading
     
-    /// Loads an audio file into a buffer.
-    /// - Parameter url: File URL of the sound.
-    /// - Returns: `AVAudioPCMBuffer` if successful, otherwise `nil`.
-    private func loadAudioBuffer(from url: URL) -> AVAudioPCMBuffer? {
+    private func loadPCMSound(from url: URL) -> PCMSound? {
         do {
             let file = try AVAudioFile(forReading: url)
             let format = file.processingFormat
             let frameCount = UInt32(file.length)
+            
             guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
                 return nil
             }
+            
             try file.read(into: buffer)
-            return buffer
+            
+            // Convert to stereo Float32 array
+            guard let pcmData = convertToStereoFloat(buffer: buffer) else {
+                return nil
+            }
+            
+            return PCMSound(data: pcmData, frameCount: Int(buffer.frameLength))
+            
         } catch {
-            print("Error loading audio buffer: \(error)")
+            Logger.audio.error("PCM decode failed: \(error.localizedDescription)")
             return nil
         }
     }
     
-    /// Returns the UID of the current output device (or "default" if not found).
-    func getCurrentOutputDeviceUID() -> String {
+    private func convertToStereoFloat(buffer: AVAudioPCMBuffer) -> [Float]? {
+        guard let floatChannelData = buffer.floatChannelData else { return nil }
+        
+        let frameCount = Int(buffer.frameLength)
+        let inputChannelCount = Int(buffer.format.channelCount)
+        
+        var stereoData: [Float] = []
+        stereoData.reserveCapacity(frameCount * 2)
+        
+        if inputChannelCount == 1 {
+            // Mono to stereo: duplicate channel
+            let monoData = floatChannelData[0]
+            for frame in 0..<frameCount {
+                let sample = monoData[frame]
+                stereoData.append(sample)  // Left
+                stereoData.append(sample)  // Right
+            }
+        } else if inputChannelCount == 2 {
+            // Stereo: interleave channels
+            let leftData = floatChannelData[0]
+            let rightData = floatChannelData[1]
+            for frame in 0..<frameCount {
+                stereoData.append(leftData[frame])   // Left
+                stereoData.append(rightData[frame])  // Right
+            }
+        } else {
+            // More than 2 channels: take first two
+            let leftData = floatChannelData[0]
+            let rightData = floatChannelData[1]
+            for frame in 0..<frameCount {
+                stereoData.append(leftData[frame])
+                stereoData.append(rightData[frame])
+            }
+        }
+        
+        return stereoData
+    }
+    
+    // MARK: - Device Management
+    
+    private func getDefaultOutputDeviceID() -> AudioDeviceID? {
         var defaultDeviceID = AudioDeviceID(0)
         var propertyAddress = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDefaultOutputDevice,
@@ -266,6 +415,7 @@ class SoundManager {
             mElement: kAudioObjectPropertyElementMain
         )
         var dataSize = UInt32(MemoryLayout<AudioDeviceID>.size)
+        
         let status = AudioObjectGetPropertyData(
             AudioObjectID(kAudioObjectSystemObject),
             &propertyAddress,
@@ -274,10 +424,17 @@ class SoundManager {
             &dataSize,
             &defaultDeviceID
         )
-        guard status == noErr else { return "default" }
         
-        var deviceUID: CFString = "default" as CFString
-        var uidSize = UInt32(MemoryLayout<CFString?>.size)
+        return status == noErr ? defaultDeviceID : nil
+    }
+    
+    func getCurrentOutputDeviceUID() -> String {
+        guard let defaultDeviceID = getDefaultOutputDeviceID() else {
+            return Self.defaultDeviceUID
+        }
+        
+        var deviceUID: Unmanaged<CFString>?
+        var uidSize = UInt32(MemoryLayout<Unmanaged<CFString>>.size)
         var uidAddress = AudioObjectPropertyAddress(
             mSelector: kAudioDevicePropertyDeviceUID,
             mScope: kAudioObjectPropertyScopeGlobal,
@@ -291,9 +448,31 @@ class SoundManager {
             &uidSize,
             &deviceUID
         )
-        if uidStatus == noErr, let swiftUID = deviceUID as String? {
-            return swiftUID
+        if uidStatus == noErr, let uid = deviceUID?.takeRetainedValue() as String? {
+            return uid
         }
-        return "default"
+        return Self.defaultDeviceUID
+    }
+    
+    func applyPerDeviceVolume() {
+        let deviceUID = getCurrentOutputDeviceUID()
+        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
+        let savedVolume = perDeviceVolumes[deviceUID] ?? 0.5
+        setVolume(savedVolume)
+    }
+    
+    // MARK: - Helpers
+    
+    private func resolveSoundDirectory(for mode: Mode) -> URL? {
+        let isCustom = mode.path.hasPrefix("CustomSounds/")
+        let trimmedPath = mode.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        
+        if isCustom {
+            return FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/Thock/\(trimmedPath)", isDirectory: true)
+        } else {
+            return Bundle.main.resourceURL?
+                .appendingPathComponent(trimmedPath, isDirectory: true)
+        }
     }
 }

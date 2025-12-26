@@ -1,12 +1,11 @@
 import Foundation
 import CoreAudio
-import os
+import OSLog
 
-// MARK: - Toggle this to enable/disable latency measurement
+// MARK: - Configuration
+
+/// Toggle this to enable/disable latency measurement
 let ENABLE_LATENCY_MEASUREMENT = false
-
-// MARK: - Logger
-private let logger = Logger(subsystem: "dev.kamillobinski.Thock", category: "latency")
 
 // MARK: - Measurement Points
 enum LatencyPoint: String {
@@ -21,6 +20,7 @@ enum LatencyPoint: String {
 class LatencyTracker {
     static let shared = LatencyTracker()
     
+    private(set) var measuredHardwareLatencyMs: Double = 0.0
     private var measurements: [UUID: LatencyMeasurement] = [:]
     private let queue = DispatchQueue(label: "dev.kamillobinski.Thock.latency", qos: .userInteractive)
     
@@ -31,6 +31,13 @@ class LatencyTracker {
     }
     
     private init() {}
+    
+    /// Update the measured hardware latency
+    func setHardwareLatency(_ latencyMs: Double) {
+        queue.async { [weak self] in
+            self?.measuredHardwareLatencyMs = latencyMs
+        }
+    }
     
     // MARK: - Public API
     
@@ -105,15 +112,23 @@ class LatencyTracker {
     // MARK: - Private Helpers
     
     private func logResults(totalLatency: Double, checkpoints: [(LatencyPoint, Double)]) {
-        var output = "Audio Engine Latency:\n"
+        var output = "Audio Engine Latency:\n\n"
         for (point, latency) in checkpoints {
             let paddedLabel = point.rawValue.padding(toLength: 18, withPad: " ", startingAt: 0)
             output += String(format: "%@  %.2f ms\n", paddedLabel, latency)
         }
-        let totalLabel = "Total:".padding(toLength: 18, withPad: " ", startingAt: 0)
-        output += String(format: "%@  %.2f ms\n\n", totalLabel, totalLatency)
-
-        logger.debug("\(output)")
+        let totalLabel = "Total (measured):".padding(toLength: 18, withPad: " ", startingAt: 0)
+        output += String(format: "%@  %.2f ms\n", totalLabel, totalLatency)
+        
+        if measuredHardwareLatencyMs > 0 {
+            let totalRealLatency = totalLatency + measuredHardwareLatencyMs
+            let realLabel = "Total (real):".padding(toLength: 18, withPad: " ", startingAt: 0)
+            output += String(format: "%@  %.2f ms (measured + HW %.2f ms)\n\n", realLabel, totalRealLatency, measuredHardwareLatencyMs)
+        } else {
+            output += "\n"
+        }
+        
+        Logger.latency.debug("\(output)")
     }
 }
 
@@ -139,7 +154,9 @@ func completeLatencyMeasurement(_ id: UUID?) {
 
 /// Measures and reports the actual audio latency from the hardware.
 /// - Parameter deviceID: The audio device to measure
-func measureHardwareLatency(deviceID: AudioDeviceID) {
+/// - Returns: The total hardware latency in milliseconds
+@discardableResult
+func measureHardwareLatency(deviceID: AudioDeviceID) -> Double {
     var sampleRate: Float64 = 0
     var dataSize = UInt32(MemoryLayout<Float64>.size)
     var sampleRateAddress = AudioObjectPropertyAddress(
@@ -217,21 +234,25 @@ func measureHardwareLatency(deviceID: AudioDeviceID) {
     let deviceLatencyMs = (Double(deviceLatency) / sampleRate) * 1000.0
     let safetyOffsetMs = (Double(safetyOffset) / sampleRate) * 1000.0
     let totalHardwareLatencyMs = bufferLatencyMs + deviceLatencyMs + safetyOffsetMs
-
+    
     let sampleLabel = "Sample Rate:".padding(toLength: 20, withPad: " ", startingAt: 0)
     let bufferLabel = "Buffer Size:".padding(toLength: 20, withPad: " ", startingAt: 0)
     let ioLabel = "- I/O Latency:".padding(toLength: 20, withPad: " ", startingAt: 0)
     let deviceLabel = "- Device Latency:".padding(toLength: 20, withPad: " ", startingAt: 0)
     let safetyLabel = "- Safety Offset:".padding(toLength: 20, withPad: " ", startingAt: 0)
     let totalLabel = "Total:".padding(toLength: 20, withPad: " ", startingAt: 0)
-
-    var output = "Audio Hardware Latency:\n"
+    
+    var output = "Audio Hardware Latency:\n\n"
     output += String(format: "%@%.1f kHz\n", sampleLabel, sampleRate / 1000.0)
     output += String(format: "%@%d frames\n", bufferLabel, actualBufferSize)
     output += String(format: "%@%.2f ms\n", ioLabel, bufferLatencyMs)
     output += String(format: "%@%.2f ms\n", deviceLabel, deviceLatencyMs)
     output += String(format: "%@%.2f ms\n", safetyLabel, safetyOffsetMs)
     output += String(format: "%@%.2f ms\n", totalLabel, totalHardwareLatencyMs)
-
-    logger.debug("\(output)")
+    
+    Logger.latency.debug("\(output)")
+    
+    LatencyTracker.shared.setHardwareLatency(totalHardwareLatencyMs)
+    
+    return totalHardwareLatencyMs
 }
