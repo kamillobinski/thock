@@ -63,7 +63,7 @@ final class SoundEngine {
     ///   - name: The sound file name
     ///   - latencyId: Optional UUID for latency measurement tracking
     func play(sound name: String, latencyId: UUID? = nil) {
-        SoundManager.shared.play(sound: name, latencyId: latencyId)
+        SoundManager.shared.play(sound: name, pitchVariation: pitchVariation, latencyId: latencyId)
     }
     
     // MARK: - Volume Control
@@ -93,11 +93,9 @@ final class SoundEngine {
     // MARK: - Effects
     
     /// Sets pitch variation range for random pitch shifts
-    /// - Parameter variation: Pitch variation range
-    /// - Note: Not yet implemented in audio system
+    /// - Parameter variation: Pitch variation range in semitones
     func setPitchVariation(_ variation: Float) {
         pitchVariation = variation
-        // TODO: Implement real-time pitch shifting without sacrificing latency
     }
     
     /// Gets current pitch variation setting

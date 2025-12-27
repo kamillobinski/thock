@@ -54,11 +54,13 @@ final class SoundManager {
         var currentFrame: Int = 0
         let latencyId: UUID?
         var hasReportedPlayback: Bool = false
+        let pitchOffset: Float
         
-        init(pcmData: [Float], frameCount: Int, latencyId: UUID?) {
+        init(pcmData: [Float], frameCount: Int, latencyId: UUID?, pitchOffset: Float) {
             self.pcmData = pcmData
             self.frameCount = frameCount
             self.latencyId = latencyId
+            self.pitchOffset = pitchOffset
         }
         
         var isFinished: Bool {
@@ -361,9 +363,6 @@ final class SoundManager {
         let currentVolume = volume
         
         for sound in activeSounds {
-            let remainingFrames = sound.frameCount - sound.currentFrame
-            let framesToCopy = min(frameCount, remainingFrames)
-            
             // Report playback started on first render
             if ENABLE_LATENCY_MEASUREMENT && !sound.hasReportedPlayback {
                 sound.hasReportedPlayback = true
@@ -371,22 +370,31 @@ final class SoundManager {
                 completeLatencyMeasurement(sound.latencyId)
             }
             
-            if framesToCopy > 0 {
-                let startSample = sound.currentFrame * Int(channelCount)
-                let sampleCount = framesToCopy * Int(channelCount)
+            // EARLY EXIT FOR PITCH
+            if sound.pitchOffset == 0.0 {
+                let remainingFrames = sound.frameCount - sound.currentFrame
+                let framesToCopy = min(frameCount, remainingFrames)
                 
-                sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
-                    var volumeScalar = currentVolume
-                    vDSP_vsma(
-                        pcmBuffer.baseAddress!.advanced(by: startSample), 1,   // A: source audio
-                        &volumeScalar,                                         // B: volume scalar
-                        outputBuffer, 1,                                       // C: current buffer
-                        outputBuffer, 1,                                       // D: output (same buffer)
-                        vDSP_Length(sampleCount)                               // N: sample count
-                    )
+                if framesToCopy > 0 {
+                    let startSample = sound.currentFrame * Int(channelCount)
+                    let sampleCount = framesToCopy * Int(channelCount)
+                    
+                    sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
+                        var volumeScalar = currentVolume
+                        vDSP_vsma(
+                            pcmBuffer.baseAddress!.advanced(by: startSample), 1,
+                            &volumeScalar,
+                            outputBuffer, 1,
+                            outputBuffer, 1,
+                            vDSP_Length(sampleCount)
+                        )
+                    }
+                    
+                    sound.currentFrame += framesToCopy
                 }
-                
-                sound.currentFrame += framesToCopy
+            } else {
+                // Pitch variation enabled RESAMPLING TIME
+                renderWithPitch(sound: sound, outputBuffer: outputBuffer, frameCount: frameCount, volume: currentVolume)
             }
         }
         
@@ -396,6 +404,53 @@ final class SoundManager {
         // Set buffer size and enqueue
         buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
         AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+    }
+    
+    // MARK: - Pitch Shifting
+    
+    /// Renders audio with pitch shifting via linear interpolation resampling
+    private func renderWithPitch(sound: ActiveSound, outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int, volume: Float) {
+        // Semitones to playback rate conv
+        let playbackRate = pow(2.0, sound.pitchOffset / 12.0)
+        
+        sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
+            for outputFrame in 0..<frameCount {
+                // Calc source position
+                let sourcePosition = Float(sound.currentFrame) + Float(outputFrame) * playbackRate
+                let sourceFrame = Int(sourcePosition)
+                
+                guard sourceFrame < sound.frameCount - 1 else {
+                    sound.currentFrame = sound.frameCount
+                    break
+                }
+                
+                // Linear interpolation fraction
+                let fraction = sourcePosition - Float(sourceFrame)
+                
+                // Interpolate l+r channels
+                let baseSample = sourceFrame * Int(channelCount)
+                let nextSample = baseSample + Int(channelCount)
+                
+                // Left channel
+                let leftCurrent = pcmBuffer[baseSample]
+                let leftNext = pcmBuffer[nextSample]
+                let leftInterpolated = leftCurrent + (leftNext - leftCurrent) * fraction
+                
+                // Right channel
+                let rightCurrent = pcmBuffer[baseSample + 1]
+                let rightNext = pcmBuffer[nextSample + 1]
+                let rightInterpolated = rightCurrent + (rightNext - rightCurrent) * fraction
+                
+                // Mix into output buffer with volume
+                let outputIndex = outputFrame * Int(channelCount)
+                outputBuffer[outputIndex] += leftInterpolated * volume
+                outputBuffer[outputIndex + 1] += rightInterpolated * volume
+            }
+            
+            // Update current frame based on how many source frames consumed
+            let framesConsumed = Int(Float(frameCount) * playbackRate)
+            sound.currentFrame += framesConsumed
+        }
     }
     
     private func primeBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
@@ -408,7 +463,7 @@ final class SoundManager {
     
     // MARK: - Public API
     
-    func play(sound name: String, latencyId: UUID? = nil) {
+    func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil) {
         guard isReady else {
             Logger.audio.warning("Playback blocked: audio system not ready")
             return
@@ -431,10 +486,19 @@ final class SoundManager {
             recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
         }
         
+        // Gen pitch offset [-variation, +variation]
+        let pitchOffset: Float
+        if pitchVariation > 0.0 {
+            pitchOffset = Float.random(in: -pitchVariation...pitchVariation)
+        } else {
+            pitchOffset = 0.0
+        }
+        
         let activeSound = ActiveSound(
             pcmData: pcmSound.data,
             frameCount: pcmSound.frameCount,
-            latencyId: latencyId
+            latencyId: latencyId,
+            pitchOffset: pitchOffset
         )
         
         activeSoundsLock.lock()
