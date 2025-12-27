@@ -49,28 +49,30 @@ struct GeneralSettingsView: View {
     @State private var openAtLogin = SettingsEngine.shared.isOpenAtLoginEnabled()
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
-            SettingsSectionView(title: "Startup") {
-                SettingsRowView(
-                    title: "Launch Thock at login",
-                    subtitle: "Automatically start Thock when you log in",
-                    control: AnyView(
-                        Toggle("", isOn: $openAtLogin)
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                            .labelsHidden()
-                            .onChange(of: openAtLogin) { newValue in
-                                SettingsEngine.shared.setOpenAtLogin(newValue)
-                            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                SettingsSectionView(title: "Startup") {
+                    SettingsRowView(
+                        title: "Launch Thock at login",
+                        subtitle: "Automatically start Thock when you log in",
+                        control: AnyView(
+                            Toggle("", isOn: $openAtLogin)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: openAtLogin) { newValue in
+                                    SettingsEngine.shared.setOpenAtLogin(newValue)
+                                }
+                        )
                     )
-                )
+                }
+                
+                Spacer()
             }
-            
-            Spacer()
+            .padding(.top, 30)
+            .padding([.leading, .trailing, .bottom], 30)
         }
-        .padding(.top, 30)
         .ignoresSafeArea(edges: .top)
-        .padding([.leading, .trailing, .bottom], 30)
         .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
             openAtLogin = SettingsEngine.shared.isOpenAtLoginEnabled()
         }
@@ -109,7 +111,7 @@ struct SettingsRowView: View {
     let control: AnyView
     
     var body: some View {
-        HStack {
+        HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 13))
@@ -119,6 +121,8 @@ struct SettingsRowView: View {
                     Text(subtitle)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             
@@ -126,7 +130,7 @@ struct SettingsRowView: View {
             
             control
         }
-        .padding(.horizontal, 16)
+        .padding(.leading, 16)
         .padding(.vertical, 12)
     }
 }
@@ -136,135 +140,163 @@ struct SoundSettingsView: View {
     @State private var ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
     @State private var autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
     @State private var idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
+    @State private var audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
-            SettingsSectionView(title: "Filters") {
-                SettingsRowView(
-                    title: "Disable sound for modifier keys",
-                    subtitle: "Mute sounds when pressing modifier keys (Cmd, Shift, etc.)",
-                    control: AnyView(
-                        Toggle("", isOn: $disableModifierKeys)
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                            .labelsHidden()
-                            .onChange(of: disableModifierKeys) { newValue in
-                                SettingsEngine.shared.setModifierKeySound(newValue)
-                            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                SettingsSectionView(title: "Filters") {
+                    SettingsRowView(
+                        title: "Disable sound for modifier keys",
+                        subtitle: "Mute sounds when pressing modifier keys (Cmd, Shift, etc.)",
+                        control: AnyView(
+                            Toggle("", isOn: $disableModifierKeys)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: disableModifierKeys) { newValue in
+                                    SettingsEngine.shared.setModifierKeySound(newValue)
+                                }
+                        )
                     )
-                )
+                    
+                    SettingsRowView(
+                        title: "Ignore rapid key events",
+                        subtitle: "Filter out key events that occur too quickly in succession",
+                        control: AnyView(
+                            Toggle("", isOn: $ignoreRapidKeyEvents)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: ignoreRapidKeyEvents) { newValue in
+                                    SettingsEngine.shared.setIgnoreRapidKeyEvents(newValue)
+                                }
+                        )
+                    )
+                }
                 
-                SettingsRowView(
-                    title: "Ignore rapid key events",
-                    subtitle: "Filter out key events that occur too quickly in succession",
-                    control: AnyView(
-                        Toggle("", isOn: $ignoreRapidKeyEvents)
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                            .labelsHidden()
-                            .onChange(of: ignoreRapidKeyEvents) { newValue in
-                                SettingsEngine.shared.setIgnoreRapidKeyEvents(newValue)
-                            }
+                SettingsSectionView(title: "Music Integration") {
+                    SettingsRowView(
+                        title: "Auto-mute with Music and Spotify",
+                        subtitle: "Automatically mute keyboard sounds when music is playing",
+                        control: AnyView(
+                            Toggle("", isOn: $autoMuteOnMusicPlayback)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: autoMuteOnMusicPlayback) { newValue in
+                                    SettingsEngine.shared.setAutoMuteOnMusicPlayback(newValue)
+                                }
+                        )
                     )
-                )
-            }
-            
-            SettingsSectionView(title: "Music Integration") {
-                SettingsRowView(
-                    title: "Auto-mute with Music and Spotify",
-                    subtitle: "Automatically mute keyboard sounds when music is playing",
-                    control: AnyView(
-                        Toggle("", isOn: $autoMuteOnMusicPlayback)
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                            .labelsHidden()
-                            .onChange(of: autoMuteOnMusicPlayback) { newValue in
-                                SettingsEngine.shared.setAutoMuteOnMusicPlayback(newValue)
+                }
+                
+                SettingsSectionView(title: "Performance") {
+                    SettingsRowView(
+                        title: "Audio Latency",
+                        subtitle: "- Ultra Low: most responsive, highest CPU usage\n- Low: very responsive, high CPU usage\n- Normal: balanced performance (recommended)\n- High: lower CPU usage, slight delay\n- Very High: lowest CPU usage, noticeable delay",
+                        control: AnyView(
+                            Picker("", selection: $audioBufferSize) {
+                                Text("Ultra Low").tag(UInt32(64))
+                                Text("Low").tag(UInt32(128))
+                                Text("Normal").tag(UInt32(256))
+                                Text("High").tag(UInt32(512))
+                                Text("Very High").tag(UInt32(1024))
                             }
+                                .pickerStyle(.menu)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: audioBufferSize) { newValue in
+                                    SettingsEngine.shared.setAudioBufferSize(newValue)
+                                }
+                        )
                     )
-                )
-            }
-            
-            SettingsSectionView(title: "Performance") {
-                SettingsRowView(
-                    title: "Reduce CPU when idle",
-                    subtitle: "Stops engine and adds a tiny delay on first sound after",
-                    control: AnyView(
-                        Picker("", selection: $idleTimeoutSeconds) {
-                            Text("5 seconds").tag(5.0)
-                            Text("10 seconds").tag(10.0)
-                            Text("30 seconds").tag(30.0)
-                            Text("1 minute").tag(60.0)
-                            Text("5 minute").tag(300.0)
-                            Text("Never").tag(0.0)
-                        }
-                            .pickerStyle(.menu)
-                            .controlSize(.small)
-                            .labelsHidden()
-                            .onChange(of: idleTimeoutSeconds) { newValue in
-                                SettingsEngine.shared.setIdleTimeoutSeconds(newValue)
+                    
+                    SettingsRowView(
+                        title: "Reduce CPU when idle",
+                        subtitle: "Stops audio engine after inactivity to reduce CPU usage.\nFirst sound after idle may have a tiny delay.\nSet to 'Never' to keep engine always running.",
+                        control: AnyView(
+                            Picker("", selection: $idleTimeoutSeconds) {
+                                Text("5 seconds").tag(5.0)
+                                Text("10 seconds").tag(10.0)
+                                Text("30 seconds").tag(30.0)
+                                Text("1 minute").tag(60.0)
+                                Text("5 minute").tag(300.0)
+                                Text("Never").tag(0.0)
                             }
+                                .pickerStyle(.menu)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: idleTimeoutSeconds) { newValue in
+                                    SettingsEngine.shared.setIdleTimeoutSeconds(newValue)
+                                }
+                        )
                     )
-                )
+                }
+                
+                Spacer()
             }
-            
-            Spacer()
+            .padding(.top, 30)
+            .padding([.leading, .trailing, .bottom], 30)
         }
-        .padding(.top, 30)
         .ignoresSafeArea(edges: .top)
-        .padding([.leading, .trailing, .bottom], 30)
         .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
             disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
             ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
+            audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
         }
     }
 }
 
 struct ShortcutsSettingsView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
-            // Keyboard Section
-            SettingsSectionView(title: "Global Shortcuts") {
-                SettingsRowView(
-                    title: "Toggle Thock",
-                    subtitle: "Quickly enable or disable Thock from anywhere",
-                    control: AnyView(
-                        KeyboardShortcuts.Recorder("", name: .toggleThock)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                // Keyboard Section
+                SettingsSectionView(title: "Global Shortcuts") {
+                    SettingsRowView(
+                        title: "Toggle Thock",
+                        subtitle: "Quickly enable or disable Thock from anywhere",
+                        control: AnyView(
+                            KeyboardShortcuts.Recorder("", name: .toggleThock)
+                        )
                     )
-                )
+                }
+                
+                Spacer()
             }
-            
-            Spacer()
+            .padding(.top, 30)
+            .padding([.leading, .trailing, .bottom], 30)
         }
-        .padding(.top, 30)
         .ignoresSafeArea(edges: .top)
-        .padding([.leading, .trailing, .bottom], 30)
     }
 }
 
 struct AboutSettingsView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
-            Image("SettingsBanner")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: .infinity)
-                .cornerRadius(8)
-                .padding(.horizontal, 30)
-            
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Version \(AppInfoHelper.appVersion)")
-                    .foregroundColor(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                Image("SettingsBanner")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity)
+                    .cornerRadius(8)
+                    .padding(.horizontal, 30)
+                
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Version \(AppInfoHelper.appVersion)")
+                        .foregroundColor(.secondary)
+                }
+                .padding([.leading, .trailing, .bottom], 30)
+                
+                Spacer()
             }
-            .padding([.leading, .trailing, .bottom], 30)
-            
-            Spacer()
+            .padding(.top, 30)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.top, 30)
         .ignoresSafeArea(edges: .top)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

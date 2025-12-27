@@ -9,6 +9,7 @@ final class SettingsManager {
     static let defaultIgnoreRapidKeyEvents: Bool = false
     static let defaultAutoMuteOnMusicPlayback: Bool = false
     static let defaultIdleTimeoutSeconds: TimeInterval = 10.0
+    static let defaultAudioBufferSize: UInt32 = 256
     
     
     private init() {}
@@ -46,6 +47,12 @@ final class SettingsManager {
         get { UserDefaults.idleTimeoutSeconds }
         set { UserDefaults.idleTimeoutSeconds = newValue }
     }
+    
+    /// Audio buffer size in frames. Lower values reduce latency but use more CPU.
+    var audioBufferSize: UInt32 {
+        get { UserDefaults.audioBufferSize }
+        set { UserDefaults.audioBufferSize = newValue }
+    }
 }
 
 private extension UserDefaults {
@@ -55,6 +62,7 @@ private extension UserDefaults {
         static let ignoreRapidKeyEvents = "ignoreRapidKeyEvents"
         static let autoMuteOnMusicPlayback = "autoMuteOnMusicPlayback"
         static let idleTimeoutSeconds = "idleTimeoutSeconds"
+        static let audioBufferSize = "audioBufferSize"
     }
     
     static var openAtLogin: Bool {
@@ -114,6 +122,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.idleTimeoutSeconds)
+        }
+    }
+    
+    static var audioBufferSize: UInt32 {
+        get {
+            if standard.object(forKey: Keys.audioBufferSize) == nil {
+                return SettingsManager.defaultAudioBufferSize
+            }
+            return UInt32(standard.integer(forKey: Keys.audioBufferSize))
+        }
+        set {
+            standard.set(newValue, forKey: Keys.audioBufferSize)
         }
     }
 }

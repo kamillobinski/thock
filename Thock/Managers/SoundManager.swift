@@ -5,9 +5,6 @@ import CoreAudio
 import OSLog
 import Accelerate
 
-// MARK: - Global Configuration
-let AUDIO_BUFFER_SIZE: UInt32 = 256
-
 final class SoundManager {
     static let shared = SoundManager()
     
@@ -28,7 +25,8 @@ final class SoundManager {
     private var sampleRate: Float64 = 44100.0
     private let channelCount: UInt32 = 2
     private let bitsPerChannel: UInt32 = 32
-    private let framesPerBuffer: UInt32 = AUDIO_BUFFER_SIZE
+    private var framesPerBuffer: UInt32
+    private var currentBufferSize: UInt32 = SettingsManager.shared.audioBufferSize
     
     private var audioFormat = AudioStreamBasicDescription()
     
@@ -70,6 +68,7 @@ final class SoundManager {
     
     // MARK: - Initialization
     private init() {
+        framesPerBuffer = currentBufferSize
         detectHardwareSampleRate()
         setupAudioFormat()
         configureLowLatencyAudio()
@@ -85,10 +84,46 @@ final class SoundManager {
     }
     
     @objc private func handleSettingsChange() {
+        let newBufferSize = SettingsManager.shared.audioBufferSize
+        
+        // Handle buffer size change
+        if newBufferSize != currentBufferSize {
+            reinitializeAudioQueue(with: newBufferSize)
+        }
+        
         // Reset idle timer with new timeout value
         if isQueueRunning {
             resetIdleTimer()
         }
+    }
+    
+    private func reinitializeAudioQueue(with newBufferSize: UInt32) {
+        // Cancel idle timer
+        idleTimeoutTimer?.cancel()
+        idleTimeoutTimer = nil
+        
+        // Stop and dispose current audio queue
+        if let queue = audioQueue {
+            AudioQueueStop(queue, true)
+            AudioQueueDispose(queue, true)
+        }
+        
+        // update state
+        activeSoundsLock.lock()
+        currentBufferSize = newBufferSize
+        framesPerBuffer = newBufferSize
+        audioQueue = nil
+        audioBuffers = []
+        isQueueRunning = false
+        activeSounds = []
+        activeSoundsLock.unlock()
+        
+        // Reinitialize audio queue
+        setupAudioFormat()
+        configureLowLatencyAudio()
+        createAudioQueue()
+        
+        Logger.audio.info("Audio queue reinitialized with buffer size: \(newBufferSize) frames")
     }
     
     deinit {
@@ -209,7 +244,7 @@ final class SoundManager {
             return
         }
         
-        var bufferSize: UInt32 = AUDIO_BUFFER_SIZE
+        var bufferSize: UInt32 = currentBufferSize
         var bufferAddress = AudioObjectPropertyAddress(
             mSelector: kAudioDevicePropertyBufferFrameSize,
             mScope: kAudioObjectPropertyScopeGlobal,
@@ -226,8 +261,8 @@ final class SoundManager {
         )
         
         if bufferStatus == noErr {
-            let latencyMs = (Double(AUDIO_BUFFER_SIZE) / sampleRate) * 1000.0
-            Logger.audio.info("Hardware buffer configured: \(AUDIO_BUFFER_SIZE) frames (~\(String(format: "%.1f", latencyMs))ms)")
+            let latencyMs = (Double(currentBufferSize) / sampleRate) * 1000.0
+            Logger.audio.info("Hardware buffer configured: \(self.currentBufferSize) frames (~\(String(format: "%.1f", latencyMs))ms)")
         }
         
         measureHardwareLatency(deviceID: defaultDeviceID)

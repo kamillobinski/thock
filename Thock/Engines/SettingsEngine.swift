@@ -79,13 +79,22 @@ final class SettingsEngine {
         SettingsManager.shared.autoMuteOnMusicPlayback = enabled
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
-
+    
     func getIdleTimeoutSeconds() -> TimeInterval {
         return SettingsManager.shared.idleTimeoutSeconds
     }
-
+    
     func setIdleTimeoutSeconds(_ seconds: TimeInterval) {
         SettingsManager.shared.idleTimeoutSeconds = seconds
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    func getAudioBufferSize() -> UInt32 {
+        return SettingsManager.shared.audioBufferSize
+    }
+    
+    func setAudioBufferSize(_ bufferSize: UInt32) {
+        SettingsManager.shared.audioBufferSize = bufferSize
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
 }
