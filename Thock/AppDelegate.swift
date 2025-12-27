@@ -1,10 +1,3 @@
-//
-//  AppDelegate.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 07/03/2025.
-//
-
 import Cocoa
 import AppKit
 import UserNotifications
@@ -18,8 +11,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
+        
         if !requestAccessibilityPermissions() {
-            showPermissionRequiredDialog()
+            if isLikelyUpdate() {
+                showUpdatePermissionDialog()
+            } else {
+                showPermissionRequiredDialog()
+            }
             return
         }
         continueAppInitialization()
@@ -38,6 +36,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     }
     
     // MARK: - Setup Methods
+    
+    /// Detects if this is likely an app update by checking for existing user data.
+    private func isLikelyUpdate() -> Bool {
+        let defaults = UserDefaults.standard
+        
+        // Check for any existing settings
+        return defaults.object(forKey: "perDeviceVolume") != nil ||
+        defaults.object(forKey: "currentMode") != nil ||
+        defaults.object(forKey: "openAtLogin") != nil ||
+        defaults.object(forKey: "disableModifierKeys") != nil ||
+        defaults.object(forKey: "ignoreRapidKeyEvents") != nil ||
+        defaults.object(forKey: "autoMuteOnMusicPlayback") != nil ||
+        defaults.object(forKey: "idleTimeoutSeconds") != nil ||
+        defaults.object(forKey: "audioBufferSize") != nil
+    }
     
     /// Checks and requests accessibility permissions.
     private func requestAccessibilityPermissions() -> Bool {
@@ -75,25 +88,51 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         GlobalShortcutManager.shared.setupGlobalShortcuts()
     }
     
-    /// Shows a dialog explaining why accessibility permissions are required and waits for them.
+    /// Shows a dialog explaining why accessibility permissions are required (first-time setup).
     private func showPermissionRequiredDialog() {
         let alert = NSAlert()
         alert.messageText = "Accessibility Permissions Required"
-        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds. \n\nSeeing this after an update?\n - Click 'Open System Preferences'. \n - Remove the old entry.\n - Quit and relaunch the app.\n - Enable the new entry."
+        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds.\n\nClick 'Open System Settings' below, then enable Thock in the Accessibility list."
         alert.alertStyle = .critical
-        alert.addButton(withTitle: "Open System Preferences")
+        alert.addButton(withTitle: "Open System Settings")
         alert.addButton(withTitle: "Quit")
         
         let response = alert.runModal()
         
         if response == .alertFirstButtonReturn {
-            // Open System Preferences to Accessibility
-            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-            self.showWaitingAlert()
+            openAccessibilitySettings()
+            showWaitingAlert()
         } else {
-            // User chose Quit
             NSApplication.shared.terminate(nil)
         }
+    }
+    
+    /// Shows a dialog for users who need to refresh permissions after an update.
+    private func showUpdatePermissionDialog() {
+        let alert = NSAlert()
+        alert.messageText = "Accessibility Permission Refresh"
+        alert.informativeText = "Annoying update step ahead!\nWe'd automate this if we could, but it requires the $100 Apple Developer Program.\n\n1. Remove the old Thock entry from Accessibility and quit the app.\n2. Reopen Thock and enable the new entry that appears."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Done")
+        alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Quit Thock")
+        
+        let response = alert.runModal()
+        
+        if response == .alertFirstButtonReturn {
+            showWaitingAlert()
+        } else if response == .alertSecondButtonReturn {
+            openAccessibilitySettings()
+            showWaitingAlert()
+        } else {
+            NSApplication.shared.terminate(nil)
+        }
+    }
+    
+    /// Opens System Settings to the Accessibility privacy section.
+    private func openAccessibilitySettings() {
+        let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility")!
+        NSWorkspace.shared.open(url)
     }
     
     /// Shows a waiting alert while polling for permissions.
