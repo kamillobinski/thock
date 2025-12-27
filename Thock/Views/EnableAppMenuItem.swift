@@ -33,6 +33,7 @@ class EnableAppMenuItem: NSView {
         toggleSwitch.target = self
         toggleSwitch.action = #selector(switchToggled)
         toggleSwitch.translatesAutoresizingMaskIntoConstraints = false
+        toggleSwitch.controlSize = .small
         
         // Add Views
         addSubview(label)
