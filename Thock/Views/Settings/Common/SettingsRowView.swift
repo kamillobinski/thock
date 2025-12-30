@@ -8,7 +8,7 @@ struct SettingsRowView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .top) {
+            HStack(alignment: subtitle == nil ? .center : .top) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
                         .font(.system(size: 13))
