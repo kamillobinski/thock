@@ -1,10 +1,3 @@
-//
-//  MenuBarController.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 07/03/2025.
-//
-
 import Cocoa
 import SwiftUI
 
@@ -279,10 +272,10 @@ class MenuBarController {
     private func createVolumeSlider() -> NSView {
         let hostingView = NSHostingView(rootView: VolumeSliderMenuItem(
             volume: Binding(
-                get: { Double(SoundEngine.shared.getVolume()) },
+                get: { Double(SettingsEngine.shared.getVolume()) },
                 set: { _ in }
             ),
-            onVolumeChange: { newValue in SoundEngine.shared.setVolume(Float(newValue)) },
+            onVolumeChange: { newValue in SettingsEngine.shared.setVolume(Float(newValue)) },
             step: 0.01
         ))
         
@@ -297,8 +290,8 @@ class MenuBarController {
     /// Creates a pitch variation button row
     private func createPitchButtonRowItem() -> NSMenuItem {
         let pitchBinding = Binding<Float>(
-            get: { SoundEngine.shared.getPitchVariation() },
-            set: { newVal in SoundEngine.shared.setPitchVariation(newVal) }
+            get: { SettingsEngine.shared.getPitchVariation() },
+            set: { newVal in SettingsEngine.shared.setPitchVariation(newVal) }
         )
         
         let view = PitchVariationButtonRow(

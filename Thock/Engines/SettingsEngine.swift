@@ -75,7 +75,6 @@ final class SettingsEngine {
     }
     
     func setAutoMuteOnMusicPlayback(_ enabled: Bool) {
-        //        print("Set auto-mute on music playback: \(enabled)")
         SettingsManager.shared.autoMuteOnMusicPlayback = enabled
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
@@ -105,6 +104,38 @@ final class SettingsEngine {
     func setSelectedAudioDeviceUID(_ uid: String?) {
         SettingsManager.shared.selectedAudioDeviceUID = uid
         NotificationCenter.default.post(name: .audioDeviceDidChange, object: nil)
+    }
+    
+    func getVolume(for deviceUID: String) -> Float {
+        let perDeviceVolumes = SettingsManager.shared.perDeviceVolumes
+        return perDeviceVolumes[deviceUID] ?? 0.5
+    }
+    
+    func setVolume(_ volume: Float, for deviceUID: String) {
+        let clampedVolume = max(0.0, min(1.0, volume))
+        var perDeviceVolumes = SettingsManager.shared.perDeviceVolumes
+        perDeviceVolumes[deviceUID] = clampedVolume
+        SettingsManager.shared.perDeviceVolumes = perDeviceVolumes
+        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
+    }
+    
+    func getVolume() -> Float {
+        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
+        return getVolume(for: deviceUID)
+    }
+    
+    func setVolume(_ volume: Float) {
+        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
+        setVolume(volume, for: deviceUID)
+    }
+    
+    func getPitchVariation() -> Float {
+        return SettingsManager.shared.pitchVariation
+    }
+    
+    func setPitchVariation(_ variation: Float) {
+        SettingsManager.shared.pitchVariation = variation
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
 }
 

@@ -11,6 +11,8 @@ final class SettingsManager {
     static let defaultIdleTimeoutSeconds: TimeInterval = 10.0
     static let defaultAudioBufferSize: UInt32 = 256
     static let defaultSelectedAudioDeviceUID: String? = nil
+    static let defaultPerDeviceVolumes: [String: Float] = [:]
+    static let defaultPitchVariation: Float = 0.0
     
     
     private init() {}
@@ -19,9 +21,7 @@ final class SettingsManager {
     /// Automatically updates the system login item registration.
     var openAtLogin: Bool {
         get { UserDefaults.openAtLogin }
-        set {
-            UserDefaults.openAtLogin = newValue
-        }
+        set { UserDefaults.openAtLogin = newValue }
     }
     
     /// Whether modifier keys should be ignored in sound playback.
@@ -60,6 +60,18 @@ final class SettingsManager {
         get { UserDefaults.selectedAudioDeviceUID }
         set { UserDefaults.selectedAudioDeviceUID = newValue }
     }
+    
+    /// Per-device volume levels. Dictionary keyed by device UID.
+    var perDeviceVolumes: [String: Float] {
+        get { UserDefaults.perDeviceVolumes }
+        set { UserDefaults.perDeviceVolumes = newValue }
+    }
+
+    /// Pitch variation range in semitones for random pitch shifts.
+    var pitchVariation: Float {
+        get { UserDefaults.pitchVariation }
+        set { UserDefaults.pitchVariation = newValue }
+    }
 }
 
 private extension UserDefaults {
@@ -71,6 +83,8 @@ private extension UserDefaults {
         static let idleTimeoutSeconds = "idleTimeoutSeconds"
         static let audioBufferSize = "audioBufferSize"
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
+        static let perDeviceVolumes = "perDeviceVolume"
+        static let pitchVariation = "pitchVariation"
     }
     
     static var openAtLogin: Bool {
@@ -154,6 +168,30 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.selectedAudioDeviceUID)
+        }
+    }
+    
+    static var perDeviceVolumes: [String: Float] {
+        get {
+            if standard.object(forKey: Keys.perDeviceVolumes) == nil {
+                return SettingsManager.defaultPerDeviceVolumes
+            }
+            return standard.dictionary(forKey: Keys.perDeviceVolumes) as? [String: Float] ?? SettingsManager.defaultPerDeviceVolumes
+        }
+        set {
+            standard.set(newValue, forKey: Keys.perDeviceVolumes)
+        }
+    }
+
+    static var pitchVariation: Float {
+        get {
+            if standard.object(forKey: Keys.pitchVariation) == nil {
+                return SettingsManager.defaultPitchVariation
+            }
+            return standard.float(forKey: Keys.pitchVariation)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.pitchVariation)
         }
     }
 }

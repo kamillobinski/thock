@@ -1,11 +1,5 @@
 import Foundation
 
-// MARK: - UserDefaults Keys
-
-extension UserDefaults {
-    static let perDeviceVolumeKey = "perDeviceVolume"
-}
-
 // MARK: - Sound Engine
 
 /// Orchestrates sound playback by coordinating between keyboard events,
@@ -13,17 +7,9 @@ extension UserDefaults {
 final class SoundEngine {
     static let shared = SoundEngine()
     
-    // MARK: - Properties
-    
-    /// Pitch variation range
-    private var pitchVariation: Float = 0.0
-    
     // MARK: - Initialization
     
-    private init() {
-        // Restore volume for the current audio device
-        SoundManager.shared.applyPerDeviceVolume()
-    }
+    private init() {}
     
     // MARK: - Sound Loading
     
@@ -63,46 +49,7 @@ final class SoundEngine {
     ///   - name: The sound file name
     ///   - latencyId: Optional UUID for latency measurement tracking
     func play(sound name: String, latencyId: UUID? = nil) {
+        let pitchVariation = SettingsEngine.shared.getPitchVariation()
         SoundManager.shared.play(sound: name, pitchVariation: pitchVariation, latencyId: latencyId)
-    }
-    
-    // MARK: - Volume Control
-    
-    /// Sets volume and persists it per audio device
-    /// - Parameter volume: Volume level (0.0 to 1.0)
-    func setVolume(_ volume: Float) {
-        SoundManager.shared.setVolume(volume)
-        
-        // Save volume preference for current audio device
-        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
-        var perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
-        perDeviceVolumes[deviceUID] = volume
-        UserDefaults.standard.set(perDeviceVolumes, forKey: UserDefaults.perDeviceVolumeKey)
-        
-        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
-    }
-    
-    /// Gets current volume for the active audio device
-    /// - Returns: Volume level (0.0 to 1.0)
-    func getVolume() -> Float {
-        let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
-        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
-        
-        // Return device-specific volume or fall back to global volume
-        return perDeviceVolumes[deviceUID] ?? SoundManager.shared.getVolume()
-    }
-    
-    // MARK: - Effects
-    
-    /// Sets pitch variation range for random pitch shifts
-    /// - Parameter variation: Pitch variation range in semitones
-    func setPitchVariation(_ variation: Float) {
-        pitchVariation = variation
-    }
-    
-    /// Gets current pitch variation setting
-    /// - Returns: Pitch variation range
-    func getPitchVariation() -> Float {
-        return pitchVariation
     }
 }

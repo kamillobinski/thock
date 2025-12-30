@@ -41,7 +41,6 @@ final class SoundManager {
     
     // MARK: - Volume Control
     private var volume: Float = 0.5
-    private let volumeLock = NSLock()
     
     // MARK: - Models
     private struct PCMSound {
@@ -100,6 +99,17 @@ final class SoundManager {
             name: .systemDefaultAudioDeviceDidChange,
             object: nil
         )
+
+        // Listen for volume changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleVolumeChange),
+            name: .volumeDidChange,
+            object: nil
+        )
+
+        // Initialize volume from settings
+        updateVolumeFromSettings()
     }
     
     @objc private func handleSettingsChange() {
@@ -120,18 +130,28 @@ final class SoundManager {
     @objc private func handleAudioDeviceChange() {
         Logger.audio.info("Audio device selection changed, reinitializing audio queue")
         reinitializeAudioQueue(with: currentBufferSize)
-        
-        applyPerDeviceVolume()
-        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
+
+        updateVolumeFromSettings(postNotification: true)
     }
-    
+
     @objc private func handleSystemDefaultDeviceChange() {
         // only if selected "System Default"
         if SettingsEngine.shared.getSelectedAudioDeviceUID() == nil {
             Logger.audio.info("System default device changed while using System Default, reinitializing audio queue")
             reinitializeAudioQueue(with: currentBufferSize)
-            
-            applyPerDeviceVolume()
+
+            updateVolumeFromSettings(postNotification: true)
+        }
+    }
+
+    @objc private func handleVolumeChange() {
+        updateVolumeFromSettings()
+    }
+
+    private func updateVolumeFromSettings(postNotification: Bool = false) {
+        let deviceUID = getCurrentOutputDeviceUID()
+        volume = SettingsEngine.shared.getVolume(for: deviceUID)
+        if postNotification {
             NotificationCenter.default.post(name: .volumeDidChange, object: nil)
         }
     }
@@ -582,18 +602,6 @@ final class SoundManager {
         activeSoundsLock.unlock()
     }
     
-    func setVolume(_ newVolume: Float) {
-        volumeLock.lock()
-        volume = max(0.0, min(1.0, newVolume))
-        volumeLock.unlock()
-    }
-    
-    func getVolume() -> Float {
-        volumeLock.lock()
-        defer { volumeLock.unlock() }
-        return volume
-    }
-    
     func preloadSounds(for mode: Mode) {
         soundLibrary.removeAll()
         
@@ -806,14 +814,7 @@ final class SoundManager {
         }
         return Self.defaultDeviceUID
     }
-    
-    func applyPerDeviceVolume() {
-        let deviceUID = getCurrentOutputDeviceUID()
-        let perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
-        let savedVolume = perDeviceVolumes[deviceUID] ?? 0.5
-        setVolume(savedVolume)
-    }
-    
+
     // MARK: - Helpers
     
     private func resolveSoundDirectory(for mode: Mode) -> URL? {

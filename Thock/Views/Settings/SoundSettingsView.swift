@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SoundSettingsView: View {
-    @State private var volume = Double(SoundEngine.shared.getVolume())
+    @State private var volume = Double(SettingsEngine.shared.getVolume())
     @State private var disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
     @State private var ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
     @State private var autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
@@ -26,7 +26,7 @@ struct SoundSettingsView: View {
                                 Slider(value: $volume, in: 0...1, step: 0.125)
                                     .frame(width: 240)
                                     .onChange(of: volume) { newValue in
-                                        SoundEngine.shared.setVolume(Float(newValue))
+                                        SettingsEngine.shared.setVolume(Float(newValue))
                                     }
                                 
                                 Image(systemName: "speaker.wave.3.fill")
@@ -194,7 +194,7 @@ struct SoundSettingsView: View {
             AudioDeviceManager.shared.stopMonitoring()
         }
         .onReceive(NotificationCenter.default.publisher(for: .volumeDidChange)) { _ in
-            volume = Double(SoundEngine.shared.getVolume())
+            volume = Double(SettingsEngine.shared.getVolume())
         }
         .onReceive(NotificationCenter.default.publisher(for: .audioDeviceListDidChange)) { _ in
             loadAvailableDevices()
