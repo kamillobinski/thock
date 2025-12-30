@@ -78,6 +78,8 @@ final class SoundEngine {
         var perDeviceVolumes = UserDefaults.standard.dictionary(forKey: UserDefaults.perDeviceVolumeKey) as? [String: Float] ?? [:]
         perDeviceVolumes[deviceUID] = volume
         UserDefaults.standard.set(perDeviceVolumes, forKey: UserDefaults.perDeviceVolumeKey)
+        
+        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
     }
     
     /// Gets current volume for the active audio device

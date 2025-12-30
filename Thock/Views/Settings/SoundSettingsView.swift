@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SoundSettingsView: View {
+    @State private var volume = Double(SoundEngine.shared.getVolume())
     @State private var disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
     @State private var ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
     @State private var autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
@@ -10,6 +11,31 @@ struct SoundSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
+                SettingsSectionView(title: "Output") {
+                    SettingsRowView(
+                        title: "Volume",
+                        subtitle: nil,
+                        control: AnyView(
+                            HStack(spacing: 8) {
+                                Image(systemName: "speaker.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                                
+                                Slider(value: $volume, in: 0...1, step: 0.125)
+                                    .frame(width: 240)
+                                    .onChange(of: volume) { newValue in
+                                        SoundEngine.shared.setVolume(Float(newValue))
+                                    }
+                                
+                                Image(systemName: "speaker.wave.3.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                        ),
+                        isLast: true
+                    )
+                }
+                
                 SettingsSectionView(title: "Filters") {
                     SettingsRowView(
                         title: "Disable sound for modifier keys",
@@ -36,12 +62,9 @@ struct SoundSettingsView: View {
                                 .onChange(of: ignoreRapidKeyEvents) { newValue in
                                     SettingsEngine.shared.setIgnoreRapidKeyEvents(newValue)
                                 }
-                        ),
-                        isLast: true
+                        )
                     )
-                }
-                
-                SettingsSectionView(title: "Music Integration") {
+                    
                     SettingsRowView(
                         title: "Auto-mute with Music and Spotify",
                         subtitle: "Automatically mute sounds when music is playing",
@@ -60,7 +83,7 @@ struct SoundSettingsView: View {
                 
                 SettingsSectionView(title: "Performance") {
                     SettingsRowView(
-                        title: "Audio Latency",
+                        title: "Audio latency",
                         subtitle: "- Ultra Low: most responsive, highest CPU usage\n- Low: very responsive, high CPU usage\n- Normal: balanced performance (recommended)\n- High: lower CPU usage, slight delay\n- Very High: lowest CPU usage, noticeable delay",
                         control: AnyView(
                             Picker("", selection: $audioBufferSize) {
@@ -107,6 +130,9 @@ struct SoundSettingsView: View {
             .padding([.leading, .trailing, .bottom], 20)
         }
         .ignoresSafeArea(edges: .top)
+        .onReceive(NotificationCenter.default.publisher(for: .volumeDidChange)) { _ in
+            volume = Double(SoundEngine.shared.getVolume())
+        }
         .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
             disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
             ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
