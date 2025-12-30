@@ -10,6 +10,7 @@ final class SettingsManager {
     static let defaultAutoMuteOnMusicPlayback: Bool = false
     static let defaultIdleTimeoutSeconds: TimeInterval = 10.0
     static let defaultAudioBufferSize: UInt32 = 256
+    static let defaultSelectedAudioDeviceUID: String? = nil
     
     
     private init() {}
@@ -53,6 +54,12 @@ final class SettingsManager {
         get { UserDefaults.audioBufferSize }
         set { UserDefaults.audioBufferSize = newValue }
     }
+    
+    /// Selected audio output device UID. nil means use system default.
+    var selectedAudioDeviceUID: String? {
+        get { UserDefaults.selectedAudioDeviceUID }
+        set { UserDefaults.selectedAudioDeviceUID = newValue }
+    }
 }
 
 private extension UserDefaults {
@@ -63,6 +70,7 @@ private extension UserDefaults {
         static let autoMuteOnMusicPlayback = "autoMuteOnMusicPlayback"
         static let idleTimeoutSeconds = "idleTimeoutSeconds"
         static let audioBufferSize = "audioBufferSize"
+        static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
     }
     
     static var openAtLogin: Bool {
@@ -134,6 +142,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.audioBufferSize)
+        }
+    }
+    
+    static var selectedAudioDeviceUID: String? {
+        get {
+            if standard.object(forKey: Keys.selectedAudioDeviceUID) == nil {
+                return SettingsManager.defaultSelectedAudioDeviceUID
+            }
+            return standard.string(forKey: Keys.selectedAudioDeviceUID)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.selectedAudioDeviceUID)
         }
     }
 }

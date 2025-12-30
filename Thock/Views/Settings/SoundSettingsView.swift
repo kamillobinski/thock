@@ -7,6 +7,8 @@ struct SoundSettingsView: View {
     @State private var autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
     @State private var idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
     @State private var audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
+    @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
+    @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
     
     var body: some View {
         ScrollView {
@@ -31,6 +33,31 @@ struct SoundSettingsView: View {
                                     .font(.system(size: 11))
                                     .foregroundColor(.secondary)
                             }
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: "Play sound effects through",
+                        subtitle: nil,
+                        control: AnyView(
+                            Picker("", selection: $selectedDeviceUID) {
+                                Text("System Default").tag("system-default")
+                                
+                                if !availableDevices.isEmpty {
+                                    Divider()
+                                }
+                                
+                                ForEach(availableDevices) { device in
+                                    Text(device.name).tag(device.id)
+                                }
+                            }
+                                .pickerStyle(.menu)
+                                .controlSize(.small)
+                                .frame(width: 200, alignment: .trailing)
+                                .onChange(of: selectedDeviceUID) { newValue in
+                                    let uidToSave = newValue == "system-default" ? nil : newValue
+                                    SettingsEngine.shared.setSelectedAudioDeviceUID(uidToSave)
+                                }
                         ),
                         isLast: true
                     )
@@ -130,8 +157,21 @@ struct SoundSettingsView: View {
             .padding([.leading, .trailing, .bottom], 20)
         }
         .ignoresSafeArea(edges: .top)
+        .onAppear {
+            loadAvailableDevices()
+            AudioDeviceManager.shared.startMonitoring()
+        }
+        .onDisappear {
+            AudioDeviceManager.shared.stopMonitoring()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .volumeDidChange)) { _ in
             volume = Double(SoundEngine.shared.getVolume())
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .audioDeviceListDidChange)) { _ in
+            loadAvailableDevices()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .audioDeviceDidChange)) { _ in
+            selectedDeviceUID = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
         }
         .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
             disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
@@ -140,6 +180,25 @@ struct SoundSettingsView: View {
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
         }
+    }
+    
+    private func loadAvailableDevices() {
+        var devices = AudioDeviceManager.shared.getAvailableOutputDevices()
+            .filter { $0.id != "system-default" }
+        
+        if let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID(),
+           selectedUID != "system-default",
+           !devices.contains(where: { $0.id == selectedUID }) {
+            // Add disconnected device to the list
+            let disconnectedDevice = AudioDeviceManager.AudioDevice(
+                id: selectedUID,
+                name: "Unknown Device (Disconnected)",
+                deviceID: 0
+            )
+            devices.insert(disconnectedDevice, at: 0)
+        }
+        
+        availableDevices = devices
     }
 }
 

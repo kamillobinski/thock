@@ -97,10 +97,20 @@ final class SettingsEngine {
         SettingsManager.shared.audioBufferSize = bufferSize
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
+    
+    func getSelectedAudioDeviceUID() -> String? {
+        return SettingsManager.shared.selectedAudioDeviceUID
+    }
+    
+    func setSelectedAudioDeviceUID(_ uid: String?) {
+        SettingsManager.shared.selectedAudioDeviceUID = uid
+        NotificationCenter.default.post(name: .audioDeviceDidChange, object: nil)
+    }
 }
 
 extension Notification.Name {
     static let settingsDidChange = Notification.Name("settingsDidChange")
     static let appStateDidChange = Notification.Name("appStateDidChange")
     static let volumeDidChange = Notification.Name("volumeDidChange")
+    static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
 }

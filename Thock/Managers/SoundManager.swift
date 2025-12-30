@@ -84,6 +84,22 @@ final class SoundManager {
             name: .settingsDidChange,
             object: nil
         )
+        
+        // Listen for audio device changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioDeviceChange),
+            name: .audioDeviceDidChange,
+            object: nil
+        )
+        
+        // Listen for system default device changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSystemDefaultDeviceChange),
+            name: .systemDefaultAudioDeviceDidChange,
+            object: nil
+        )
     }
     
     @objc private func handleSettingsChange() {
@@ -98,6 +114,25 @@ final class SoundManager {
         // Reset idle timer with new timeout value
         if isQueueRunning {
             resetIdleTimer()
+        }
+    }
+    
+    @objc private func handleAudioDeviceChange() {
+        Logger.audio.info("Audio device selection changed, reinitializing audio queue")
+        reinitializeAudioQueue(with: currentBufferSize)
+        
+        applyPerDeviceVolume()
+        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
+    }
+    
+    @objc private func handleSystemDefaultDeviceChange() {
+        // only if selected "System Default"
+        if SettingsEngine.shared.getSelectedAudioDeviceUID() == nil {
+            Logger.audio.info("System default device changed while using System Default, reinitializing audio queue")
+            reinitializeAudioQueue(with: currentBufferSize)
+            
+            applyPerDeviceVolume()
+            NotificationCenter.default.post(name: .volumeDidChange, object: nil)
         }
     }
     
@@ -208,10 +243,11 @@ final class SoundManager {
     
     // MARK: - Audio Format Setup
     private func detectHardwareSampleRate() {
-        guard let defaultDeviceID = getDefaultOutputDeviceID() else {
-            Logger.audio.warning("Default output device unavailable, using 44.1kHz fallback")
+        guard let preferredDeviceID = getPreferredOutputDeviceID() else {
+            Logger.audio.warning("Preferred output device unavailable, using 44.1kHz fallback")
             return
         }
+        let defaultDeviceID = preferredDeviceID
         
         // Query nominal sample rate
         var nominalSampleRate: Float64 = 44100.0
@@ -255,10 +291,11 @@ final class SoundManager {
     
     // MARK: - Low-Latency Configuration
     private func configureLowLatencyAudio() {
-        guard let defaultDeviceID = getDefaultOutputDeviceID() else {
-            Logger.audio.error("Cannot configure audio: default output device unavailable")
+        guard let preferredDeviceID = getPreferredOutputDeviceID() else {
+            Logger.audio.error("Cannot configure audio: preferred output device unavailable")
             return
         }
+        let defaultDeviceID = preferredDeviceID
         
         var bufferSize: UInt32 = currentBufferSize
         var bufferAddress = AudioObjectPropertyAddress(
@@ -322,6 +359,19 @@ final class SoundManager {
             Logger.audio.error("Incomplete buffer allocation: \(self.audioBuffers.count)/\(self.numberOfBuffers)")
             return
         }
+        
+        // Set output device for the audio queue (if not available, abort starting the queue)
+        guard let deviceID = getPreferredOutputDeviceID() else {
+            Logger.audio.error("Preferred audio device unavailable. Audio queue will not start")
+            // dispose the queue
+            AudioQueueDispose(queue, true)
+            audioQueue = nil
+            audioBuffers = []
+            isReady = false
+            return
+        }
+        
+        setAudioQueueOutputDevice(queue, deviceID: deviceID)
         
         // Start the queue
         let startStatus = AudioQueueStart(queue, nil)
@@ -657,7 +707,81 @@ final class SoundManager {
         return status == noErr ? defaultDeviceID : nil
     }
     
+    /// Returns the preferred output device ID based on user selection
+    /// Returns nil if user selected a specific device that's not available (privacy protection)
+    private func getPreferredOutputDeviceID() -> AudioDeviceID? {
+        // Check user preference
+        if let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID() {
+            if let device = AudioDeviceManager.shared.findDevice(byUID: selectedUID) {
+                guard device.deviceID != 0 else {
+                    Logger.audio.error("Selected device '\(selectedUID)' has invalid device ID. Stopping playback")
+                    return nil
+                }
+                Logger.audio.debug("Using selected device: \(device.name) (\(device.id))")
+                return device.deviceID
+            }
+            Logger.audio.error("Selected device '\(selectedUID)' not found. Stopping playback")
+            return nil
+        }
+        
+        // system default
+        return getDefaultOutputDeviceID()
+    }
+    
+    /// Sets the output device for an audio queue
+    private func setAudioQueueOutputDevice(_ queue: AudioQueueRef, deviceID: AudioDeviceID) {
+        // Get device uid
+        var deviceUIDCF: Unmanaged<CFString>?
+        var uidSize = UInt32(MemoryLayout<Unmanaged<CFString>>.size)
+        var uidAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyDeviceUID,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        let uidStatus = AudioObjectGetPropertyData(
+            deviceID,
+            &uidAddress,
+            0,
+            nil,
+            &uidSize,
+            &deviceUIDCF
+        )
+        
+        guard uidStatus == noErr, let uid = deviceUIDCF?.takeRetainedValue() else {
+            Logger.audio.error("Failed to get device UID for AudioQueue routing: \(uidStatus)")
+            return
+        }
+        
+        // Set the output device on the audio queue
+        var uidRef: CFString = uid
+        let queueStatus = withUnsafePointer(to: &uidRef) { pointer in
+            AudioQueueSetProperty(
+                queue,
+                kAudioQueueProperty_CurrentDevice,
+                pointer,
+                UInt32(MemoryLayout<CFString>.size)
+            )
+        }
+        
+        if queueStatus == noErr {
+            Logger.audio.info("Audio queue routed to device: \(uid)")
+        } else {
+            Logger.audio.error("Failed to set audio queue device: \(queueStatus)")
+        }
+    }
+    
     func getCurrentOutputDeviceUID() -> String {
+        if let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID() {
+            // Return selected device UID if available
+            if AudioDeviceManager.shared.findDevice(byUID: selectedUID) != nil {
+                return selectedUID
+            }
+            // Device not found, keep the preference in case of reconnect or whatever
+            Logger.audio.warning("Selected device '\(selectedUID)' not currently available")
+        }
+        
+        // Fall back to system default for per-device volume tracking
         guard let defaultDeviceID = getDefaultOutputDeviceID() else {
             return Self.defaultDeviceUID
         }
