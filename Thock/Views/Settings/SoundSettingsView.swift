@@ -108,6 +108,35 @@ struct SoundSettingsView: View {
                     )
                 }
                 
+                SettingsSectionView(title: "Soundpacks") {
+                    VStack(spacing: 0) {
+                        HStack(alignment: .center) {
+                            Text("Custom soundpack directory")
+                                .font(.system(size: 13))
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                CustomSoundpackHelper.openCustomSoundpackDirectory()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Text("Open")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.secondary)
+                                    
+                                    Image(systemName: "arrow.up.forward")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                    }
+                }
+                
                 SettingsSectionView(title: "Performance") {
                     SettingsRowView(
                         title: "Audio latency",
