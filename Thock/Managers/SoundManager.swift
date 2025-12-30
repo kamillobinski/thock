@@ -20,6 +20,7 @@ final class SoundManager {
     private var audioBuffers: [AudioQueueBufferRef] = []
     private var isQueueRunning = false
     private var idleTimeoutTimer: DispatchSourceTimer?
+    private let timerLock = NSLock()
     
     // MARK: - Audio Format
     private var sampleRate: Float64 = 44100.0
@@ -91,6 +92,7 @@ final class SoundManager {
         // Handle buffer size change
         if newBufferSize != currentBufferSize {
             reinitializeAudioQueue(with: newBufferSize)
+            return
         }
         
         // Reset idle timer with new timeout value
@@ -101,8 +103,11 @@ final class SoundManager {
     
     private func reinitializeAudioQueue(with newBufferSize: UInt32) {
         // Cancel idle timer
-        idleTimeoutTimer?.cancel()
+        timerLock.lock()
+        let oldTimer = idleTimeoutTimer
         idleTimeoutTimer = nil
+        timerLock.unlock()
+        oldTimer?.cancel()
         
         // Stop and dispose current audio queue
         if let queue = audioQueue {
@@ -158,8 +163,17 @@ final class SoundManager {
     }
     
     private func resetIdleTimer() {
-        idleTimeoutTimer?.cancel()
+        timerLock.lock()
+        
+        let oldTimer = idleTimeoutTimer
+        idleTimeoutTimer = nil
+        timerLock.unlock()
+        
+        oldTimer?.cancel()
+        
+        timerLock.lock()
         setupIdleTimeoutTimer()
+        timerLock.unlock()
     }
     
     private func stopQueueIfIdle() {
@@ -398,8 +412,15 @@ final class SoundManager {
             }
         }
         
+        let initialCount = activeSounds.count
         activeSounds.removeAll(where: { $0.isFinished })
+        let finishedCount = initialCount - activeSounds.count
+        
         activeSoundsLock.unlock()
+        
+        if finishedCount > 0 {
+            Logger.audio.debug("Removed \(finishedCount) finished sounds, \(self.activeSounds.count) still active")
+        }
         
         // Set buffer size and enqueue
         buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
@@ -413,14 +434,18 @@ final class SoundManager {
         // Semitones to playback rate conv
         let playbackRate = pow(2.0, sound.pitchOffset / 12.0)
         
+        let initialFrame = sound.currentFrame
+        var didFinish = false
+        
         sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
             for outputFrame in 0..<frameCount {
                 // Calc source position
-                let sourcePosition = Float(sound.currentFrame) + Float(outputFrame) * playbackRate
+                let sourcePosition = Float(initialFrame) + Float(outputFrame) * playbackRate
                 let sourceFrame = Int(sourcePosition)
                 
                 guard sourceFrame < sound.frameCount - 1 else {
                     sound.currentFrame = sound.frameCount
+                    didFinish = true
                     break
                 }
                 
@@ -446,8 +471,9 @@ final class SoundManager {
                 outputBuffer[outputIndex] += leftInterpolated * volume
                 outputBuffer[outputIndex + 1] += rightInterpolated * volume
             }
-            
-            // Update current frame based on how many source frames consumed
+        }
+        
+        if !didFinish {
             let framesConsumed = Int(Float(frameCount) * playbackRate)
             sound.currentFrame += framesConsumed
         }
