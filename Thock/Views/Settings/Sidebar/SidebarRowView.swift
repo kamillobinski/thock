@@ -7,14 +7,15 @@ struct SidebarRowView: View {
     var body: some View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.primary.opacity(0.15) : Color.gray.opacity(0.3))
+                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.2))
                 .frame(width: 26, height: 26)
                 .overlay(
                     Image(systemName: tab.icon)
+                        .symbolRenderingMode(.hierarchical)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(isSelected ? .white : .primary)
                 )
-            
+
             Text(tab.rawValue)
                 .font(.system(size: 13, weight: .regular))
                 .foregroundColor(.primary)

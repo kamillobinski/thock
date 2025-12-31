@@ -5,14 +5,12 @@ enum SettingsTab: String, CaseIterable {
     case general = "General"
     case sound = "Sound"
     case shortcuts = "Shortcuts"
-    case about = "About"
     
     var icon: String {
         switch self {
         case .general: return "gearshape.fill"
         case .sound: return "speaker.wave.2.fill"
         case .shortcuts: return "command"
-        case .about: return "info.circle.fill"
         }
     }
 }
@@ -39,7 +37,6 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.sidebar)
-            .listItemTint(.clear)
             .frame(width: 215)
             .modifier(SidebarModifier())
         } detail: {
@@ -50,8 +47,6 @@ struct SettingsView: View {
                 SoundSettingsView()
             case .shortcuts:
                 ShortcutsSettingsView()
-            case .about:
-                AboutSettingsView()
             }
         }
         .frame(minWidth: 715, maxWidth: 715, minHeight: 470, maxHeight: .infinity)
