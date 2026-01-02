@@ -88,22 +88,21 @@ jobs:
           body_path: docs/releases/${{ github.ref_name }}.md
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update Homebrew tap
+      - name: Update Homebrew Cask
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
         run: |
           git config --global user.email "release-bot@thock.dev"
           git config --global user.name "Thock Release Bot"
-          
+
           git clone https://${GH_TOKEN}@github.com/kamillobinski/homebrew-thock.git
           cd homebrew-thock
           git checkout -b bump-${{ env.VERSION }}
-          
-          sed -i '' "s|url \".*\"|url \"https://github.com/kamillobinski/thock/releases/download/${{ env.VERSION }}/${{ env.ZIP_NAME }}\"|" thock.rb
-          sed -i '' "s|sha256 \".*\"|sha256 \"${{ steps.sha.outputs.sha }}\"|" thock.rb
-          sed -i '' "s|version \".*\"|version \"${{ env.VERSION }}\"|" thock.rb
-          
-          git add thock.rb
-          git commit -m "chore: update to ${{ env.VERSION }}"
+
+          sed -i '' "s|version \".*\"|version \"${{ env.VERSION }}\"|" Casks/thock.rb
+          sed -i '' "s|sha256 \".*\"|sha256 \"${{ steps.sha.outputs.sha }}\"|" Casks/thock.rb
+
+          git add Casks/thock.rb
+          git commit -m "chore: bump cask to ${{ env.VERSION }}"
           git push origin bump-${{ env.VERSION }}
-          gh pr create --title "chore: update to ${{ env.VERSION }}" --body "Automated Thock release bump." --head bump-${{ env.VERSION }}
+          gh pr create --title "chore: bump cask to ${{ env.VERSION }}" --body "Automated Thock cask version bump." --head bump-${{ env.VERSION }}
