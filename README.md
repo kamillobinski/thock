@@ -87,24 +87,20 @@ It's quick and easy. You can either download a prebuilt release or build it your
 > [!IMPORTANT]  
 > Thock requires macOS 13.5 Ventura or later.
 
-### → Option 1. Hombrew Installation (recommended)
+### → Option 1. Hombrew Cask Installation (recommended)
 
-1. Tap the repository
-   ```sh
-   brew tap kamillobinski/thock
-   ```
+```sh
+brew tap kamillobinski/thock
+brew install --cask thock
+```
 
-2. Install Thock
-   ```sh
-   brew install thock
-   ```
+or one command:
+```sh
+brew install --cask kamillobinski/thock/thock
+```
 
-3. (Optional) Move it to your Applications folder
-   ```sh
-   thock --install
-   ```
-
-### Option 2. Release Download
+<details>
+<summary><b>Option 2. Release Download</b></summary>
 
 1. Go to the [latest release](https://github.com/kamillobinski/thock/releases/latest)
 2. Download `Thock-x.y.z.zip`
@@ -112,20 +108,25 @@ It's quick and easy. You can either download a prebuilt release or build it your
 4. Move the app to your Applications folder for easy access
 5. Open Thock
 
-### Option 3. Build From Source
+</details>
+
+<details>
+<summary><b>Option 3. Build From Source</b></summary>
 
 1. Clone the repository
    ```sh
    git clone https://github.com/kamillobinski/thock.git
    cd thock
    ```
-   
+
 2. Open in Xcode
    ```sh
    open Thock.xcodeproj
    ```
 
 3. Build and run the application
+
+</details>
    
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
