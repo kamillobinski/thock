@@ -99,7 +99,7 @@ final class SoundManager {
             name: .systemDefaultAudioDeviceDidChange,
             object: nil
         )
-
+        
         // Listen for volume changes
         NotificationCenter.default.addObserver(
             self,
@@ -107,9 +107,20 @@ final class SoundManager {
             name: .volumeDidChange,
             object: nil
         )
-
+        
+        // Listen for device list changes (conn/disconn)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDeviceListChange),
+            name: .audioDeviceListDidChange,
+            object: nil
+        )
+        
         // Initialize volume from settings
         updateVolumeFromSettings()
+        
+        // Start monitoring audio device changes
+        AudioDeviceManager.shared.startMonitoring()
     }
     
     @objc private func handleSettingsChange() {
@@ -130,24 +141,49 @@ final class SoundManager {
     @objc private func handleAudioDeviceChange() {
         Logger.audio.info("Audio device selection changed, reinitializing audio queue")
         reinitializeAudioQueue(with: currentBufferSize)
-
+        
         updateVolumeFromSettings(postNotification: true)
     }
-
+    
     @objc private func handleSystemDefaultDeviceChange() {
         // only if selected "System Default"
         if SettingsEngine.shared.getSelectedAudioDeviceUID() == nil {
             Logger.audio.info("System default device changed while using System Default, reinitializing audio queue")
             reinitializeAudioQueue(with: currentBufferSize)
-
+            
             updateVolumeFromSettings(postNotification: true)
         }
     }
-
+    
     @objc private func handleVolumeChange() {
         updateVolumeFromSettings()
     }
-
+    
+    @objc private func handleDeviceListChange() {
+        Logger.audio.info("Audio device list changed, checking if selected device reconnected")
+        
+        // Check if specific device selected
+        guard let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID() else {
+            return
+        }
+        
+        // Check if the selected device is available
+        if AudioDeviceManager.shared.findDevice(byUID: selectedUID) != nil {
+            if !isReady {
+                Logger.audio.info("Selected device '\(selectedUID)' reconnected, reinitializing audio queue")
+                reinitializeAudioQueue(with: currentBufferSize)
+                updateVolumeFromSettings(postNotification: true)
+            } else {
+                Logger.audio.debug("Selected device '\(selectedUID)' is available and system is ready")
+            }
+        } else {
+            // Device not available
+            if isReady {
+                Logger.audio.warning("Selected device '\(selectedUID)' disconnected while audio was ready")
+            }
+        }
+    }
+    
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
         volume = SettingsEngine.shared.getVolume(for: deviceUID)
@@ -159,10 +195,9 @@ final class SoundManager {
     private func reinitializeAudioQueue(with newBufferSize: UInt32) {
         // Cancel idle timer
         timerLock.lock()
-        let oldTimer = idleTimeoutTimer
+        idleTimeoutTimer?.cancel()
         idleTimeoutTimer = nil
         timerLock.unlock()
-        oldTimer?.cancel()
         
         // Stop and dispose current audio queue
         if let queue = audioQueue {
@@ -186,6 +221,14 @@ final class SoundManager {
         createAudioQueue()
         
         Logger.audio.info("Audio queue reinitialized with buffer size: \(newBufferSize) frames")
+    }
+    
+    /// Reinitializes the audio system after wake from sleep.
+    func reinitializeAfterWake() {
+        Logger.audio.info("Reinitializing audio system after wake from sleep")
+        detectHardwareSampleRate()
+        reinitializeAudioQueue(with: currentBufferSize)
+        updateVolumeFromSettings(postNotification: true)
     }
     
     deinit {
@@ -219,16 +262,11 @@ final class SoundManager {
     
     private func resetIdleTimer() {
         timerLock.lock()
+        defer { timerLock.unlock() }
         
-        let oldTimer = idleTimeoutTimer
+        idleTimeoutTimer?.cancel()
         idleTimeoutTimer = nil
-        timerLock.unlock()
-        
-        oldTimer?.cancel()
-        
-        timerLock.lock()
         setupIdleTimeoutTimer()
-        timerLock.unlock()
     }
     
     private func stopQueueIfIdle() {
@@ -342,14 +380,27 @@ final class SoundManager {
     }
     
     // MARK: - Audio Queue Creation
+    
+    /// Creates audio queue, ensuring it's always on the main thread's runloop
     private func createAudioQueue() {
+        if !Thread.isMainThread {
+            DispatchQueue.main.sync {
+                createAudioQueueInternal()
+            }
+            return
+        }
+        createAudioQueueInternal()
+    }
+    
+    /// Internal audio queue creation
+    private func createAudioQueueInternal() {
         let selfPointer = Unmanaged.passUnretained(self).toOpaque()
         
         let status = AudioQueueNewOutput(
             &audioFormat,
             audioQueueCallback,
             selfPointer,
-            CFRunLoopGetCurrent(),
+            CFRunLoopGetMain(),
             CFRunLoopMode.commonModes.rawValue,
             0,
             &audioQueue
@@ -402,7 +453,11 @@ final class SoundManager {
         
         isQueueRunning = true
         isReady = true
+        
+        timerLock.lock()
         setupIdleTimeoutTimer()
+        timerLock.unlock()
+        
         Logger.audio.info("Audio system initialized successfully")
     }
     
@@ -814,7 +869,7 @@ final class SoundManager {
         }
         return Self.defaultDeviceUID
     }
-
+    
     // MARK: - Helpers
     
     private func resolveSoundDirectory(for mode: Mode) -> URL? {

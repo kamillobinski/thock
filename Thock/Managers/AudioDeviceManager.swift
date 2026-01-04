@@ -115,15 +115,16 @@ final class AudioDeviceManager {
         Logger.audio.info("Stopped monitoring audio device changes")
     }
     
-    // MARK: - Private Methods - Device Enumeration
-    
-    private func enumerateAndCacheDevices() {
+    /// Re-enumerates and caches all available audio devices.
+    func enumerateAndCacheDevices() {
         deviceListLock.lock()
         defer { deviceListLock.unlock() }
         
         availableDevices = enumerateOutputDevices()
         Logger.audio.debug("Enumerated \(self.availableDevices.count) audio output devices")
     }
+    
+    // MARK: - Private Methods - Device Enumeration
     
     private func enumerateOutputDevices() -> [AudioDevice] {
         var devices: [AudioDevice] = []
