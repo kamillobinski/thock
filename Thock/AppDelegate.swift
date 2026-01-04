@@ -1,6 +1,7 @@
 import Cocoa
 import AppKit
 import UserNotifications
+import OSLog
 
 class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private var statusBarItem: NSStatusItem!
@@ -163,11 +164,44 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         }
         
         // Show the waiting alert (blocks until quit or aborted)
-        let response = waitingAlert.runModal()
+        _ = waitingAlert.runModal()
         
         // Only quit if user clicked Quit (not if permissions were granted)
         if !permissionsGranted {
             NSApplication.shared.terminate(nil)
+        }
+    }
+    
+    /// Sets up monitoring for system sleep/wake events.
+    private func setupSleepWakeMonitoring() {
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleSystemWillSleep),
+            name: NSWorkspace.willSleepNotification,
+            object: nil
+        )
+        
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleSystemDidWake),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+    }
+    
+    /// Handles system going to sleep.
+    @objc private func handleSystemWillSleep(_ notification: Notification) {
+        Logger.audio.info("System going to sleep")
+    }
+    
+    /// Handles system waking from sleep.
+    @objc private func handleSystemDidWake(_ notification: Notification) {
+        Logger.audio.info("System woke from sleep, reinitializing audio system")
+        
+        // Stabilize after wake
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            AudioDeviceManager.shared.enumerateAndCacheDevices()
+            SoundManager.shared.reinitializeAfterWake()
         }
     }
     
@@ -190,6 +224,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
         
         setupGlobalShortcuts()
+        setupSleepWakeMonitoring()
         
         AppUpdater.shared.checkForUpdates { result in
             switch result {

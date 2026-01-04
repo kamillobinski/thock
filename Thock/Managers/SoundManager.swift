@@ -99,7 +99,7 @@ final class SoundManager {
             name: .systemDefaultAudioDeviceDidChange,
             object: nil
         )
-
+        
         // Listen for volume changes
         NotificationCenter.default.addObserver(
             self,
@@ -107,7 +107,7 @@ final class SoundManager {
             name: .volumeDidChange,
             object: nil
         )
-
+        
         // Initialize volume from settings
         updateVolumeFromSettings()
     }
@@ -130,24 +130,24 @@ final class SoundManager {
     @objc private func handleAudioDeviceChange() {
         Logger.audio.info("Audio device selection changed, reinitializing audio queue")
         reinitializeAudioQueue(with: currentBufferSize)
-
+        
         updateVolumeFromSettings(postNotification: true)
     }
-
+    
     @objc private func handleSystemDefaultDeviceChange() {
         // only if selected "System Default"
         if SettingsEngine.shared.getSelectedAudioDeviceUID() == nil {
             Logger.audio.info("System default device changed while using System Default, reinitializing audio queue")
             reinitializeAudioQueue(with: currentBufferSize)
-
+            
             updateVolumeFromSettings(postNotification: true)
         }
     }
-
+    
     @objc private func handleVolumeChange() {
         updateVolumeFromSettings()
     }
-
+    
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
         volume = SettingsEngine.shared.getVolume(for: deviceUID)
@@ -186,6 +186,14 @@ final class SoundManager {
         createAudioQueue()
         
         Logger.audio.info("Audio queue reinitialized with buffer size: \(newBufferSize) frames")
+    }
+    
+    /// Reinitializes the audio system after wake from sleep.
+    func reinitializeAfterWake() {
+        Logger.audio.info("Reinitializing audio system after wake from sleep")
+        detectHardwareSampleRate()
+        reinitializeAudioQueue(with: currentBufferSize)
+        updateVolumeFromSettings(postNotification: true)
     }
     
     deinit {
@@ -814,7 +822,7 @@ final class SoundManager {
         }
         return Self.defaultDeviceUID
     }
-
+    
     // MARK: - Helpers
     
     private func resolveSoundDirectory(for mode: Mode) -> URL? {
