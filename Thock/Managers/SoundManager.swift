@@ -380,14 +380,27 @@ final class SoundManager {
     }
     
     // MARK: - Audio Queue Creation
+    
+    /// Creates audio queue, ensuring it's always on the main thread's runloop
     private func createAudioQueue() {
+        if !Thread.isMainThread {
+            DispatchQueue.main.sync {
+                createAudioQueueInternal()
+            }
+            return
+        }
+        createAudioQueueInternal()
+    }
+    
+    /// Internal audio queue creation
+    private func createAudioQueueInternal() {
         let selfPointer = Unmanaged.passUnretained(self).toOpaque()
         
         let status = AudioQueueNewOutput(
             &audioFormat,
             audioQueueCallback,
             selfPointer,
-            CFRunLoopGetCurrent(),
+            CFRunLoopGetMain(),
             CFRunLoopMode.commonModes.rawValue,
             0,
             &audioQueue
