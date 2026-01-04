@@ -108,8 +108,19 @@ final class SoundManager {
             object: nil
         )
         
+        // Listen for device list changes (conn/disconn)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDeviceListChange),
+            name: .audioDeviceListDidChange,
+            object: nil
+        )
+        
         // Initialize volume from settings
         updateVolumeFromSettings()
+        
+        // Start monitoring audio device changes
+        AudioDeviceManager.shared.startMonitoring()
     }
     
     @objc private func handleSettingsChange() {
@@ -146,6 +157,31 @@ final class SoundManager {
     
     @objc private func handleVolumeChange() {
         updateVolumeFromSettings()
+    }
+    
+    @objc private func handleDeviceListChange() {
+        Logger.audio.info("Audio device list changed, checking if selected device reconnected")
+        
+        // Check if specific device selected
+        guard let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID() else {
+            return
+        }
+        
+        // Check if the selected device is available
+        if AudioDeviceManager.shared.findDevice(byUID: selectedUID) != nil {
+            if !isReady {
+                Logger.audio.info("Selected device '\(selectedUID)' reconnected, reinitializing audio queue")
+                reinitializeAudioQueue(with: currentBufferSize)
+                updateVolumeFromSettings(postNotification: true)
+            } else {
+                Logger.audio.debug("Selected device '\(selectedUID)' is available and system is ready")
+            }
+        } else {
+            // Device not available
+            if isReady {
+                Logger.audio.warning("Selected device '\(selectedUID)' disconnected while audio was ready")
+            }
+        }
     }
     
     private func updateVolumeFromSettings(postNotification: Bool = false) {

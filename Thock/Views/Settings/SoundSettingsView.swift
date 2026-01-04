@@ -188,10 +188,6 @@ struct SoundSettingsView: View {
         .ignoresSafeArea(edges: .top)
         .onAppear {
             loadAvailableDevices()
-            AudioDeviceManager.shared.startMonitoring()
-        }
-        .onDisappear {
-            AudioDeviceManager.shared.stopMonitoring()
         }
         .onReceive(NotificationCenter.default.publisher(for: .volumeDidChange)) { _ in
             volume = Double(SettingsEngine.shared.getVolume())
