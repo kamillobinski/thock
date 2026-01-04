@@ -195,10 +195,9 @@ final class SoundManager {
     private func reinitializeAudioQueue(with newBufferSize: UInt32) {
         // Cancel idle timer
         timerLock.lock()
-        let oldTimer = idleTimeoutTimer
+        idleTimeoutTimer?.cancel()
         idleTimeoutTimer = nil
         timerLock.unlock()
-        oldTimer?.cancel()
         
         // Stop and dispose current audio queue
         if let queue = audioQueue {
@@ -263,16 +262,11 @@ final class SoundManager {
     
     private func resetIdleTimer() {
         timerLock.lock()
+        defer { timerLock.unlock() }
         
-        let oldTimer = idleTimeoutTimer
+        idleTimeoutTimer?.cancel()
         idleTimeoutTimer = nil
-        timerLock.unlock()
-        
-        oldTimer?.cancel()
-        
-        timerLock.lock()
         setupIdleTimeoutTimer()
-        timerLock.unlock()
     }
     
     private func stopQueueIfIdle() {
@@ -446,7 +440,11 @@ final class SoundManager {
         
         isQueueRunning = true
         isReady = true
+        
+        timerLock.lock()
         setupIdleTimeoutTimer()
+        timerLock.unlock()
+        
         Logger.audio.info("Audio system initialized successfully")
     }
     
