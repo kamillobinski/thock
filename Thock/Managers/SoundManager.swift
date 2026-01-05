@@ -19,8 +19,10 @@ final class SoundManager {
     private let numberOfBuffers = 3
     private var audioBuffers: [AudioQueueBufferRef] = []
     private var isQueueRunning = false
+    private var audioQueueGeneration: UInt64 = 0 // Incremented on each reinitialization to detect stale references
     private var idleTimeoutTimer: DispatchSourceTimer?
     private let timerLock = NSLock()
+    private let queueStateLock = NSLock() // Protects audioQueue, isQueueRunning, isReady, and audioQueueGeneration
     
     // MARK: - Audio Format
     private var sampleRate: Float64 = 44100.0
@@ -133,7 +135,11 @@ final class SoundManager {
         }
         
         // Reset idle timer with new timeout value
-        if isQueueRunning {
+        queueStateLock.lock()
+        let isRunning = isQueueRunning
+        queueStateLock.unlock()
+        
+        if isRunning {
             resetIdleTimer()
         }
     }
@@ -167,10 +173,14 @@ final class SoundManager {
             return
         }
         
+        queueStateLock.lock()
+        let ready = isReady
+        queueStateLock.unlock()
+        
         // Check if the selected device is available
         if AudioDeviceManager.shared.findDevice(byUID: selectedUID) != nil {
             // Device reconnected
-            if !isReady {
+            if !ready {
                 Logger.audio.info("Selected device '\(selectedUID)' reconnected, reinitializing audio queue")
                 reinitializeAudioQueue(with: currentBufferSize)
                 updateVolumeFromSettings(postNotification: true)
@@ -179,7 +189,7 @@ final class SoundManager {
             }
         } else {
             // Device disconnected
-            if isReady {
+            if ready {
                 Logger.audio.warning("Selected device '\(selectedUID)' disconnected, reinitializing to clean up audio queue")
                 reinitializeAudioQueue(with: currentBufferSize)
             } else {
@@ -204,18 +214,28 @@ final class SoundManager {
         timerLock.unlock()
         
         // Stop and dispose current audio queue
-        if let queue = audioQueue {
+        queueStateLock.lock()
+        audioQueueGeneration += 1
+        let queue = audioQueue
+        queueStateLock.unlock()
+        
+        if let queue = queue {
             AudioQueueStop(queue, true)
             AudioQueueDispose(queue, true)
         }
         
-        // update state
-        activeSoundsLock.lock()
+        // Update queue state
+        queueStateLock.lock()
         currentBufferSize = newBufferSize
         framesPerBuffer = newBufferSize
         audioQueue = nil
         audioBuffers = []
         isQueueRunning = false
+        isReady = false
+        queueStateLock.unlock()
+        
+        // Clear active sounds
+        activeSoundsLock.lock()
         activeSounds = []
         activeSoundsLock.unlock()
         
@@ -275,14 +295,36 @@ final class SoundManager {
     
     private func stopQueueIfIdle() {
         activeSoundsLock.lock()
-        let shouldStop = activeSounds.isEmpty && isQueueRunning
+        let isEmpty = activeSounds.isEmpty
         activeSoundsLock.unlock()
         
-        guard shouldStop, let queue = audioQueue else { return }
+        queueStateLock.lock()
+        let isRunning = isQueueRunning
+        let queue = audioQueue
+        let generation = audioQueueGeneration
+        queueStateLock.unlock()
+        
+        guard isEmpty && isRunning, let queue = queue else { return }
+        
+        // Validate generation before calling core audio api
+        queueStateLock.lock()
+        let stillValid = (audioQueueGeneration == generation)
+        queueStateLock.unlock()
+        
+        guard stillValid else {
+            Logger.audio.debug("Queue was reinitialized, aborting stop")
+            return
+        }
         
         let status = AudioQueueStop(queue, false)
         if status == noErr {
-            isQueueRunning = false
+            queueStateLock.lock()
+            // Update state onyl if queue hasnt been reinitialized
+            if audioQueueGeneration == generation {
+                isQueueRunning = false
+            }
+            queueStateLock.unlock()
+            
             let timeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             Logger.audio.info("Audio queue stopped after \(timeoutSeconds)s idle")
         } else {
@@ -291,11 +333,33 @@ final class SoundManager {
     }
     
     private func restartQueue() {
-        guard !isQueueRunning, let queue = audioQueue else { return }
+        queueStateLock.lock()
+        let isRunning = isQueueRunning
+        let queue = audioQueue
+        let generation = audioQueueGeneration
+        queueStateLock.unlock()
+        
+        guard !isRunning, let queue = queue else { return }
+        
+        // Validate generation before calling core audio api
+        queueStateLock.lock()
+        let stillValid = (audioQueueGeneration == generation)
+        queueStateLock.unlock()
+        
+        guard stillValid else {
+            Logger.audio.debug("Queue was reinitialized, aborting restart")
+            return
+        }
         
         let status = AudioQueueStart(queue, nil)
         if status == noErr {
-            isQueueRunning = true
+            queueStateLock.lock()
+            // Update state only if queue hasnt been reinitialized
+            if audioQueueGeneration == generation {
+                isQueueRunning = true
+            }
+            queueStateLock.unlock()
+            
             resetIdleTimer()
             Logger.audio.info("Audio queue restarted")
         } else {
@@ -440,9 +504,12 @@ final class SoundManager {
             Logger.audio.error("Preferred audio device unavailable. Audio queue will not start")
             // dispose the queue
             AudioQueueDispose(queue, true)
+            
+            queueStateLock.lock()
             audioQueue = nil
             audioBuffers = []
             isReady = false
+            queueStateLock.unlock()
             return
         }
         
@@ -455,8 +522,10 @@ final class SoundManager {
             return
         }
         
+        queueStateLock.lock()
         isQueueRunning = true
         isReady = true
+        queueStateLock.unlock()
         
         timerLock.lock()
         setupIdleTimeoutTimer()
@@ -619,7 +688,11 @@ final class SoundManager {
     // MARK: - Public API
     
     func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil) {
-        guard isReady else {
+        queueStateLock.lock()
+        let ready = isReady
+        queueStateLock.unlock()
+        
+        guard ready else {
             Logger.audio.warning("Playback blocked: audio system not ready")
             return
         }
@@ -630,7 +703,11 @@ final class SoundManager {
         }
         
         // Restart queue if stopped due to idle timeout
-        if !isQueueRunning {
+        queueStateLock.lock()
+        let isRunning = isQueueRunning
+        queueStateLock.unlock()
+        
+        if !isRunning {
             restartQueue()
         } else {
             // Running, reset timer
