@@ -319,7 +319,7 @@ final class SoundManager {
         let status = AudioQueueStop(queue, false)
         if status == noErr {
             queueStateLock.lock()
-            // Update state onyl if queue hasnt been reinitialized
+            // Update state only if queue hasnt been reinitialized
             if audioQueueGeneration == generation {
                 isQueueRunning = false
             }
