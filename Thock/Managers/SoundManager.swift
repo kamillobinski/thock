@@ -160,7 +160,7 @@ final class SoundManager {
     }
     
     @objc private func handleDeviceListChange() {
-        Logger.audio.info("Audio device list changed, checking if selected device reconnected")
+        Logger.audio.info("Audio device list changed, checking if selected device status changed")
         
         // Check if specific device selected
         guard let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID() else {
@@ -169,6 +169,7 @@ final class SoundManager {
         
         // Check if the selected device is available
         if AudioDeviceManager.shared.findDevice(byUID: selectedUID) != nil {
+            // Device reconnected
             if !isReady {
                 Logger.audio.info("Selected device '\(selectedUID)' reconnected, reinitializing audio queue")
                 reinitializeAudioQueue(with: currentBufferSize)
@@ -177,9 +178,12 @@ final class SoundManager {
                 Logger.audio.debug("Selected device '\(selectedUID)' is available and system is ready")
             }
         } else {
-            // Device not available
+            // Device disconnected
             if isReady {
-                Logger.audio.warning("Selected device '\(selectedUID)' disconnected while audio was ready")
+                Logger.audio.warning("Selected device '\(selectedUID)' disconnected, reinitializing to clean up audio queue")
+                reinitializeAudioQueue(with: currentBufferSize)
+            } else {
+                Logger.audio.debug("Selected device '\(selectedUID)' is not available and audio was already not ready")
             }
         }
     }
