@@ -368,13 +368,12 @@ final class AudioDeviceManager {
     }
     
     fileprivate func scheduleDeviceListChange() {
-        workItemLock.lock()
-        deviceListChangeWorkItem?.cancel()
-        
         let workItem = DispatchWorkItem { [weak self] in
             self?.handleDeviceListChange()
         }
         
+        workItemLock.lock()
+        deviceListChangeWorkItem?.cancel()
         deviceListChangeWorkItem = workItem
         workItemLock.unlock()
         
