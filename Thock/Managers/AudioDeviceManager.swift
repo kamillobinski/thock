@@ -30,6 +30,7 @@ final class AudioDeviceManager {
     
     // Debouncing for device list changes
     private var deviceListChangeWorkItem: DispatchWorkItem?
+    private let workItemLock = NSLock()
     private let debounceDelay: TimeInterval = 0.5
     
     // MARK: - Initialization
@@ -114,8 +115,10 @@ final class AudioDeviceManager {
         }
         
         // Cancel any pending debounced work
+        workItemLock.lock()
         deviceListChangeWorkItem?.cancel()
         deviceListChangeWorkItem = nil
+        workItemLock.unlock()
         
         isMonitoring = false
         deviceListListenerAddress = nil
@@ -365,6 +368,7 @@ final class AudioDeviceManager {
     }
     
     fileprivate func scheduleDeviceListChange() {
+        workItemLock.lock()
         deviceListChangeWorkItem?.cancel()
         
         let workItem = DispatchWorkItem { [weak self] in
@@ -372,6 +376,8 @@ final class AudioDeviceManager {
         }
         
         deviceListChangeWorkItem = workItem
+        workItemLock.unlock()
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + debounceDelay, execute: workItem)
     }
 }
