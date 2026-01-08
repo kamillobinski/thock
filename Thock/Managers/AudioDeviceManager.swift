@@ -28,6 +28,11 @@ final class AudioDeviceManager {
     private var deviceListListenerAddress: AudioObjectPropertyAddress?
     private var defaultDeviceListenerAddress: AudioObjectPropertyAddress?
     
+    // Debouncing for device list changes
+    private var deviceListChangeWorkItem: DispatchWorkItem?
+    private let workItemLock = NSLock()
+    private let debounceDelay: TimeInterval = 0.5
+    
     // MARK: - Initialization
     
     private init() {
@@ -108,6 +113,12 @@ final class AudioDeviceManager {
                 Unmanaged.passUnretained(self).toOpaque()
             )
         }
+        
+        // Cancel any pending debounced work
+        workItemLock.lock()
+        deviceListChangeWorkItem?.cancel()
+        deviceListChangeWorkItem = nil
+        workItemLock.unlock()
         
         isMonitoring = false
         deviceListListenerAddress = nil
@@ -355,6 +366,19 @@ final class AudioDeviceManager {
             object: nil
         )
     }
+    
+    fileprivate func scheduleDeviceListChange() {
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.handleDeviceListChange()
+        }
+        
+        workItemLock.lock()
+        deviceListChangeWorkItem?.cancel()
+        deviceListChangeWorkItem = workItem
+        workItemLock.unlock()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + debounceDelay, execute: workItem)
+    }
 }
 
 // MARK: - Callback
@@ -370,10 +394,7 @@ private func deviceListChangedCallback(
     }
     
     let manager = Unmanaged<AudioDeviceManager>.fromOpaque(clientData).takeUnretainedValue()
-    
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak manager] in
-        manager?.handleDeviceListChange()
-    }
+    manager.scheduleDeviceListChange()
     
     return noErr
 }
