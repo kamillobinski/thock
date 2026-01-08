@@ -43,6 +43,7 @@ final class SoundManager {
     
     // MARK: - Volume Control
     private var volume: Float = 0.5
+    private let volumeLock = NSLock()
     
     // MARK: - Models
     private struct PCMSound {
@@ -200,7 +201,12 @@ final class SoundManager {
     
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
-        volume = SettingsEngine.shared.getVolume(for: deviceUID)
+        let newVolume = SettingsEngine.shared.getVolume(for: deviceUID)
+        
+        volumeLock.lock()
+        volume = newVolume
+        volumeLock.unlock()
+        
         if postNotification {
             NotificationCenter.default.post(name: .volumeDidChange, object: nil)
         }
@@ -571,7 +577,7 @@ final class SoundManager {
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
-        // Read volume without lock, one-buffer-cycle delay is ookayish
+        // No lock here coz float reads are atomic
         let currentVolume = volume
         
         for sound in activeSounds {
@@ -851,25 +857,60 @@ final class SoundManager {
         return status == noErr ? defaultDeviceID : nil
     }
     
+    /// Validates that a device ID is still valid and available
+    /// - Parameter deviceID: The device ID to validate
+    /// - Returns: true if device is valid, false otherwise
+    private func isDeviceValid(_ deviceID: AudioDeviceID) -> Bool {
+        guard deviceID != 0 else { return false }
+        
+        // Check if device exists
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyDeviceNameCFString,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        // Check if property exists
+        let hasProperty = AudioObjectHasProperty(deviceID, &propertyAddress)
+        return hasProperty
+    }
+    
     /// Returns the preferred output device ID based on user selection
     /// Returns nil if user selected a specific device that's not available (privacy protection)
     private func getPreferredOutputDeviceID() -> AudioDeviceID? {
         // Check user preference
         if let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID() {
             if let device = AudioDeviceManager.shared.findDevice(byUID: selectedUID) {
-                guard device.deviceID != 0 else {
+                let deviceID = device.deviceID
+                
+                guard deviceID != 0 else {
                     Logger.audio.error("Selected device '\(selectedUID)' has invalid device ID. Stopping playback")
                     return nil
                 }
+                
+                // Validate device still exists before returning
+                guard isDeviceValid(deviceID) else {
+                    Logger.audio.error("Selected device '\(selectedUID)' is no longer valid. Stopping playback")
+                    return nil
+                }
+                
                 Logger.audio.debug("Using selected device: \(device.name) (\(device.id))")
-                return device.deviceID
+                return deviceID
             }
             Logger.audio.error("Selected device '\(selectedUID)' not found. Stopping playback")
             return nil
         }
         
-        // system default
-        return getDefaultOutputDeviceID()
+        if let defaultDeviceID = getDefaultOutputDeviceID() {
+            // Validate before returning
+            guard isDeviceValid(defaultDeviceID) else {
+                Logger.audio.error("System default device is no longer valid")
+                return nil
+            }
+            return defaultDeviceID
+        }
+        
+        return nil
     }
     
     /// Sets the output device for an audio queue
