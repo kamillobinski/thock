@@ -20,9 +20,10 @@ final class SoundManager {
     private var audioBuffers: [AudioQueueBufferRef] = []
     private var isQueueRunning = false
     private var audioQueueGeneration: UInt64 = 0 // Incremented on each reinitialization to detect stale references
+    private var initRetryCount: Int = 0
     private var idleTimeoutTimer: DispatchSourceTimer?
     private let timerLock = NSLock()
-    private let queueStateLock = NSLock() // Protects audioQueue, isQueueRunning, isReady, and audioQueueGeneration
+    private let queueStateLock = NSLock() // Protects audioQueue, isQueueRunning, isReady, initRetryCount and audioQueueGeneration
     
     // MARK: - Audio Format
     private var sampleRate: Float64 = 44100.0
@@ -136,13 +137,7 @@ final class SoundManager {
         }
         
         // Reset idle timer with new timeout value
-        queueStateLock.lock()
-        let isRunning = isQueueRunning
-        queueStateLock.unlock()
-        
-        if isRunning {
-            resetIdleTimer()
-        }
+        resetIdleTimer()
     }
     
     @objc private func handleAudioDeviceChange() {
@@ -213,6 +208,8 @@ final class SoundManager {
     }
     
     private func reinitializeAudioQueue(with newBufferSize: UInt32) {
+        detectHardwareSampleRate()
+        
         // Cancel idle timer
         timerLock.lock()
         idleTimeoutTimer?.cancel()
@@ -322,7 +319,7 @@ final class SoundManager {
             return
         }
         
-        let status = AudioQueueStop(queue, false)
+        let status = AudioQueueStop(queue, true)
         if status == noErr {
             queueStateLock.lock()
             // Update state only if queue hasnt been reinitialized
@@ -357,6 +354,13 @@ final class SoundManager {
             return
         }
         
+        idleCallbackCount = 0
+        // Re-prime all buffers
+        Logger.audio.debug("Re-priming \(self.audioBuffers.count) buffers before restart")
+        for buffer in audioBuffers {
+            primeBuffer(buffer, queue: queue)
+        }
+        
         let status = AudioQueueStart(queue, nil)
         if status == noErr {
             queueStateLock.lock()
@@ -369,7 +373,13 @@ final class SoundManager {
             resetIdleTimer()
             Logger.audio.info("Audio queue restarted")
         } else {
-            Logger.audio.error("Failed to restart audio queue: \(status)")
+            Logger.audio.error("Failed to restart audio queue: \(status), queue is in bad state - reinitializing")
+            
+            // Queue failed to restart, full reinit to recover
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.reinitializeAudioQueue(with: self.currentBufferSize)
+            }
         }
     }
     
@@ -507,15 +517,25 @@ final class SoundManager {
         
         // Set output device for the audio queue (if not available, abort starting the queue)
         guard let deviceID = getPreferredOutputDeviceID() else {
-            Logger.audio.error("Preferred audio device unavailable. Audio queue will not start")
-            // dispose the queue
+            Logger.audio.error("Preferred audio device unavailable, cleaning up and scheduling retry")
             AudioQueueDispose(queue, true)
             
             queueStateLock.lock()
             audioQueue = nil
             audioBuffers = []
             isReady = false
+            let currentRetry = initRetryCount
+            initRetryCount += 1
             queueStateLock.unlock()
+            
+            let delay = min(15.0, pow(2.0, Double(currentRetry))) // capped at 15
+            Logger.audio.info("Scheduling device availability retry #\(currentRetry + 1) after \(delay)s")
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self = self else { return }
+                Logger.audio.info("Retrying audio queue initialization for device availability (attempt #\(currentRetry + 1))")
+                self.reinitializeAudioQueue(with: self.currentBufferSize)
+            }
             return
         }
         
@@ -524,13 +544,33 @@ final class SoundManager {
         // Start the queue
         let startStatus = AudioQueueStart(queue, nil)
         guard startStatus == noErr else {
-            Logger.audio.error("Audio queue start failed with status: \(startStatus)")
+            Logger.audio.error("Audio queue start failed with status: \(startStatus), cleaning up and scheduling retry")
+            AudioQueueDispose(queue, true)
+            
+            queueStateLock.lock()
+            audioQueue = nil
+            audioBuffers = []
+            isReady = false
+            isQueueRunning = false
+            let currentRetry = initRetryCount
+            initRetryCount += 1
+            queueStateLock.unlock()
+            
+            let delay = min(15.0, pow(2.0, Double(currentRetry))) // capped at 15
+            Logger.audio.info("Scheduling retry #\(currentRetry + 1) after \(delay)s")
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self = self else { return }
+                Logger.audio.info("Retrying audio queue initialization (attempt #\(currentRetry + 1))")
+                self.reinitializeAudioQueue(with: self.currentBufferSize)
+            }
             return
         }
         
         queueStateLock.lock()
         isQueueRunning = true
         isReady = true
+        initRetryCount = 0
         queueStateLock.unlock()
         
         timerLock.lock()
@@ -711,13 +751,16 @@ final class SoundManager {
         // Restart queue if stopped due to idle timeout
         queueStateLock.lock()
         let isRunning = isQueueRunning
+        let stillReady = isReady // could have changed during device reinit
         queueStateLock.unlock()
         
-        if !isRunning {
+        if stillReady && !isRunning {
             restartQueue()
-        } else {
-            // Running, reset timer
+        } else if stillReady && isRunning {
             resetIdleTimer()
+        } else {
+            Logger.audio.debug("Playback blocked: audio system became not ready during play()")
+            return
         }
         
         if ENABLE_LATENCY_MEASUREMENT {

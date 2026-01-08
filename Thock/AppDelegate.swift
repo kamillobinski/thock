@@ -198,8 +198,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     @objc private func handleSystemDidWake(_ notification: Notification) {
         Logger.audio.info("System woke from sleep, reinitializing audio system")
         
-        // Stabilize after wake
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             AudioDeviceManager.shared.enumerateAndCacheDevices()
             SoundManager.shared.reinitializeAfterWake()
         }
