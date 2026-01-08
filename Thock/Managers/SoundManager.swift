@@ -235,6 +235,7 @@ final class SoundManager {
         audioBuffers = []
         isQueueRunning = false
         isReady = false
+        initRetryCount = 0
         queueStateLock.unlock()
         
         // Clear active sounds
