@@ -207,7 +207,7 @@ final class SoundManager {
         }
     }
     
-    private func reinitializeAudioQueue(with newBufferSize: UInt32) {
+    private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false) {
         detectHardwareSampleRate()
         
         // Cancel idle timer
@@ -235,7 +235,9 @@ final class SoundManager {
         audioBuffers = []
         isQueueRunning = false
         isReady = false
-        initRetryCount = 0
+        if !isRetry {
+            initRetryCount = 0
+        }
         queueStateLock.unlock()
         
         // Clear active sounds
@@ -535,7 +537,7 @@ final class SoundManager {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 guard let self = self else { return }
                 Logger.audio.info("Retrying audio queue initialization for device availability (attempt #\(currentRetry + 1))")
-                self.reinitializeAudioQueue(with: self.currentBufferSize)
+                self.reinitializeAudioQueue(with: self.currentBufferSize, isRetry: true)
             }
             return
         }
@@ -563,7 +565,7 @@ final class SoundManager {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 guard let self = self else { return }
                 Logger.audio.info("Retrying audio queue initialization (attempt #\(currentRetry + 1))")
-                self.reinitializeAudioQueue(with: self.currentBufferSize)
+                self.reinitializeAudioQueue(with: self.currentBufferSize, isRetry: true)
             }
             return
         }
