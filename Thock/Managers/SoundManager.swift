@@ -819,68 +819,21 @@ final class SoundManager {
         preloadTrackpadSounds()
     }
     
-    /// Preloads trackpad click sounds
-    private func preloadTrackpadSounds() {
-        trackpadSoundLibrary.removeAll()
+    /// Preloads trackpad click sounds from the bundle.
+    /// Call this during app initialization for low-latency playback.
+    func preloadTrackpadSounds() {
+        guard trackpadSoundLibrary.isEmpty else { return }
         
-        // Try to find click.wav directly in the bundle (with Resources/Sounds/Trackpad path)
+        // The sound file is at Resources/Sounds/Trackpad/click.wav in the bundle
         if let clickURL = Bundle.main.url(forResource: "click", withExtension: "wav", subdirectory: "Resources/Sounds/Trackpad") {
             if let pcmSound = loadPCMSound(from: clickURL) {
                 trackpadSoundLibrary["click.wav"] = pcmSound
-                Logger.audio.info("Loaded trackpad click sound from Resources/Sounds/Trackpad")
+                Logger.audio.info("Loaded trackpad click sound")
                 return
             }
         }
         
-        // Try Sounds/Trackpad subdirectory
-        if let clickURL = Bundle.main.url(forResource: "click", withExtension: "wav", subdirectory: "Sounds/Trackpad") {
-            if let pcmSound = loadPCMSound(from: clickURL) {
-                trackpadSoundLibrary["click.wav"] = pcmSound
-                Logger.audio.info("Loaded trackpad click sound from Sounds/Trackpad")
-                return
-            }
-        }
-        
-        // Try without subdirectory (if added to root of Copy Bundle Resources)
-        if let clickURL = Bundle.main.url(forResource: "click", withExtension: "wav") {
-            if let pcmSound = loadPCMSound(from: clickURL) {
-                trackpadSoundLibrary["click.wav"] = pcmSound
-                Logger.audio.info("Loaded trackpad click sound from bundle root")
-                return
-            }
-        }
-        
-        // Fallback: try to load from resourceURL with various paths
-        let possiblePaths = [
-            "Resources/Sounds/Trackpad",
-            "Sounds/Trackpad"
-        ]
-        
-        for pathComponent in possiblePaths {
-            if let trackpadDir = Bundle.main.resourceURL?.appendingPathComponent(pathComponent),
-               FileManager.default.fileExists(atPath: trackpadDir.path) {
-                do {
-                    let soundFiles = try FileManager.default.contentsOfDirectory(atPath: trackpadDir.path)
-                        .filter { $0.hasSuffix(".mp3") || $0.hasSuffix(".wav") }
-                    
-                    for file in soundFiles {
-                        let fileURL = trackpadDir.appendingPathComponent(file)
-                        if let pcmSound = loadPCMSound(from: fileURL) {
-                            trackpadSoundLibrary[file] = pcmSound
-                        }
-                    }
-                    
-                    if !trackpadSoundLibrary.isEmpty {
-                        Logger.audio.info("Preloaded \(self.trackpadSoundLibrary.count) trackpad sounds from \(pathComponent)")
-                        return
-                    }
-                } catch {
-                    Logger.audio.debug("Could not enumerate \(pathComponent): \(error.localizedDescription)")
-                }
-            }
-        }
-        
-        Logger.audio.warning("Trackpad click sound not found in any location")
+        Logger.audio.warning("Trackpad click sound not found in bundle")
     }
     
     /// Plays the trackpad click sound

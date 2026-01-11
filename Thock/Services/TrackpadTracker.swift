@@ -3,19 +3,50 @@ import Cocoa
 /// Tracks trackpad/mouse click events and plays sounds.
 class TrackpadTracker {
     private var eventMonitor: CFMachPort?
+    private var settingsObserver: NSObjectProtocol?
+    
+    init() {
+        // Observe settings changes to start/stop tracking dynamically
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: .settingsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleSettingsChange()
+        }
+    }
     
     deinit {
+        if let observer = settingsObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
         stopTracking()
     }
     
+    /// Starts tracking if trackpad sound is enabled, otherwise stops.
+    func startTrackingIfEnabled() {
+        if SettingsEngine.shared.isTrackpadSoundEnabled() {
+            startTracking()
+        } else {
+            stopTracking()
+        }
+    }
+    
+    /// Handles settings changes to start/stop tracking dynamically.
+    private func handleSettingsChange() {
+        startTrackingIfEnabled()
+    }
+    
     /// Starts tracking trackpad click events.
-    func startTracking() {
-        stopTracking()
+    private func startTracking() {
+        // Already tracking
+        guard eventMonitor == nil else { return }
         
         // Only track left mouse down (trackpad click)
         let eventMask: CGEventMask = (1 << CGEventType.leftMouseDown.rawValue)
         
-        let observer = Unmanaged.passRetained(self).toOpaque()
+        // Use passUnretained to avoid retain cycle - the tracker's lifetime is managed by AppDelegate
+        let observer = Unmanaged.passUnretained(self).toOpaque()
         
         eventMonitor = CGEvent.tapCreate(
             tap: .cghidEventTap,
@@ -23,11 +54,6 @@ class TrackpadTracker {
             options: .listenOnly,
             eventsOfInterest: eventMask,
             callback: { _, type, event, userInfo in
-                // Check if trackpad sound is enabled
-                guard SettingsEngine.shared.isTrackpadSoundEnabled() else {
-                    return Unmanaged.passUnretained(event)
-                }
-                
                 // Don't play if app is disabled
                 guard AppEngine.shared.isEnabled() else {
                     return Unmanaged.passUnretained(event)
@@ -60,6 +86,7 @@ class TrackpadTracker {
     /// Stops tracking trackpad click events.
     func stopTracking() {
         if let eventMonitor = eventMonitor {
+            CGEvent.tapEnable(tap: eventMonitor, enable: false)
             CFMachPortInvalidate(eventMonitor)
             self.eventMonitor = nil
         }

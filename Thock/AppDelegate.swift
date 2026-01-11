@@ -78,7 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private func initializeTrackpadTracker() {
         if trackpadTracker == nil {
             trackpadTracker = TrackpadTracker()
-            trackpadTracker.startTracking()
+            trackpadTracker.startTrackingIfEnabled()
         }
     }
     
