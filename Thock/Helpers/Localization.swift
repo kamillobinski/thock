@@ -434,9 +434,9 @@ struct L10n {
     
     static var autoEnableOnHeadphoneSubtitle: String {
         switch lang {
-        case .english: return "Automatically enable Thock when Bluetooth headphones are connected"
-        case .chinese: return "连接蓝牙耳机时自动启用 Thock，断开时自动关闭"
-        case .japanese: return "Bluetoothヘッドフォン接続時にThockを自動で有効化"
+        case .english: return "Automatically enable Thock when headphones are connected"
+        case .chinese: return "连接耳机时自动启用 Thock，断开时自动关闭"
+        case .japanese: return "ヘッドフォン接続時にThockを自動で有効化"
         }
     }
     
