@@ -148,6 +148,23 @@ final class SettingsEngine {
         SettingsManager.shared.trackpadSoundEnabled = enabled
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
+    
+    // MARK: - Headphone Auto-Enable
+    
+    func isAutoEnableOnHeadphoneEnabled() -> Bool {
+        return SettingsManager.shared.autoEnableOnHeadphone
+    }
+    
+    func setAutoEnableOnHeadphone(_ enabled: Bool) {
+        SettingsManager.shared.autoEnableOnHeadphone = enabled
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+        
+        // When enabling, immediately check headphone state and apply
+        if enabled {
+            let headphoneConnected = HeadphoneDetector.shared.isHeadphoneConnected()
+            AppEngine.shared.setEnabled(headphoneConnected)
+        }
+    }
 }
 
 extension Notification.Name {
