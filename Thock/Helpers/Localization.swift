@@ -29,11 +29,14 @@ final class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
     
     private let key = "appLanguage"
+    private var isInitialized = false
     
     @Published var current: AppLanguage {
         didSet {
             UserDefaults.standard.set(current.rawValue, forKey: key)
-            NotificationCenter.default.post(name: .languageDidChange, object: nil)
+            if isInitialized {
+                NotificationCenter.default.post(name: .languageDidChange, object: nil)
+            }
         }
     }
     
@@ -44,6 +47,7 @@ final class LocalizationManager: ObservableObject {
         } else {
             self.current = AppLanguage.fromSystem()
         }
+        isInitialized = true
     }
 }
 
