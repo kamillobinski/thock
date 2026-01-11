@@ -7,6 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private var statusBarItem: NSStatusItem!
     var menuBarController: MenuBarController!
     private var keyTracker: KeyTracker!
+    private var trackpadTracker: TrackpadTracker!
     
     // MARK: - App Lifecycle
     
@@ -27,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     /// Quits the application cleanly.
     func applicationWillTerminate(_ notification: Notification) {
         keyTracker?.stopTrackingKeys()
+        trackpadTracker?.stopTracking()
         PipeListenerService.shared.cleanUp()
     }
     
@@ -69,6 +71,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         if keyTracker == nil {
             keyTracker = KeyTracker()
             keyTracker.startTrackingKeys()
+        }
+    }
+    
+    /// Initializes and starts tracking trackpad click events.
+    private func initializeTrackpadTracker() {
+        if trackpadTracker == nil {
+            trackpadTracker = TrackpadTracker()
+            trackpadTracker.startTracking()
         }
     }
     
@@ -215,6 +225,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         
         _ = PipeListenerService.shared
         initializeKeyTracker()
+        initializeTrackpadTracker()
         initializeAudioMonitor()
         
         ModeEngine.shared.loadInitialMode()

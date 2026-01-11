@@ -36,6 +36,7 @@ final class SoundManager {
     
     // MARK: - Sound Storage
     private var soundLibrary: [String: PCMSound] = [:]
+    private var trackpadSoundLibrary: [String: PCMSound] = [:]
     private var activeSounds: [ActiveSound] = []
     private let activeSoundsLock = NSLock()
     
@@ -813,6 +814,133 @@ final class SoundManager {
         } catch {
             Logger.audio.error("Failed to load sound files: \(error.localizedDescription)")
         }
+        
+        // Also preload trackpad sounds
+        preloadTrackpadSounds()
+    }
+    
+    /// Preloads trackpad click sounds
+    private func preloadTrackpadSounds() {
+        trackpadSoundLibrary.removeAll()
+        
+        // Try to find click.wav directly in the bundle (with Resources/Sounds/Trackpad path)
+        if let clickURL = Bundle.main.url(forResource: "click", withExtension: "wav", subdirectory: "Resources/Sounds/Trackpad") {
+            if let pcmSound = loadPCMSound(from: clickURL) {
+                trackpadSoundLibrary["click.wav"] = pcmSound
+                Logger.audio.info("Loaded trackpad click sound from Resources/Sounds/Trackpad")
+                return
+            }
+        }
+        
+        // Try Sounds/Trackpad subdirectory
+        if let clickURL = Bundle.main.url(forResource: "click", withExtension: "wav", subdirectory: "Sounds/Trackpad") {
+            if let pcmSound = loadPCMSound(from: clickURL) {
+                trackpadSoundLibrary["click.wav"] = pcmSound
+                Logger.audio.info("Loaded trackpad click sound from Sounds/Trackpad")
+                return
+            }
+        }
+        
+        // Try without subdirectory (if added to root of Copy Bundle Resources)
+        if let clickURL = Bundle.main.url(forResource: "click", withExtension: "wav") {
+            if let pcmSound = loadPCMSound(from: clickURL) {
+                trackpadSoundLibrary["click.wav"] = pcmSound
+                Logger.audio.info("Loaded trackpad click sound from bundle root")
+                return
+            }
+        }
+        
+        // Fallback: try to load from resourceURL with various paths
+        let possiblePaths = [
+            "Resources/Sounds/Trackpad",
+            "Sounds/Trackpad"
+        ]
+        
+        for pathComponent in possiblePaths {
+            if let trackpadDir = Bundle.main.resourceURL?.appendingPathComponent(pathComponent),
+               FileManager.default.fileExists(atPath: trackpadDir.path) {
+                do {
+                    let soundFiles = try FileManager.default.contentsOfDirectory(atPath: trackpadDir.path)
+                        .filter { $0.hasSuffix(".mp3") || $0.hasSuffix(".wav") }
+                    
+                    for file in soundFiles {
+                        let fileURL = trackpadDir.appendingPathComponent(file)
+                        if let pcmSound = loadPCMSound(from: fileURL) {
+                            trackpadSoundLibrary[file] = pcmSound
+                        }
+                    }
+                    
+                    if !trackpadSoundLibrary.isEmpty {
+                        Logger.audio.info("Preloaded \(self.trackpadSoundLibrary.count) trackpad sounds from \(pathComponent)")
+                        return
+                    }
+                } catch {
+                    Logger.audio.debug("Could not enumerate \(pathComponent): \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        Logger.audio.warning("Trackpad click sound not found in any location")
+    }
+    
+    /// Plays the trackpad click sound
+    func playTrackpadClick() {
+        // If trackpad sounds not loaded yet, try loading now
+        if trackpadSoundLibrary.isEmpty {
+            preloadTrackpadSounds()
+        }
+        
+        // Play click.wav if available
+        guard let clickSound = trackpadSoundLibrary["click.wav"] else {
+            Logger.audio.warning("Trackpad click sound not found")
+            return
+        }
+        
+        queueStateLock.lock()
+        let ready = isReady
+        queueStateLock.unlock()
+        
+        guard ready else {
+            Logger.audio.warning("Trackpad sound blocked: audio system not ready")
+            return
+        }
+        
+        // Restart queue if stopped due to idle timeout
+        queueStateLock.lock()
+        let isRunning = isQueueRunning
+        let stillReady = isReady
+        queueStateLock.unlock()
+        
+        if stillReady && !isRunning {
+            restartQueue()
+        } else if stillReady && isRunning {
+            resetIdleTimer()
+        } else {
+            Logger.audio.debug("Trackpad sound blocked: audio system became not ready")
+            return
+        }
+        
+        // Get current volume and pitch variation
+        let currentVolume = volume
+        let pitchVariation = SettingsEngine.shared.getPitchVariation()
+        
+        let pitchOffset: Float
+        if pitchVariation > 0.0 {
+            pitchOffset = Float.random(in: -pitchVariation...pitchVariation)
+        } else {
+            pitchOffset = 0.0
+        }
+        
+        let activeSound = ActiveSound(
+            pcmData: clickSound.data,
+            frameCount: clickSound.frameCount,
+            latencyId: nil,
+            pitchOffset: pitchOffset
+        )
+        
+        activeSoundsLock.lock()
+        activeSounds.append(activeSound)
+        activeSoundsLock.unlock()
     }
     
     // MARK: - Sound Loading

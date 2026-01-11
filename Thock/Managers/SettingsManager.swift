@@ -13,6 +13,7 @@ final class SettingsManager {
     static let defaultSelectedAudioDeviceUID: String? = nil
     static let defaultPerDeviceVolumes: [String: Float] = [:]
     static let defaultPitchVariation: Float = 0.0
+    static let defaultTrackpadSoundEnabled: Bool = false
     
     
     private init() {}
@@ -72,6 +73,12 @@ final class SettingsManager {
         get { UserDefaults.pitchVariation }
         set { UserDefaults.pitchVariation = newValue }
     }
+    
+    /// Whether to play sound when clicking the trackpad.
+    var trackpadSoundEnabled: Bool {
+        get { UserDefaults.trackpadSoundEnabled }
+        set { UserDefaults.trackpadSoundEnabled = newValue }
+    }
 }
 
 private extension UserDefaults {
@@ -85,6 +92,7 @@ private extension UserDefaults {
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let perDeviceVolumes = "perDeviceVolume"
         static let pitchVariation = "pitchVariation"
+        static let trackpadSoundEnabled = "trackpadSoundEnabled"
     }
     
     static var openAtLogin: Bool {
@@ -192,6 +200,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.pitchVariation)
+        }
+    }
+    
+    static var trackpadSoundEnabled: Bool {
+        get {
+            if standard.object(forKey: Keys.trackpadSoundEnabled) == nil {
+                return SettingsManager.defaultTrackpadSoundEnabled
+            }
+            return standard.bool(forKey: Keys.trackpadSoundEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.trackpadSoundEnabled)
         }
     }
 }
