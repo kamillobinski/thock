@@ -2,9 +2,17 @@ import SwiftUI
 import KeyboardShortcuts
 
 enum SettingsTab: String, CaseIterable {
-    case general = "General"
-    case sound = "Sound"
-    case shortcuts = "Shortcuts"
+    case general
+    case sound
+    case shortcuts
+    
+    var localizedName: String {
+        switch self {
+        case .general: return L10n.general
+        case .sound: return L10n.sound
+        case .shortcuts: return L10n.shortcuts
+        }
+    }
     
     var icon: String {
         switch self {
@@ -28,6 +36,7 @@ struct SidebarModifier: ViewModifier {
 struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
     @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
+    @State private var refreshID = UUID()
     
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -49,11 +58,15 @@ struct SettingsView: View {
                 ShortcutsSettingsView()
             }
         }
+        .id(refreshID)
         .frame(minWidth: 715, maxWidth: 715, minHeight: 470, maxHeight: .infinity)
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 Color.clear.frame(width: 0, height: 0)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .languageDidChange)) { _ in
+            refreshID = UUID()
         }
     }
 }
@@ -61,3 +74,4 @@ struct SettingsView: View {
 #Preview("Settings") {
     SettingsView()
 }
+

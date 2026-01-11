@@ -26,7 +26,7 @@ struct SettingsLinkRowView: View {
                     }
                 }) {
                     HStack(spacing: 4) {
-                        Text("Open")
+                        Text(L10n.open)
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
 

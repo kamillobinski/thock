@@ -9,13 +9,14 @@ struct SoundSettingsView: View {
     @State private var audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
     @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
+    @State private var refreshID = UUID()
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
-                SettingsSectionView(title: "Output") {
+                SettingsSectionView(title: L10n.output) {
                     SettingsRowView(
-                        title: "Volume",
+                        title: L10n.volume,
                         subtitle: nil,
                         control: AnyView(
                             HStack(spacing: 8) {
@@ -37,11 +38,11 @@ struct SoundSettingsView: View {
                     )
                     
                     SettingsRowView(
-                        title: "Play sound effects through",
+                        title: L10n.playThrough,
                         subtitle: nil,
                         control: AnyView(
                             Picker("", selection: $selectedDeviceUID) {
-                                Text("System Default").tag("system-default")
+                                Text(L10n.systemDefault).tag("system-default")
                                 
                                 if !availableDevices.isEmpty {
                                     Divider()
@@ -63,10 +64,10 @@ struct SoundSettingsView: View {
                     )
                 }
                 
-                SettingsSectionView(title: "Filters") {
+                SettingsSectionView(title: L10n.filters) {
                     SettingsRowView(
-                        title: "Disable sound for modifier keys",
-                        subtitle: "Mute sounds when pressing modifier keys (Cmd, Shift, etc.)",
+                        title: L10n.disableModifierKeys,
+                        subtitle: L10n.disableModifierKeysSubtitle,
                         control: AnyView(
                             Toggle("", isOn: $disableModifierKeys)
                                 .toggleStyle(.switch)
@@ -79,8 +80,8 @@ struct SoundSettingsView: View {
                     )
                     
                     SettingsRowView(
-                        title: "Ignore rapid key events",
-                        subtitle: "Filter out key events that occur too quickly in succession",
+                        title: L10n.ignoreRapidKeys,
+                        subtitle: L10n.ignoreRapidKeysSubtitle,
                         control: AnyView(
                             Toggle("", isOn: $ignoreRapidKeyEvents)
                                 .toggleStyle(.switch)
@@ -93,8 +94,8 @@ struct SoundSettingsView: View {
                     )
                     
                     SettingsRowView(
-                        title: "Auto-mute with Music and Spotify",
-                        subtitle: "Automatically mute sounds when music is playing",
+                        title: L10n.autoMute,
+                        subtitle: L10n.autoMuteSubtitle,
                         control: AnyView(
                             Toggle("", isOn: $autoMuteOnMusicPlayback)
                                 .toggleStyle(.switch)
@@ -108,10 +109,10 @@ struct SoundSettingsView: View {
                     )
                 }
                 
-                SettingsSectionView(title: "Soundpacks") {
+                SettingsSectionView(title: L10n.soundpacks) {
                     VStack(spacing: 0) {
                         HStack(alignment: .center) {
-                            Text("Custom soundpack directory")
+                            Text(L10n.customSoundpackDir)
                                 .font(.system(size: 13))
                                 .foregroundColor(.primary)
                             
@@ -121,7 +122,7 @@ struct SoundSettingsView: View {
                                 CustomSoundpackHelper.openCustomSoundpackDirectory()
                             }) {
                                 HStack(spacing: 4) {
-                                    Text("Open")
+                                    Text(L10n.open)
                                         .font(.system(size: 13))
                                         .foregroundColor(.secondary)
                                     
@@ -137,17 +138,17 @@ struct SoundSettingsView: View {
                     }
                 }
                 
-                SettingsSectionView(title: "Performance") {
+                SettingsSectionView(title: L10n.performance) {
                     SettingsRowView(
-                        title: "Audio latency",
-                        subtitle: "- Ultra Low: most responsive, highest CPU usage\n- Low: very responsive, high CPU usage\n- Normal: balanced performance (recommended)\n- High: lower CPU usage, slight delay\n- Very High: lowest CPU usage, noticeable delay",
+                        title: L10n.audioLatency,
+                        subtitle: L10n.audioLatencySubtitle,
                         control: AnyView(
                             Picker("", selection: $audioBufferSize) {
-                                Text("Ultra Low").tag(UInt32(64))
-                                Text("Low").tag(UInt32(128))
-                                Text("Normal").tag(UInt32(256))
-                                Text("High").tag(UInt32(512))
-                                Text("Very High").tag(UInt32(1024))
+                                Text(L10n.ultraLow).tag(UInt32(64))
+                                Text(L10n.low).tag(UInt32(128))
+                                Text(L10n.normal).tag(UInt32(256))
+                                Text(L10n.high).tag(UInt32(512))
+                                Text(L10n.veryHigh).tag(UInt32(1024))
                             }
                                 .pickerStyle(.menu)
                                 .controlSize(.small)
@@ -159,16 +160,16 @@ struct SoundSettingsView: View {
                     )
                     
                     SettingsRowView(
-                        title: "Reduce CPU when idle",
-                        subtitle: "Stops audio engine after inactivity to reduce CPU usage.\nFirst sound after idle may have a tiny delay.\nSet to 'Never' to keep engine always running.",
+                        title: L10n.reduceCPU,
+                        subtitle: L10n.reduceCPUSubtitle,
                         control: AnyView(
                             Picker("", selection: $idleTimeoutSeconds) {
-                                Text("5 seconds").tag(5.0)
-                                Text("10 seconds").tag(10.0)
-                                Text("30 seconds").tag(30.0)
-                                Text("1 minute").tag(60.0)
-                                Text("5 minute").tag(300.0)
-                                Text("Never").tag(0.0)
+                                Text(L10n.seconds5).tag(5.0)
+                                Text(L10n.seconds10).tag(10.0)
+                                Text(L10n.seconds30).tag(30.0)
+                                Text(L10n.minute1).tag(60.0)
+                                Text(L10n.minutes5).tag(300.0)
+                                Text(L10n.never).tag(0.0)
                             }
                                 .pickerStyle(.menu)
                                 .controlSize(.small)
@@ -185,6 +186,7 @@ struct SoundSettingsView: View {
             }
             .padding([.leading, .trailing, .bottom], 20)
         }
+        .id(refreshID)
         .ignoresSafeArea(edges: .top)
         .onAppear {
             loadAvailableDevices()
@@ -205,6 +207,9 @@ struct SoundSettingsView: View {
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .languageDidChange)) { _ in
+            refreshID = UUID()
+        }
     }
     
     private func loadAvailableDevices() {
@@ -217,7 +222,7 @@ struct SoundSettingsView: View {
             // Add disconnected device to the list
             let disconnectedDevice = AudioDeviceManager.AudioDevice(
                 id: selectedUID,
-                name: "Unknown Device (Disconnected)",
+                name: L10n.unknownDevice,
                 deviceID: 0
             )
             devices.insert(disconnectedDevice, at: 0)
@@ -231,3 +236,4 @@ struct SoundSettingsView: View {
     SoundSettingsView()
         .frame(width: 500, height: 600)
 }
+
