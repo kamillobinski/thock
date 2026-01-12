@@ -92,11 +92,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     /// Shows a dialog explaining why accessibility permissions are required (first-time setup).
     private func showPermissionRequiredDialog() {
         let alert = NSAlert()
-        alert.messageText = "Accessibility Permissions Required"
-        alert.informativeText = "Thock needs accessibility permissions to detect keyboard input and play sounds.\n\nClick 'Open System Settings' below, then enable Thock in the Accessibility list."
+        alert.messageText = L10n.permissionRequired
+        alert.informativeText = L10n.permissionMessage
         alert.alertStyle = .critical
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Quit")
+        alert.addButton(withTitle: L10n.openSystemSettings)
+        alert.addButton(withTitle: L10n.quit)
         
         let response = alert.runModal()
         
@@ -111,12 +111,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     /// Shows a dialog for users who need to refresh permissions after an update.
     private func showUpdatePermissionDialog() {
         let alert = NSAlert()
-        alert.messageText = "Accessibility Permission Refresh"
-        alert.informativeText = "Annoying update step ahead!\nWe'd automate this if we could, but it requires the $100 Apple Developer Program.\n\n1. Remove the old Thock entry from Accessibility and quit the app.\n2. Reopen Thock and enable the new entry that appears."
+        alert.messageText = L10n.permissionRefresh
+        alert.informativeText = L10n.permissionRefreshMessage
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Done")
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Quit Thock")
+        alert.addButton(withTitle: L10n.done)
+        alert.addButton(withTitle: L10n.openSystemSettings)
+        alert.addButton(withTitle: L10n.quitThock)
         
         let response = alert.runModal()
         
@@ -139,10 +139,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     /// Shows a waiting alert while polling for permissions.
     private func showWaitingAlert() {
         let waitingAlert = NSAlert()
-        waitingAlert.messageText = "Accessibility Permissions Required"
-        waitingAlert.informativeText = "Waiting for permissions..."
+        waitingAlert.messageText = L10n.permissionRequired
+        waitingAlert.informativeText = L10n.waitingForPermissions
         waitingAlert.alertStyle = .informational
-        waitingAlert.addButton(withTitle: "Quit")
+        waitingAlert.addButton(withTitle: L10n.quit)
         
         // Track whether permissions were granted
         var permissionsGranted = false

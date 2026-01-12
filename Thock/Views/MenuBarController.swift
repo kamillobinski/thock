@@ -8,22 +8,22 @@ class MenuBarController {
     private var hasUpdate: Bool = false
     
     private enum MenuItemTitle {
-        static let app = AppInfoHelper.appName
-        static let volume = "Volume"
-        static let pitch = "Pitch Variation"
-        static let pitchTooltip = "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
-        static let quit = "Quit"
-        static let version = "Version"
-        static let quickSettings = "Quick Options..."
-        static let settings = "Settings..."
-        static let openAtLogin = "Launch Thock at login"
-        static let disableModifierKeys = "Disable sound for modifier keys"
-        static let ignoreRapidKeyEvents = "Ignore rapid key events"
-        static let autoMuteOnMusicPlayback = "Auto-mute with Music and Spotify"
-        static let releaseNotes = "About this version"
-        static let updateAvailable = "New Version Is Available!"
-        static let updateNow = "↺ Update Now"
-        static let checkForUpdates = "Check for updates..."
+        static var app: String { AppInfoHelper.appName }
+        static var volume: String { L10n.volume }
+        static var pitch: String { L10n.pitch }
+        static var pitchTooltip: String { L10n.pitchTooltip }
+        static var quit: String { L10n.quit }
+        static var version: String { L10n.version }
+        static var quickSettings: String { L10n.quickSettings }
+        static var settings: String { L10n.settings }
+        static var openAtLogin: String { L10n.launchAtLogin }
+        static var disableModifierKeys: String { L10n.disableModifierKeys }
+        static var ignoreRapidKeyEvents: String { L10n.ignoreRapidKeys }
+        static var autoMuteOnMusicPlayback: String { L10n.autoMute }
+        static var releaseNotes: String { L10n.releaseNotes }
+        static var updateAvailable: String { L10n.updateAvailable }
+        static var updateNow: String { L10n.updateNow }
+        static var checkForUpdates: String { L10n.checkForUpdates }
     }
     
     // MARK: - Init
@@ -54,6 +54,13 @@ class MenuBarController {
             self,
             selector: #selector(handleAppStateUpdate),
             name: .appStateDidChange,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleLanguageChange),
+            name: .languageDidChange,
             object: nil
         )
     }
@@ -202,23 +209,23 @@ class MenuBarController {
                     
                     let alert = NSAlert()
                     if isUpdateAvailable {
-                        alert.messageText = "Update Available!"
-                        alert.informativeText = "A new version of Thock is available. Check the menu bar for the update option."
+                        alert.messageText = L10n.updateAvailableTitle
+                        alert.informativeText = L10n.updateAvailableMessage
                         alert.alertStyle = .informational
                     } else {
-                        alert.messageText = "No Updates Available"
-                        alert.informativeText = "You're already running the latest version of Thock."
+                        alert.messageText = L10n.noUpdatesTitle
+                        alert.informativeText = L10n.noUpdatesMessage
                         alert.alertStyle = .informational
                     }
-                    alert.addButton(withTitle: "OK")
+                    alert.addButton(withTitle: L10n.ok)
                     alert.runModal()
                     
                 case .failure(let error):
                     let alert = NSAlert()
-                    alert.messageText = "Update Check Failed"
+                    alert.messageText = L10n.updateCheckFailed
                     alert.informativeText = "Unable to check for updates: \(error.localizedDescription)"
                     alert.alertStyle = .warning
-                    alert.addButton(withTitle: "OK")
+                    alert.addButton(withTitle: L10n.ok)
                     alert.runModal()
                 }
             }
@@ -473,6 +480,12 @@ class MenuBarController {
         DispatchQueue.main.async {
             self.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
             self.setupMenu()  // Rebuild menu to update toggle button state
+        }
+    }
+    
+    @objc private func handleLanguageChange() {
+        DispatchQueue.main.async {
+            self.setupMenu()  // Rebuild menu with new language
         }
     }
     

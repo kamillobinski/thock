@@ -2,6 +2,8 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @State private var openAtLogin = SettingsEngine.shared.isOpenAtLoginEnabled()
+    @ObservedObject private var localization = LocalizationManager.shared
+    @State private var refreshID = UUID()
     
     var body: some View {
         ScrollView {
@@ -30,7 +32,7 @@ struct GeneralSettingsView: View {
                         .frame(height: 3)
                     
                     // Version
-                    Text("Version \(AppInfoHelper.appVersion)")
+                    Text("\(L10n.version) \(AppInfoHelper.appVersion)")
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                     
@@ -39,10 +41,10 @@ struct GeneralSettingsView: View {
                 }
                 .frame(maxWidth: .infinity)
                 
-                SettingsSectionView(title: "System") {
+                SettingsSectionView(title: L10n.system) {
                     SettingsRowView(
-                        title: "Launch Thock at login",
-                        subtitle: "Automatically start Thock when you log in",
+                        title: L10n.launchAtLogin,
+                        subtitle: L10n.launchAtLoginSubtitle,
                         control: AnyView(
                             Toggle("", isOn: $openAtLogin)
                                 .toggleStyle(.switch)
@@ -51,24 +53,38 @@ struct GeneralSettingsView: View {
                                 .onChange(of: openAtLogin) { newValue in
                                     SettingsEngine.shared.setOpenAtLogin(newValue)
                                 }
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.language,
+                        subtitle: L10n.languageSubtitle,
+                        control: AnyView(
+                            Picker("", selection: $localization.current) {
+                                ForEach(AppLanguage.allCases, id: \.self) { lang in
+                                    Text(lang.displayName).tag(lang)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .controlSize(.small)
                         ),
                         isLast: true
                     )
                 }
                 
-                SettingsSectionView(title: "More") {
+                SettingsSectionView(title: L10n.more) {
                     SettingsLinkRowView(
-                        title: "About this version",
+                        title: L10n.aboutThisVersion,
                         url: "https://github.com/kamillobinski/thock/releases/tag/\(AppInfoHelper.appVersion)"
                     )
                     
                     SettingsLinkRowView(
-                        title: "Contribute",
+                        title: L10n.contribute,
                         url: "https://github.com/kamillobinski/thock"
                     )
                     
                     SettingsLinkRowView(
-                        title: "Report a bug",
+                        title: L10n.reportBug,
                         url: "https://github.com/kamillobinski/thock/issues",
                         showDivider: false
                     )
@@ -78,9 +94,13 @@ struct GeneralSettingsView: View {
             }
             .padding([.leading, .trailing, .bottom], 20)
         }
+        .id(refreshID)
         .ignoresSafeArea(edges: .top)
         .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
             openAtLogin = SettingsEngine.shared.isOpenAtLoginEnabled()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .languageDidChange)) { _ in
+            refreshID = UUID()
         }
     }
 }

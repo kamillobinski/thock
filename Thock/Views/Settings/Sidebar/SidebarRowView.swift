@@ -16,7 +16,7 @@ struct SidebarRowView: View {
                         .foregroundStyle(isSelected ? .white : .primary)
                 )
 
-            Text(tab.rawValue)
+            Text(tab.localizedName)
                 .font(.system(size: 13, weight: .regular))
                 .foregroundColor(.primary)
             
