@@ -62,7 +62,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
 
 
 
-<!-- FATURES -->
+<!-- FEATURES -->
 ## Features
 
 <details>
