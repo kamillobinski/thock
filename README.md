@@ -76,7 +76,7 @@ Select your preferred language in the general settings to enjoy a workspace tail
 
 
 
-![custom-engine](docs/readme/custom-engine)
+![custom-engine](docs/readme/custom-engine.png)
 
 ### Custom Engine
 
