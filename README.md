@@ -65,6 +65,43 @@ Started this project to challenge the status quo. While paid alternatives exist,
 <!-- FATURES -->
 ## Features
 
+<details>
+<summary>Quick Overview (if you don't feel like scrolling today)</summary>
+<br/>
+<table>
+  <thead>
+    <tr>
+      <th width="300px">Feature</th>
+      <th width="700px">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Custom Engine</b></td>
+      <td>Native AudioQueue APIs achieving ultra-low latency for perfectly synced feedback.</td>
+    </tr>
+    <tr>
+      <td><b>Sound Library</b></td>
+      <td>Extensible JSON-based architecture to import or create custom switch profiles.</td>
+    </tr>
+    <tr>
+      <td><b>Smart Integration</b></td>
+      <td>Music awareness that automatically mutes or ducks audio during playback.</td>
+    </tr>
+    <tr>
+      <td><b>Advanced Control</b></td>
+      <td>Hands-on-keys management via Raycast extension and dedicated CLI.</td>
+    </tr>
+    <tr>
+      <td><b>Translation</b></td>
+      <td>Fully localized interface for English, 日本語, and 中文 users.</td>
+    </tr>
+  </tbody>
+</table>
+</details>
+
+
+
 ![custom-engine](docs/readme/custom-engine.png)
 
 ### Custom Engine
