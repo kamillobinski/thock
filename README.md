@@ -112,7 +112,9 @@ TODO
 
 ### Advanced Control
 
-TODO
+Built for power users, Thock extends beyond the menu bar with its own Raycast Extension and a dedicated CLI. This integration allows you to toggle the audio engine and switch sound packs entirely via the command bar.
+
+By exposing every core function to the system, Thock fits seamlessly into your automation workflows and productivity scripts. Whether you're using Raycas, Alfred, or the terminal, you have total control over your typing environment without ever lifting your hands.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
