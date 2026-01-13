@@ -86,7 +86,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
     </tr>
     <tr>
       <td><b>Smart Integration</b></td>
-      <td>Music awareness that automatically mutes or ducks audio during playback.</td>
+      <td>Music awareness that automatically mutes audio during playback.</td>
     </tr>
     <tr>
       <td><b>Advanced Control</b></td>
@@ -130,7 +130,7 @@ With support for custom sound packs, you can easily import new switch profiles o
 
 ### Smart Integration
 
-With music awareness, Thock intelligently manages your soundscape so you never have to manually toggle settings. By detecting active playback from apps like Spotify or Apple Music, it automatically mutes or ducks its typing sounds to let your music take priority.
+With music awareness, Thock intelligently manages your soundscape so you never have to manually toggle settings. By detecting active playback from apps like Spotify or Apple Music, it automatically mutes its typing sounds to let your music take priority.
 
 As soon as the music stops, the app instantly resumes your mechanical feedback. It's a seamless, 'set-and-forget' feature designed for deep work sessions where your focus shifts between rhythm of your keys and the rhythm of your playlist.
 
