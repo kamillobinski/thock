@@ -33,10 +33,11 @@
     <li>
       <a href="#features">Features</a>
       <ul>
-        <li><a href="#translation">Translation</a></li>
         <li><a href="#custom-engine">Custom Engine</a></li>
+        <li><a href="#sound-library">Sound Library</a></li>
         <li><a href="#smart-integration">Smart Integration</a></li>
         <li><a href="#advanced-control">Advanced Control</a></li>
+        <li><a href="#translation">Translation</a></li>
       </ul>
     </li>
     <li><a href="#getting-started">Getting Started</a></li>
@@ -53,9 +54,9 @@
 
 ![banner](docs/readme/banner.png)
 
-Thock is a high-performance utility designed to bring the tactile satisfaction of mechanical switches to you macOS workspace. Built natively in Swift, it bridges the gap between hardware feel and software execution with zero compromises on speed or privacy.
+Thock is a high-performance utility designed to bring the tactile satisfaction of mechanical switches to your macOS workspace. Built natively in Swift, it bridges the gap between hardware feel and software execution with zero compromises on speed or privacy.
 
-Started this project to challege the status quo. While paid alternatives exist, Thock is built on the belief that the best tools should be open-source and community-driven. By focusing on a custom low-latency engine and deep system integration, Thock offers a professional-grade typing experience that stays out of your way and keeps your flow state intact.
+Started this project to challenge the status quo. While paid alternatives exist, Thock is built on the belief that the best tools should be open-source and community-driven. By focusing on a custom low-latency engine and deep system integration, Thock offers a professional-grade typing experience that stays out of your way and keeps your flow state intact.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -64,18 +65,6 @@ Started this project to challege the status quo. While paid alternatives exist, 
 <!-- FATURES -->
 ## Features
 
-![translation](docs/readme/translation.png)
-
-### Translation
-
-With localization, Thock bridges the gap between powerful functionality and efortless usability. The interface is fully translated into English, 日本語 (Japanese) and 中文 (Chinese), allowing users to navigate the ecosystem without language barriers.
-
-Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 ![custom-engine](docs/readme/custom-engine.png)
 
 ### Custom Engine
@@ -83,6 +72,18 @@ Select your preferred language in the general settings to enjoy a workspace tail
 Features a custom audio engine built on native macOS AudioQueue APIs, achieving ultra-low latency that feels instantaneous. By bypassing standard high-level processing layers, we have eliminated perceptual lag to provide perfectly synced auditory feedback.
 
 Whether you are a high-speed programmer or a creative writer, Thock ensures every keystroke is met with organic, realtime sound that keeps pace with your fastest workflow.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+![sound-library](docs/readme/sound-library.png)
+
+### Sound Library
+
+Built to be an open platform. While the app comes pre-loaded with high-quality recordings, you aren't limited to the defaults.
+
+With support for custom sound packs, you can easily import new switch profiles or create your own using a simple JSON structure. Whether you want the heavy 'thock' of a vintage board or a completely unique experimental soundscape, you can expand your library to suit your specific taste. Drop your folder into the directory and switch profiles instantly.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -100,21 +101,25 @@ As soon as the music stops, the app instantly resumes your mechanical feedback. 
 
 
 
-### Custom Soundpacks
-
-TODO
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 ![advanced-control](docs/readme/advanced-control.png)
 
 ### Advanced Control
 
 Built for power users, Thock extends beyond the menu bar with its own Raycast Extension and a dedicated CLI. This integration allows you to toggle the audio engine and switch sound packs entirely via the command bar.
 
-By exposing every core function to the system, Thock fits seamlessly into your automation workflows and productivity scripts. Whether you're using Raycas, Alfred, or the terminal, you have total control over your typing environment without ever lifting your hands.
+By exposing every core function to the system, Thock fits seamlessly into your automation workflows and productivity scripts. Whether you're using Raycast, Alfred, or the terminal, you have total control over your typing environment without ever lifting your hands.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+![translation](docs/readme/translation.png)
+
+### Translation
+
+With localization, Thock bridges the gap between powerful functionality and effortless usability. The interface is fully translated into English, 日本語 (Japanese) and 中文 (Chinese), allowing users to navigate the ecosystem without language barriers.
+
+Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -128,7 +133,7 @@ It's quick and easy. You can either download a prebuilt release or build it your
 > [!WARNING]  
 > Thock requires macOS 13.5 Ventura or later.
 
-### `A` Hombrew Cask Installation (recommended)
+### `A` Homebrew Cask Installation (recommended)
 
 ```sh
 brew tap kamillobinski/thock
