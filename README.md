@@ -5,11 +5,11 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="Thock/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" alt="Logo" width="100" height="100">
+  <img src="docs/readme/icon.png" alt="Logo" width="80" height="80">
   <h3 align="center">Thock</h3>
   <p align="center">
-    A macOS utility that adds sound effects to your keyboard.
-    <br />Lightweight, native and runs in the menu bar.
+    A native macOS utility that adds sound effects to your keyboard.
+    <br />Blazing fast, lightweight and runs in the menu bar.
     <br /><br />
     <a href="https://github.com/kamillobinski/thock/releases/latest" target="_blank" rel="noopener noreferrer">
       <img src="https://img.shields.io/github/v/release/kamillobinski/thock?style=rounded&color=white&labelColor=000000&label=release" alt="Release Version" />
@@ -29,16 +29,16 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
+    <li><a href="#about-the-project">About The Project</a></li>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#features">Features</a>
       <ul>
-        <li><a href="#built-with">Built With</a></li>
+        <li><a href="#translation">Translation</a></li>
+        <li><a href="#custom-engine">Custom Engine</a></li>
+        <li><a href="#smart-integration">Smart Integration</a></li>
       </ul>
     </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-    </li>
-    <li><a href="#usage">Usage</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -50,30 +50,66 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-![banner](banner.png)
+![banner](docs/readme/banner.png)
 
-Thock is a native macOS utility that adds sound effects to your keyboard.
+Thock is a high-performance utility designed to bring the tactile satisfaction of mechanical switches to you macOS workspace. Built natively in Swift, it bridges the gap between hardware feel and software execution with zero compromises on speed or privacy.
 
-I built this project for fun, aiming to create a satisfying typing experience - like a mechanical keyboard, but entirely in software. Similar apps exist, but those written in other languages often lack proper macOS support or fall short in quality and functionality. There’s also Klack, a $5 paid alternative on the App Store, but I believe an open source community can do better lol.
-
-Key features:
-* &nbsp; Native macOS application
-* ⚡ Minimal CPU & memory usage
-* 📎 Menu bar utility
-* 🔊 Over 25 unique sound modes
-* 🕹️ Adjustable volume slider
-* 🪄 [Raycast extension](https://www.raycast.com/shail_antani/thock)
-* 🙉 [Custom soundpacks](https://github.com/kamillobinski/thock/blob/main/docs/CUSTOM-SOUNDS.md)
-* 💅 [Soundpack Converters](https://github.com/kamillobinski/thock/blob/main/docs/SOUNDPACK-CONVERTERS.md)
-* ⚙️ Settings (auto-mute, launch at login, etc)
+Started this project to challege the status quo. While paid alternatives exist, Thock is built on the belief that the best tools should be open-source and community-driven. By focusing on a custom low-latency engine and deep system integration, Thock offers a professional-grade typing experience that stays out of your way and keeps your flow state intact.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-<!-- BUILT WITH -->
-### Built With
 
-![Swift][Swift-url]
+<!-- FATURES -->
+## Features
+
+![translation](docs/readme/translation.png)
+
+### Translation
+
+With localization, Thock bridges the gap between powerful functionality and efortless usability. The interface is fully translated into English, 日本語 (Japanese) and 中文 (Chinese), allowing users to navigate the ecosystem without language barriers.
+
+Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+![performance](docs/readme/performance.png)
+
+### Custom Engine
+
+Features a custom audio engine built on native macOS AudioQueue APIs, achieving ultra-low latency that feels instantaneous. By bypassing standard high-level processing layers, we have eliminated perceptual lag to provide perfectly synced auditory feedback.
+
+Whether you are a high-speed programmer or a creative writer, Thock ensures every keystroke is met with organic, realtime sound that keeps pace with your fastest workflow.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+![smart-integration](docs/readme/smart-integration.png)
+
+### Smart Integration
+
+With music awareness, Thock intelligently manages your soundscape so you never have to manually toggle settings. By detecting active playback from apps like Spotify or Apple Music, it automatically mutes or ducks its typing sounds to let your music take priority.
+
+As soon as the music stops, the app instantly resumes your mechanical feedback. It's a seamless, 'set-and-forget' feature designed for deep work sessions where your focus shifts between rhythm of your keys and the rhythm of your playlist.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+### Custom Soundpacks
+
+TODO
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+### Raycast Extension
+
+TODO
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -84,10 +120,10 @@ Key features:
 
 It's quick and easy. You can either download a prebuilt release or build it yourself if you prefer.
 
-> [!IMPORTANT]  
+> [!WARNING]  
 > Thock requires macOS 13.5 Ventura or later.
 
-### → Option 1. Hombrew Cask Installation (recommended)
+### `A` Hombrew Cask Installation (recommended)
 
 ```sh
 brew tap kamillobinski/thock
@@ -100,7 +136,7 @@ brew install --cask kamillobinski/thock/thock
 ```
 
 <details>
-<summary><b>Option 2. Release Download</b></summary>
+<summary><b>B</b>: Release Download</summary>
 
 1. Go to the [latest release](https://github.com/kamillobinski/thock/releases/latest)
 2. Download `Thock-x.y.z.zip`
@@ -111,7 +147,7 @@ brew install --cask kamillobinski/thock/thock
 </details>
 
 <details>
-<summary><b>Option 3. Build From Source</b></summary>
+<summary><b>C</b>: Build From Source</summary>
 
 1. Clone the repository
    ```sh
@@ -132,21 +168,13 @@ brew install --cask kamillobinski/thock/thock
 
 
 
-<!-- USAGE EXAMPLES -->
-## Usage
-
-![usage](usage.gif)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 
 
 <!-- CONTRIBUTING -->
@@ -167,6 +195,7 @@ Thanks to the folks that helped make this project a reality!
 
 **Community Contribution**
 
+- [@distantorigin](https://github.com/distantorigin) - Fixed menu bar accessibility to ensure the app is fully responsive when using VoiceOver.
 - [@SouhailBlmn](https://github.com/SouhailBlmn) - Volume persistence across output devices, global shortcut to toggle the app
 - [@shailantani](https://github.com/shailantani) - Raycast extension ([source code](https://github.com/raycast/extensions/tree/main/extensions/thock))
 - [@qalonbudker](https://github.com/qalonbudker) - Pitch variation for key sounds
