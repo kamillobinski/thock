@@ -36,6 +36,7 @@
         <li><a href="#translation">Translation</a></li>
         <li><a href="#custom-engine">Custom Engine</a></li>
         <li><a href="#smart-integration">Smart Integration</a></li>
+        <li><a href="#advanced-control">Advanced Control</a></li>
       </ul>
     </li>
     <li><a href="#getting-started">Getting Started</a></li>
@@ -75,7 +76,7 @@ Select your preferred language in the general settings to enjoy a workspace tail
 
 
 
-![performance](docs/readme/performance.png)
+![custom-engine](docs/readme/custom-engine)
 
 ### Custom Engine
 
@@ -107,7 +108,9 @@ TODO
 
 
 
-### Raycast Extension
+![advanced-control](docs/readme/advanced-control.png)
+
+### Advanced Control
 
 TODO
 
