@@ -408,19 +408,11 @@ struct L10n {
         }
     }
     
-    static var trackpadClickSound: String {
+    static var mouseClickSound: String {
         switch lang {
-        case .english: return "Trackpad click sound"
-        case .chinese: return "触控板点击声音"
-        case .japanese: return "トラックパッドクリックサウンド"
-        }
-    }
-    
-    static var trackpadClickSoundSubtitle: String {
-        switch lang {
-        case .english: return "Play sound when clicking the trackpad"
-        case .chinese: return "点击触控板时播放声音"
-        case .japanese: return "トラックパッドをクリックした時にサウンドを再生"
+        case .english: return "Play sound for mouse clicks"
+        case .chinese: return "播放鼠标点击声音"
+        case .japanese: return "マウスクリックのサウンドを再生"
         }
     }
     

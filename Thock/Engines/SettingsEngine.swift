@@ -5,6 +5,8 @@ final class SettingsEngine {
     
     private init() {}
     
+    // MARK: - Open at Login
+    
     func toggleOpenAtLogin() -> Bool {
         let newState = !SettingsManager.shared.openAtLogin
         SettingsManager.shared.openAtLogin = newState
@@ -23,6 +25,8 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    // MARK: - Modifier Key Sound
+    
     func toggleModifierKeySound() -> Bool {
         let newState = !SettingsManager.shared.disableModifierKeys
         SettingsManager.shared.disableModifierKeys = newState
@@ -39,6 +43,8 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    // MARK: - Mode Selection
+    
     func selectMode(mode: Mode) {
         ModeEngine.shared.apply(mode: mode)
     }
@@ -46,6 +52,8 @@ final class SettingsEngine {
     func refreshMenu() {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
+    
+    // MARK: - Rapid Key Events
     
     func toggleIgnoreRapidKeyEvents() -> Bool {
         let newState = !SettingsManager.shared.ignoreRapidKeyEvents
@@ -63,6 +71,8 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    // MARK: - Auto Mute on Music Playback
+    
     func toggleAutoMuteOnMusicPlayback() -> Bool {
         let newState = !SettingsManager.shared.autoMuteOnMusicPlayback
         SettingsManager.shared.autoMuteOnMusicPlayback = newState
@@ -79,6 +89,8 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    // MARK: - Idle Timeout
+    
     func getIdleTimeoutSeconds() -> TimeInterval {
         return SettingsManager.shared.idleTimeoutSeconds
     }
@@ -87,6 +99,8 @@ final class SettingsEngine {
         SettingsManager.shared.idleTimeoutSeconds = seconds
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
+    
+    // MARK: - Audio Buffer Size
     
     func getAudioBufferSize() -> UInt32 {
         return SettingsManager.shared.audioBufferSize
@@ -97,6 +111,8 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    // MARK: - Selected Audio Device
+    
     func getSelectedAudioDeviceUID() -> String? {
         return SettingsManager.shared.selectedAudioDeviceUID
     }
@@ -105,6 +121,8 @@ final class SettingsEngine {
         SettingsManager.shared.selectedAudioDeviceUID = uid
         NotificationCenter.default.post(name: .audioDeviceDidChange, object: nil)
     }
+    
+    // MARK: - Volume
     
     func getVolume(for deviceUID: String) -> Float {
         let perDeviceVolumes = SettingsManager.shared.perDeviceVolumes
@@ -129,6 +147,8 @@ final class SettingsEngine {
         setVolume(volume, for: deviceUID)
     }
     
+    // MARK: - Pitch Variation
+    
     func getPitchVariation() -> Float {
         return SettingsManager.shared.pitchVariation
     }
@@ -138,21 +158,24 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
-    // MARK: - Trackpad Sound
+    // MARK: - Mouse Click Sound
     
-    func isTrackpadSoundEnabled() -> Bool {
-        return SettingsManager.shared.trackpadSoundEnabled
+    func isMouseSoundEnabled() -> Bool {
+        return SettingsManager.shared.mouseSoundEnabled
     }
     
-    func setTrackpadSoundEnabled(_ enabled: Bool) {
-        SettingsManager.shared.trackpadSoundEnabled = enabled
-        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    func setMouseSoundEnabled(_ enabled: Bool) {
+        SettingsManager.shared.mouseSoundEnabled = enabled
+        NotificationCenter.default.post(name: .mouseSoundDidChange, object: nil)
     }
 }
+
+// MARK: - Notifications
 
 extension Notification.Name {
     static let settingsDidChange = Notification.Name("settingsDidChange")
     static let appStateDidChange = Notification.Name("appStateDidChange")
     static let volumeDidChange = Notification.Name("volumeDidChange")
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
+    static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
 }

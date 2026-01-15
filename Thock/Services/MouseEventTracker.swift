@@ -1,14 +1,31 @@
 import Cocoa
 
-/// Tracks trackpad/mouse click events and plays sounds.
-class TrackpadTracker {
+/// Represents a mouse button event type for sound playback.
+enum MouseButtonEvent: Hashable, CustomStringConvertible {
+    case leftDown
+    case leftUp
+    case rightDown
+    case rightUp
+    
+    var description: String {
+        switch self {
+        case .leftDown: return "leftDown"
+        case .leftUp: return "leftUp"
+        case .rightDown: return "rightDown"
+        case .rightUp: return "rightUp"
+        }
+    }
+}
+
+/// Tracks mouse button events and plays sounds.
+class MouseEventTracker {
     private var eventMonitor: CFMachPort?
     private var settingsObserver: NSObjectProtocol?
     
     init() {
-        // Observe settings changes to start/stop tracking dynamically
+        // Observe mouse sound setting changes to start/stop tracking dynamically
         settingsObserver = NotificationCenter.default.addObserver(
-            forName: .settingsDidChange,
+            forName: .mouseSoundDidChange,
             object: nil,
             queue: .main
         ) { [weak self] _ in
@@ -23,9 +40,9 @@ class TrackpadTracker {
         stopTracking()
     }
     
-    /// Starts tracking if trackpad sound is enabled, otherwise stops.
+    /// Starts tracking if enabled, otherwise stops.
     func startTrackingIfEnabled() {
-        if SettingsEngine.shared.isTrackpadSoundEnabled() {
+        if SettingsEngine.shared.isMouseSoundEnabled() {
             startTracking()
         } else {
             stopTracking()
@@ -37,13 +54,16 @@ class TrackpadTracker {
         startTrackingIfEnabled()
     }
     
-    /// Starts tracking trackpad click events.
+    /// Starts tracking mouse button events.
     private func startTracking() {
         // Already tracking
         guard eventMonitor == nil else { return }
         
-        // Only track left mouse down (trackpad click)
-        let eventMask: CGEventMask = (1 << CGEventType.leftMouseDown.rawValue)
+        // Track all mouse button events: left down/up, right down/up
+        let eventMask: CGEventMask = (1 << CGEventType.leftMouseDown.rawValue) |
+        (1 << CGEventType.leftMouseUp.rawValue) |
+        (1 << CGEventType.rightMouseDown.rawValue) |
+        (1 << CGEventType.rightMouseUp.rawValue)
         
         // Use passUnretained to avoid retain cycle - the tracker's lifetime is managed by AppDelegate
         let observer = Unmanaged.passUnretained(self).toOpaque()
@@ -64,9 +84,23 @@ class TrackpadTracker {
                     return Unmanaged.passUnretained(event)
                 }
                 
-                // Play trackpad click sound
-                if type == .leftMouseDown {
-                    SoundManager.shared.playTrackpadClick()
+                // Map CGEventType to MouseButtonEvent and play sound
+                let mouseEvent: MouseButtonEvent?
+                switch type {
+                case .leftMouseDown:
+                    mouseEvent = .leftDown
+                case .leftMouseUp:
+                    mouseEvent = .leftUp
+                case .rightMouseDown:
+                    mouseEvent = .rightDown
+                case .rightMouseUp:
+                    mouseEvent = .rightUp
+                default:
+                    mouseEvent = nil
+                }
+                
+                if let mouseEvent = mouseEvent {
+                    SoundManager.shared.playMouseSound(for: mouseEvent)
                 }
                 
                 return Unmanaged.passUnretained(event)
@@ -79,11 +113,11 @@ class TrackpadTracker {
             CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
             CGEvent.tapEnable(tap: eventMonitor, enable: true)
         } else {
-            print("Failed to create trackpad event tap.")
+            print("Failed to create mouse event tap.")
         }
     }
     
-    /// Stops tracking trackpad click events.
+    /// Stops tracking mouse button events.
     func stopTracking() {
         if let eventMonitor = eventMonitor {
             CGEvent.tapEnable(tap: eventMonitor, enable: false)

@@ -36,7 +36,7 @@ final class SoundManager {
     
     // MARK: - Sound Storage
     private var soundLibrary: [String: PCMSound] = [:]
-    private var trackpadSoundLibrary: [String: PCMSound] = [:]
+    private var mouseSoundLibrary: [MouseButtonEvent: PCMSound] = [:]
     private var activeSounds: [ActiveSound] = []
     private let activeSoundsLock = NSLock()
     
@@ -815,37 +815,48 @@ final class SoundManager {
             Logger.audio.error("Failed to load sound files: \(error.localizedDescription)")
         }
         
-        // Also preload trackpad sounds
-        preloadTrackpadSounds()
+        // Also preload mouse sounds
+        preloadMouseSounds()
     }
     
-    /// Preloads trackpad click sounds from the bundle.
+    /// Preloads mouse button sounds from the bundle.
     /// Call this during app initialization for low-latency playback.
-    func preloadTrackpadSounds() {
-        guard trackpadSoundLibrary.isEmpty else { return }
+    func preloadMouseSounds() {
+        guard mouseSoundLibrary.isEmpty else { return }
         
-        // The sound file is at Resources/Sounds/Trackpad/click.wav in the bundle
-        if let clickURL = Bundle.main.url(forResource: "click", withExtension: "wav", subdirectory: "Resources/Sounds/Trackpad") {
-            if let pcmSound = loadPCMSound(from: clickURL) {
-                trackpadSoundLibrary["click.wav"] = pcmSound
-                Logger.audio.info("Loaded trackpad click sound")
-                return
+        // Map event types to sound file names
+        // Expected directory: Resources/Sounds/Mouse/
+        // Expected files: left_down.wav, left_up.wav, right_down.wav, right_up.wav
+        let soundFiles: [(MouseButtonEvent, String)] = [
+            (.leftDown, "left_down"),
+            (.leftUp, "left_up"),
+            (.rightDown, "right_down"),
+            (.rightUp, "right_up")
+        ]
+        
+        for (event, fileName) in soundFiles {
+            if let soundURL = Bundle.main.url(forResource: fileName, withExtension: "wav", subdirectory: "Resources/Sounds/Mouse") {
+                if let pcmSound = loadPCMSound(from: soundURL) {
+                    mouseSoundLibrary[event] = pcmSound
+                    Logger.audio.info("Loaded mouse sound: \(fileName).wav")
+                }
+            } else {
+                Logger.audio.warning("Mouse sound not found: \(fileName).wav")
             }
         }
         
-        Logger.audio.warning("Trackpad click sound not found in bundle")
+        Logger.audio.info("Preloaded \(self.mouseSoundLibrary.count)/4 mouse sounds")
     }
     
-    /// Plays the trackpad click sound
-    func playTrackpadClick() {
-        // If trackpad sounds not loaded yet, try loading now
-        if trackpadSoundLibrary.isEmpty {
-            preloadTrackpadSounds()
+    /// Plays a sound for the specified mouse button event.
+    func playMouseSound(for event: MouseButtonEvent) {
+        // If mouse sounds not loaded yet, try loading now
+        if mouseSoundLibrary.isEmpty {
+            preloadMouseSounds()
         }
         
-        // Play click.wav if available
-        guard let clickSound = trackpadSoundLibrary["click.wav"] else {
-            Logger.audio.warning("Trackpad click sound not found")
+        guard let sound = mouseSoundLibrary[event] else {
+            Logger.audio.warning("Mouse sound not found for event: \(event)")
             return
         }
         
@@ -854,7 +865,7 @@ final class SoundManager {
         queueStateLock.unlock()
         
         guard ready else {
-            Logger.audio.warning("Trackpad sound blocked: audio system not ready")
+            Logger.audio.warning("Mouse sound blocked: audio system not ready")
             return
         }
         
@@ -869,12 +880,11 @@ final class SoundManager {
         } else if stillReady && isRunning {
             resetIdleTimer()
         } else {
-            Logger.audio.debug("Trackpad sound blocked: audio system became not ready")
+            Logger.audio.debug("Mouse sound blocked: audio system became not ready")
             return
         }
         
-        // Get current volume and pitch variation
-        let currentVolume = volume
+        // Get pitch variation
         let pitchVariation = SettingsEngine.shared.getPitchVariation()
         
         let pitchOffset: Float
@@ -885,8 +895,8 @@ final class SoundManager {
         }
         
         let activeSound = ActiveSound(
-            pcmData: clickSound.data,
-            frameCount: clickSound.frameCount,
+            pcmData: sound.data,
+            frameCount: sound.frameCount,
             latencyId: nil,
             pitchOffset: pitchOffset
         )
