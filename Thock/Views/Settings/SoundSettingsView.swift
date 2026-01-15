@@ -9,6 +9,7 @@ struct SoundSettingsView: View {
     @State private var audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
     @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
+    @State private var mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()
     @State private var refreshID = UUID()
     
     var body: some View {
@@ -58,6 +59,20 @@ struct SoundSettingsView: View {
                                 .onChange(of: selectedDeviceUID) { newValue in
                                     let uidToSave = newValue == "system-default" ? nil : newValue
                                     SettingsEngine.shared.setSelectedAudioDeviceUID(uidToSave)
+                                }
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.mouseClickSound,
+                        subtitle: nil,
+                        control: AnyView(
+                            Toggle("", isOn: $mouseSoundEnabled)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: mouseSoundEnabled) { newValue in
+                                    SettingsEngine.shared.setMouseSoundEnabled(newValue)
                                 }
                         ),
                         isLast: true
@@ -206,6 +221,9 @@ struct SoundSettingsView: View {
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .mouseSoundDidChange)) { _ in
+            mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()
         }
         .onReceive(NotificationCenter.default.publisher(for: .languageDidChange)) { _ in
             refreshID = UUID()

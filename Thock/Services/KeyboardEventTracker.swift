@@ -1,18 +1,18 @@
 import Cocoa
 
-class KeyTracker {
+class KeyboardEventTracker {
     private var pressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
     private var lastEventTime: Double = 0
     
     deinit {
-        stopTrackingKeys()
+        stopTracking()
     }
     
     /// Starts tracking key events.
     /// - Parameter delegate: The delegate to handle key events.
-    func startTrackingKeys() {
-        stopTrackingKeys()
+    func startTracking() {
+        stopTracking()
         
         let eventMask: CGEventMask =
         (1 << CGEventType.keyDown.rawValue) |
@@ -28,18 +28,18 @@ class KeyTracker {
             options: .defaultTap,
             eventsOfInterest: eventMask,
             callback: { _, type, event, userInfo in
-                let keyTracker = Unmanaged<KeyTracker>.fromOpaque(userInfo!).takeUnretainedValue()
+                let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-
+                
                 // Start latency measurement
                 let latencyId = startLatencyMeasurement()
                 recordLatencyCheckpoint(latencyId, point: .keyEventReceived)
-
+                
                 if SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled() {
                     // Ignore events that are too close to each other.
-                    defer { keyTracker.lastEventTime = keyTracker.currentTime() }
-                    let currentTimestamp = keyTracker.currentTime()
-                    let elapsedTime = currentTimestamp - keyTracker.lastEventTime
+                    defer { tracker.lastEventTime = tracker.currentTime() }
+                    let currentTimestamp = tracker.currentTime()
+                    let elapsedTime = currentTimestamp - tracker.lastEventTime
                     if elapsedTime <= 10 { return Unmanaged.passUnretained(event) }
                 }
                 
@@ -47,22 +47,22 @@ class KeyTracker {
                 if AudioMonitor.shared.isMusicAppPlaying && SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
                     return Unmanaged.passUnretained(event)
                 }
-
+                
                 defer {
                     switch type {
-                    case .keyDown where !keyTracker.pressedKeys.contains(keyCode):
-                        keyTracker.pressedKeys.insert(keyCode)
+                    case .keyDown where !tracker.pressedKeys.contains(keyCode):
+                        tracker.pressedKeys.insert(keyCode)
                         SoundEngine.shared.play(for: keyCode, isKeyDown: true, latencyId: latencyId)
-
+                        
                     case .keyUp:
-                        keyTracker.pressedKeys.remove(keyCode)
+                        tracker.pressedKeys.remove(keyCode)
                         SoundEngine.shared.play(for: keyCode, isKeyDown: false, latencyId: latencyId)
-
+                        
                     case .flagsChanged:
                         // Respect the user setting to ignore modifier key sounds
                         if !SettingsEngine.shared.isModifierKeySoundDisabled() {
-                            if keyTracker.pressedKeys.remove(keyCode) == nil {
-                                keyTracker.pressedKeys.insert(keyCode)
+                            if tracker.pressedKeys.remove(keyCode) == nil {
+                                tracker.pressedKeys.insert(keyCode)
                                 SoundEngine.shared.play(for: keyCode, isKeyDown: true, latencyId: latencyId)
                             } else {
                                 SoundEngine.shared.play(for: keyCode, isKeyDown: false, latencyId: latencyId)
@@ -86,7 +86,7 @@ class KeyTracker {
     }
     
     /// Stops tracking key events and removes the event tap.
-    func stopTrackingKeys() {
+    func stopTracking() {
         if let eventMonitor = eventMonitor {
             CFMachPortInvalidate(eventMonitor)
             self.eventMonitor = nil

@@ -6,7 +6,8 @@ import OSLog
 class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private var statusBarItem: NSStatusItem!
     var menuBarController: MenuBarController!
-    private var keyTracker: KeyTracker!
+    private var keyboardEventTracker: KeyboardEventTracker!
+    private var mouseEventTracker: MouseEventTracker!
     
     // MARK: - App Lifecycle
     
@@ -26,7 +27,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     /// Quits the application cleanly.
     func applicationWillTerminate(_ notification: Notification) {
-        keyTracker?.stopTrackingKeys()
+        keyboardEventTracker?.stopTracking()
+        mouseEventTracker?.stopTracking()
         PipeListenerService.shared.cleanUp()
     }
     
@@ -65,10 +67,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     }
     
     /// Initializes and starts tracking keyboard events.
-    private func initializeKeyTracker() {
-        if keyTracker == nil {
-            keyTracker = KeyTracker()
-            keyTracker.startTrackingKeys()
+    private func initializeKeyboardEventTracker() {
+        if keyboardEventTracker == nil {
+            keyboardEventTracker = KeyboardEventTracker()
+            keyboardEventTracker.startTracking()
+        }
+    }
+    
+    /// Initializes and starts tracking mouse events.
+    private func initializeMouseEventTracker() {
+        if mouseEventTracker == nil {
+            mouseEventTracker = MouseEventTracker()
+            mouseEventTracker.startTrackingIfEnabled()
         }
     }
     
@@ -214,7 +224,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         }
         
         _ = PipeListenerService.shared
-        initializeKeyTracker()
+        initializeKeyboardEventTracker()
+        initializeMouseEventTracker()
         initializeAudioMonitor()
         
         ModeEngine.shared.loadInitialMode()

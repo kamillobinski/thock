@@ -408,6 +408,14 @@ struct L10n {
         }
     }
     
+    static var mouseClickSound: String {
+        switch lang {
+        case .english: return "Play sound for mouse clicks"
+        case .chinese: return "播放鼠标点击声音"
+        case .japanese: return "マウスクリックのサウンドを再生"
+        }
+    }
+    
     // MARK: - Shortcuts
     static var global: String {
         switch lang {

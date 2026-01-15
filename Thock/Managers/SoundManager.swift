@@ -36,6 +36,7 @@ final class SoundManager {
     
     // MARK: - Sound Storage
     private var soundLibrary: [String: PCMSound] = [:]
+    private var mouseSoundLibrary: [MouseButtonEvent: PCMSound] = [:]
     private var activeSounds: [ActiveSound] = []
     private let activeSoundsLock = NSLock()
     
@@ -813,6 +814,96 @@ final class SoundManager {
         } catch {
             Logger.audio.error("Failed to load sound files: \(error.localizedDescription)")
         }
+        
+        // Also preload mouse sounds
+        preloadMouseSounds()
+    }
+    
+    /// Preloads mouse button sounds from the bundle.
+    /// Call this during app initialization for low-latency playback.
+    func preloadMouseSounds() {
+        guard mouseSoundLibrary.isEmpty else { return }
+        
+        // Map event types to sound file names
+        // Expected directory: Resources/Sounds/Mouse/
+        // Expected files: left_down.wav, left_up.wav, right_down.wav, right_up.wav
+        let soundFiles: [(MouseButtonEvent, String)] = [
+            (.leftDown, "left_down"),
+            (.leftUp, "left_up"),
+            (.rightDown, "right_down"),
+            (.rightUp, "right_up")
+        ]
+        
+        for (event, fileName) in soundFiles {
+            if let soundURL = Bundle.main.url(forResource: fileName, withExtension: "wav", subdirectory: "Resources/Sounds/Mouse") {
+                if let pcmSound = loadPCMSound(from: soundURL) {
+                    mouseSoundLibrary[event] = pcmSound
+                    Logger.audio.info("Loaded mouse sound: \(fileName).wav")
+                }
+            } else {
+                Logger.audio.warning("Mouse sound not found: \(fileName).wav")
+            }
+        }
+        
+        Logger.audio.info("Preloaded \(self.mouseSoundLibrary.count)/4 mouse sounds")
+    }
+    
+    /// Plays a sound for the specified mouse button event.
+    func playMouseSound(for event: MouseButtonEvent) {
+        // If mouse sounds not loaded yet, try loading now
+        if mouseSoundLibrary.isEmpty {
+            preloadMouseSounds()
+        }
+        
+        guard let sound = mouseSoundLibrary[event] else {
+            Logger.audio.warning("Mouse sound not found for event: \(event)")
+            return
+        }
+        
+        queueStateLock.lock()
+        let ready = isReady
+        queueStateLock.unlock()
+        
+        guard ready else {
+            Logger.audio.warning("Mouse sound blocked: audio system not ready")
+            return
+        }
+        
+        // Restart queue if stopped due to idle timeout
+        queueStateLock.lock()
+        let isRunning = isQueueRunning
+        let stillReady = isReady
+        queueStateLock.unlock()
+        
+        if stillReady && !isRunning {
+            restartQueue()
+        } else if stillReady && isRunning {
+            resetIdleTimer()
+        } else {
+            Logger.audio.debug("Mouse sound blocked: audio system became not ready")
+            return
+        }
+        
+        // Get pitch variation
+        let pitchVariation = SettingsEngine.shared.getPitchVariation()
+        
+        let pitchOffset: Float
+        if pitchVariation > 0.0 {
+            pitchOffset = Float.random(in: -pitchVariation...pitchVariation)
+        } else {
+            pitchOffset = 0.0
+        }
+        
+        let activeSound = ActiveSound(
+            pcmData: sound.data,
+            frameCount: sound.frameCount,
+            latencyId: nil,
+            pitchOffset: pitchOffset
+        )
+        
+        activeSoundsLock.lock()
+        activeSounds.append(activeSound)
+        activeSoundsLock.unlock()
     }
     
     // MARK: - Sound Loading
