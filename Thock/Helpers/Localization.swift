@@ -408,6 +408,22 @@ struct L10n {
         }
     }
     
+    static var trackpadClickSound: String {
+        switch lang {
+        case .english: return "Trackpad click sound"
+        case .chinese: return "触控板点击声音"
+        case .japanese: return "トラックパッドクリックサウンド"
+        }
+    }
+    
+    static var trackpadClickSoundSubtitle: String {
+        switch lang {
+        case .english: return "Play sound when clicking the trackpad"
+        case .chinese: return "点击触控板时播放声音"
+        case .japanese: return "トラックパッドをクリックした時にサウンドを再生"
+        }
+    }
+    
     // MARK: - Shortcuts
     static var global: String {
         switch lang {

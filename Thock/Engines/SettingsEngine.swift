@@ -137,6 +137,17 @@ final class SettingsEngine {
         SettingsManager.shared.pitchVariation = variation
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
+    
+    // MARK: - Trackpad Sound
+    
+    func isTrackpadSoundEnabled() -> Bool {
+        return SettingsManager.shared.trackpadSoundEnabled
+    }
+    
+    func setTrackpadSoundEnabled(_ enabled: Bool) {
+        SettingsManager.shared.trackpadSoundEnabled = enabled
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
 }
 
 extension Notification.Name {

@@ -1161,6 +1161,7 @@
 				Resources/Sounds/Topre/tplai/Topre/401.mp3,
 				Resources/Sounds/Topre/tplai/Topre/451.mp3,
 				Resources/Sounds/Topre/tplai/Topre/config.json,
+				Resources/Sounds/Trackpad/click.wav,
 			);
 			target = 7762F48F2D7A83BA0033AE42 /* Thock */;
 		};

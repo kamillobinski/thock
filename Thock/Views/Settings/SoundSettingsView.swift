@@ -9,6 +9,7 @@ struct SoundSettingsView: View {
     @State private var audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
     @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
+    @State private var trackpadSoundEnabled = SettingsEngine.shared.isTrackpadSoundEnabled()
     @State private var refreshID = UUID()
     
     var body: some View {
@@ -58,6 +59,20 @@ struct SoundSettingsView: View {
                                 .onChange(of: selectedDeviceUID) { newValue in
                                     let uidToSave = newValue == "system-default" ? nil : newValue
                                     SettingsEngine.shared.setSelectedAudioDeviceUID(uidToSave)
+                                }
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.trackpadClickSound,
+                        subtitle: L10n.trackpadClickSoundSubtitle,
+                        control: AnyView(
+                            Toggle("", isOn: $trackpadSoundEnabled)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: trackpadSoundEnabled) { newValue in
+                                    SettingsEngine.shared.setTrackpadSoundEnabled(newValue)
                                 }
                         ),
                         isLast: true
@@ -206,6 +221,7 @@ struct SoundSettingsView: View {
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
+            trackpadSoundEnabled = SettingsEngine.shared.isTrackpadSoundEnabled()
         }
         .onReceive(NotificationCenter.default.publisher(for: .languageDidChange)) { _ in
             refreshID = UUID()
