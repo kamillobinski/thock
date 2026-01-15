@@ -65,15 +65,12 @@ class MouseEventTracker {
         (1 << CGEventType.rightMouseDown.rawValue) |
         (1 << CGEventType.rightMouseUp.rawValue)
         
-        // Use passUnretained to avoid retain cycle - the tracker's lifetime is managed by AppDelegate
-        let observer = Unmanaged.passUnretained(self).toOpaque()
-        
         eventMonitor = CGEvent.tapCreate(
             tap: .cghidEventTap,
             place: .tailAppendEventTap,
             options: .listenOnly,
             eventsOfInterest: eventMask,
-            callback: { _, type, event, userInfo in
+            callback: { _, type, event, _ in
                 // Don't play if app is disabled
                 guard AppEngine.shared.isEnabled() else {
                     return Unmanaged.passUnretained(event)
@@ -105,7 +102,7 @@ class MouseEventTracker {
                 
                 return Unmanaged.passUnretained(event)
             },
-            userInfo: observer
+            userInfo: nil
         )
         
         if let eventMonitor = eventMonitor {
