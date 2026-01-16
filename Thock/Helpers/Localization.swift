@@ -6,12 +6,14 @@ enum AppLanguage: String, CaseIterable {
     case english = "en"
     case chinese = "zh"
     case japanese = "ja"
+    case german = "de"
     
     var displayName: String {
         switch self {
         case .english: return "English"
         case .chinese: return "中文"
         case .japanese: return "日本語"
+        case .german: return "Deutsch"
         }
     }
     
@@ -19,6 +21,7 @@ enum AppLanguage: String, CaseIterable {
         guard let preferred = Locale.preferredLanguages.first else { return .english }
         if preferred.hasPrefix("zh") { return .chinese }
         if preferred.hasPrefix("ja") { return .japanese }
+        if preferred.hasPrefix("de") { return .german }
         return .english
     }
 }
@@ -66,6 +69,7 @@ struct L10n {
         case .english: return "General"
         case .chinese: return "通用"
         case .japanese: return "一般"
+        case .german: return "Allgemein"
         }
     }
     
@@ -74,6 +78,7 @@ struct L10n {
         case .english: return "Sound"
         case .chinese: return "声音"
         case .japanese: return "サウンド"
+        case. german: return "Ton"
         }
     }
     
@@ -82,6 +87,7 @@ struct L10n {
         case .english: return "Shortcuts"
         case .chinese: return "快捷键"
         case .japanese: return "ショートカット"
+        case .german: return "Tastenkombinationen"
         }
     }
     
@@ -91,6 +97,7 @@ struct L10n {
         case .english: return "System"
         case .chinese: return "系统"
         case .japanese: return "システム"
+        case .german: return "System"
         }
     }
     
@@ -99,6 +106,7 @@ struct L10n {
         case .english: return "Launch Thock at login"
         case .chinese: return "登录时启动 Thock"
         case .japanese: return "ログイン時にThockを起動"
+        case. german: return "Thock bei Anmeldung öffnen"
         }
     }
     
@@ -107,6 +115,7 @@ struct L10n {
         case .english: return "Automatically start Thock when you log in"
         case .chinese: return "登录时自动启动 Thock"
         case .japanese: return "ログイン時にThockを自動的に起動"
+        case .german: return "Thock wird beim Anmelden automatisch geöffnet"
         }
     }
     
@@ -115,6 +124,7 @@ struct L10n {
         case .english: return "Language"
         case .chinese: return "语言"
         case .japanese: return "言語"
+        case .german: return "Sprache"
         }
     }
     
@@ -123,6 +133,7 @@ struct L10n {
         case .english: return "Choose your preferred language"
         case .chinese: return "选择您的首选语言"
         case .japanese: return "言語を選択"
+        case .german: return "Wählen Sie Ihre bevorzugte Sprache"
         }
     }
     
@@ -132,6 +143,7 @@ struct L10n {
         case .english: return "More"
         case .chinese: return "更多"
         case .japanese: return "その他"
+        case .german: return "Mehr"
         }
     }
     
@@ -140,6 +152,7 @@ struct L10n {
         case .english: return "About this version"
         case .chinese: return "关于此版本"
         case .japanese: return "このバージョンについて"
+        case .german: return "Über diese Version"
         }
     }
     
@@ -148,6 +161,7 @@ struct L10n {
         case .english: return "Contribute"
         case .chinese: return "贡献代码"
         case .japanese: return "貢献する"
+        case .german: return "Mitwirken"
         }
     }
     
@@ -156,6 +170,7 @@ struct L10n {
         case .english: return "Report a bug"
         case .chinese: return "报告问题"
         case .japanese: return "バグを報告"
+        case .german: return "Einen Fehler melden"
         }
     }
     
@@ -165,6 +180,7 @@ struct L10n {
         case .english: return "Output"
         case .chinese: return "输出"
         case .japanese: return "出力"
+        case .german: return "Ausgabe"
         }
     }
     
@@ -173,6 +189,7 @@ struct L10n {
         case .english: return "Volume"
         case .chinese: return "音量"
         case .japanese: return "音量"
+        case .german: return "Lautstärke"
         }
     }
     
@@ -181,6 +198,7 @@ struct L10n {
         case .english: return "Play sound effects through"
         case .chinese: return "播放声音效果通过"
         case .japanese: return "サウンドの出力先"
+        case .german: return "Ton wiedergeben über"
         }
     }
     
@@ -189,6 +207,7 @@ struct L10n {
         case .english: return "System Default"
         case .chinese: return "系统默认"
         case .japanese: return "システムデフォルト"
+        case .german: return "Standard-Ausgabegerät"
         }
     }
     
@@ -197,6 +216,7 @@ struct L10n {
         case .english: return "Filters"
         case .chinese: return "过滤器"
         case .japanese: return "フィルター"
+        case .german: return "Filter"
         }
     }
     
@@ -205,6 +225,7 @@ struct L10n {
         case .english: return "Disable sound for modifier keys"
         case .chinese: return "禁用修饰键声音"
         case .japanese: return "修飾キーのサウンドを無効化"
+        case .german: return "Ton für Modifikator-Tasten deaktivieren"
         }
     }
     
@@ -213,6 +234,7 @@ struct L10n {
         case .english: return "Mute sounds when pressing modifier keys (Cmd, Shift, etc.)"
         case .chinese: return "按下修饰键时静音（Cmd、Shift 等）"
         case .japanese: return "修飾キー（Cmd、Shiftなど）を押したときにミュート"
+        case.german: return "Töne deaktivieren, wenn Modifikator-Tasten (Cmd, Shift, usw.) gedrückt sind"
         }
     }
     
@@ -221,6 +243,7 @@ struct L10n {
         case .english: return "Ignore rapid key events"
         case .chinese: return "忽略快速连续按键"
         case .japanese: return "高速キー入力を無視"
+        case .german: return "Wiederholt schnelle Tasteneingaben ignorieren"
         }
     }
     
@@ -229,6 +252,7 @@ struct L10n {
         case .english: return "Filter out key events that occur too quickly in succession"
         case .chinese: return "过滤掉过快的连续按键事件"
         case .japanese: return "連続して発生する高速なキーイベントをフィルタリング"
+        case .german: return "Ignoriere zu schnell aufeinanderfolgende Tasteneingaben"
         }
     }
     
@@ -237,6 +261,7 @@ struct L10n {
         case .english: return "Auto-mute with Music and Spotify"
         case .chinese: return "播放音乐时自动静音"
         case .japanese: return "音楽再生時に自動ミュート"
+        case .german: return "Automatisch stummschalten bei Musik und Spotify"
         }
     }
     
@@ -245,6 +270,7 @@ struct L10n {
         case .english: return "Automatically mute sounds when music is playing"
         case .chinese: return "播放音乐时自动静音"
         case .japanese: return "音楽再生中は自動的にミュート"
+        case .german: return "Töne werden automatisch stummgeschaltet, wenn Musik abgespielt wird"
         }
     }
     
@@ -253,6 +279,7 @@ struct L10n {
         case .english: return "Soundpacks"
         case .chinese: return "音效包"
         case .japanese: return "サウンドパック"
+        case .german: return "Soundeffektpakete"
         }
     }
     
@@ -261,6 +288,7 @@ struct L10n {
         case .english: return "Custom soundpack directory"
         case .chinese: return "自定义音效包目录"
         case .japanese: return "カスタムサウンドパックディレクトリ"
+        case .german: return "Pfad für benutzerdefinierte Soundeffektpakete"
         }
     }
     
@@ -269,6 +297,7 @@ struct L10n {
         case .english: return "Open"
         case .chinese: return "打开"
         case .japanese: return "開く"
+        case .german: return "Öffnen"
         }
     }
     
@@ -277,6 +306,7 @@ struct L10n {
         case .english: return "Performance"
         case .chinese: return "性能"
         case .japanese: return "パフォーマンス"
+        case .german: return "Leistung"
         }
     }
     
