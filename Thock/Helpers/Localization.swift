@@ -234,7 +234,7 @@ struct L10n {
         case .english: return "Mute sounds when pressing modifier keys (Cmd, Shift, etc.)"
         case .chinese: return "按下修饰键时静音（Cmd、Shift 等）"
         case .japanese: return "修飾キー（Cmd、Shiftなど）を押したときにミュート"
-        case.german: return "Töne deaktivieren, wenn Modifikator-Tasten (Cmd, Shift, usw.) gedrückt sind"
+        case .german: return "Töne deaktivieren, wenn Modifikator-Tasten (Cmd, Shift, usw.) gedrückt sind"
         }
     }
     
@@ -315,6 +315,7 @@ struct L10n {
         case .english: return "Audio latency"
         case .chinese: return "音频延迟"
         case .japanese: return "オーディオ遅延"
+        case .german: return "Audio-Latenz"
         }
     }
     
@@ -323,6 +324,7 @@ struct L10n {
         case .english: return "- Ultra Low: most responsive, highest CPU usage\n- Low: very responsive, high CPU usage\n- Normal: balanced performance (recommended)\n- High: lower CPU usage, slight delay\n- Very High: lowest CPU usage, noticeable delay"
         case .chinese: return "- 超低：响应最快，CPU 占用最高\n- 低：响应很快，CPU 占用较高\n- 正常：性能均衡（推荐）\n- 高：CPU 占用较低，略有延迟\n- 非常高：CPU 占用最低，延迟明显"
         case .japanese: return "- 超低：最も応答性が高く、CPU使用率が最も高い\n- 低：非常に応答性が高く、CPU使用率が高い\n- 通常：バランスの取れたパフォーマンス（推奨）\n- 高：CPU使用率が低く、わずかな遅延\n- 非常に高い：CPU使用率が最も低く、顕著な遅延"
+        case .german: return "- Ultra Niedrig: am reaktionsschnellsten, höchste CPU-Auslastung\n- Niedrig: sehr reaktionsschnell, hohe CPU-Auslastung\n- Normal: ausgewogene Leistung (empfohlen)\n- Hoch: niedrigere CPU-Auslastung, leichte Verzögerungen\n- Sehr Hoch: niedrigste CPU-Auslastung, spürbare Verzögerungen"
         }
     }
     
@@ -331,6 +333,7 @@ struct L10n {
         case .english: return "Ultra Low"
         case .chinese: return "超低"
         case .japanese: return "超低"
+        case .german: return "Ultra Niedrig"
         }
     }
     
@@ -339,6 +342,7 @@ struct L10n {
         case .english: return "Low"
         case .chinese: return "低"
         case .japanese: return "低"
+        case .german: return "Niedrig"
         }
     }
     
@@ -347,6 +351,7 @@ struct L10n {
         case .english: return "Normal"
         case .chinese: return "正常"
         case .japanese: return "通常"
+        case .german: return "Normal"
         }
     }
     
@@ -355,6 +360,7 @@ struct L10n {
         case .english: return "High"
         case .chinese: return "高"
         case .japanese: return "高"
+        case .german: return "Hoch"
         }
     }
     
@@ -363,6 +369,7 @@ struct L10n {
         case .english: return "Very High"
         case .chinese: return "非常高"
         case .japanese: return "非常に高い"
+        case .german: return "Sehr Hoch"
         }
     }
     
@@ -371,6 +378,7 @@ struct L10n {
         case .english: return "Reduce CPU when idle"
         case .chinese: return "空闲时降低 CPU 占用"
         case .japanese: return "アイドル時にCPU使用率を削減"
+        case .german: return "CPU-Auslastung während Untätigkeit reduzieren"
         }
     }
     
@@ -379,6 +387,7 @@ struct L10n {
         case .english: return "Stops audio engine after inactivity to reduce CPU usage.\nFirst sound after idle may have a tiny delay.\nSet to 'Never' to keep engine always running."
         case .chinese: return "闲置后停止音频引擎以降低 CPU 占用。\n空闲后的第一个声音可能会有轻微延迟。\n设置为「从不」以保持引擎始终运行。"
         case .japanese: return "非アクティブ時にオーディオエンジンを停止してCPU使用率を削減。\nアイドル後の最初のサウンドにわずかな遅延が生じる場合があります。\n「なし」に設定するとエンジンを常時稼働させます。"
+        case .german: return "Stoppt die Audio-Engine nach Inaktivität, um die CPU-Auslastung zu reduzieren.\nDer erste Ton nach dem Leerlauf kann eine kleine Verzögerung haben.\nAuf 'Nie' setzen, um die Audio-Engine immer laufen zu lassen."
         }
     }
     
@@ -387,6 +396,7 @@ struct L10n {
         case .english: return "5 seconds"
         case .chinese: return "5 秒"
         case .japanese: return "5秒"
+        case .german: return "5 Sekunden"
         }
     }
     
@@ -395,6 +405,7 @@ struct L10n {
         case .english: return "10 seconds"
         case .chinese: return "10 秒"
         case .japanese: return "10秒"
+        case .german: return "10 Sekunden"
         }
     }
     
@@ -403,6 +414,7 @@ struct L10n {
         case .english: return "30 seconds"
         case .chinese: return "30 秒"
         case .japanese: return "30秒"
+        case .german: return "30 Sekunden"
         }
     }
     
@@ -411,6 +423,7 @@ struct L10n {
         case .english: return "1 minute"
         case .chinese: return "1 分钟"
         case .japanese: return "1分"
+        case .german: return "1 Minute"
         }
     }
     
@@ -419,6 +432,7 @@ struct L10n {
         case .english: return "5 minutes"
         case .chinese: return "5 分钟"
         case .japanese: return "5分"
+        case .german: return "5 Minuten"
         }
     }
     
@@ -427,6 +441,7 @@ struct L10n {
         case .english: return "Never"
         case .chinese: return "从不"
         case .japanese: return "なし"
+        case .german: return "Nie"
         }
     }
     
@@ -435,6 +450,7 @@ struct L10n {
         case .english: return "Unknown Device (Disconnected)"
         case .chinese: return "未知设备（已断开）"
         case .japanese: return "不明なデバイス（切断済み）"
+        case .german: return "Unbekanntes Gerät (Getrennt)"
         }
     }
     
@@ -443,6 +459,7 @@ struct L10n {
         case .english: return "Play sound for mouse clicks"
         case .chinese: return "播放鼠标点击声音"
         case .japanese: return "マウスクリックのサウンドを再生"
+        case .german: return "Ton für Mausklicks aktivieren"
         }
     }
     
@@ -452,6 +469,7 @@ struct L10n {
         case .english: return "Global"
         case .chinese: return "全局"
         case .japanese: return "グローバル"
+        case .german: return "Universal"
         }
     }
     
@@ -460,6 +478,7 @@ struct L10n {
         case .english: return "Toggle Thock"
         case .chinese: return "开关 Thock"
         case .japanese: return "Thockの切り替え"
+        case .german: return "Thock umschalten"
         }
     }
     
@@ -468,6 +487,7 @@ struct L10n {
         case .english: return "Quickly enable or disable Thock from anywhere"
         case .chinese: return "从任意位置快速启用或禁用 Thock"
         case .japanese: return "どこからでもThockを素早く有効/無効にする"
+        case .german: return "Thock von überall schnell ein- oder ausschalten"
         }
     }
     
