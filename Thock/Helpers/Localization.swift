@@ -78,7 +78,7 @@ struct L10n {
         case .english: return "Sound"
         case .chinese: return "声音"
         case .japanese: return "サウンド"
-        case. german: return "Ton"
+        case . german: return "Ton"
         }
     }
     
@@ -106,7 +106,7 @@ struct L10n {
         case .english: return "Launch Thock at login"
         case .chinese: return "登录时启动 Thock"
         case .japanese: return "ログイン時にThockを起動"
-        case. german: return "Thock bei Anmeldung öffnen"
+        case . german: return "Thock bei der Anmeldung öffnen"
         }
     }
     
@@ -497,6 +497,7 @@ struct L10n {
         case .english: return "Pitch Variation"
         case .chinese: return "音调变化"
         case .japanese: return "ピッチの変化"
+        case .german: return "Tonhöhenvariation"
         }
     }
     
@@ -505,6 +506,7 @@ struct L10n {
         case .english: return "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
         case .chinese: return "每次按键都会产生轻微的音调变化 - ± 您选择的值。让声音更自然，或者更诡异。"
         case .japanese: return "各キー入力が少しずつ音程を変える - ±選択した値。より人間らしく。または不気味に。"
+        case .german: return "Jeder Tastenanschlag verstimmt sich leicht - ± um den ausgwählten Wert. Klingt natürlicher. Oder spukiger"
         }
     }
     
@@ -513,6 +515,7 @@ struct L10n {
         case .english: return "Quit"
         case .chinese: return "退出"
         case .japanese: return "終了"
+        case .german: return "Beenden"
         }
     }
     
@@ -521,6 +524,7 @@ struct L10n {
         case .english: return "Version"
         case .chinese: return "版本"
         case .japanese: return "バージョン"
+        case .german: return "Version"
         }
     }
     
@@ -529,6 +533,7 @@ struct L10n {
         case .english: return "Quick Options..."
         case .chinese: return "快捷选项..."
         case .japanese: return "クイックオプション..."
+        case .german: return "Schnelloptionen..."
         }
     }
     
@@ -537,6 +542,7 @@ struct L10n {
         case .english: return "Settings..."
         case .chinese: return "设置..."
         case .japanese: return "設定..."
+        case .german: return "Einstellungen..."
         }
     }
     
@@ -545,6 +551,7 @@ struct L10n {
         case .english: return "About this version"
         case .chinese: return "关于此版本"
         case .japanese: return "このバージョンについて"
+        case .german: return "Über diese Version"
         }
     }
     
@@ -553,6 +560,7 @@ struct L10n {
         case .english: return "New Version Is Available!"
         case .chinese: return "有新版本可用！"
         case .japanese: return "新しいバージョンが利用可能です！"
+        case .german: return "Eine neue Version ist verfügbar!"
         }
     }
     
@@ -561,6 +569,7 @@ struct L10n {
         case .english: return "↺ Update Now"
         case .chinese: return "↺ 立即更新"
         case .japanese: return "↺ 今すぐ更新"
+        case .german: return "↺ Jetzt aktualisieren"
         }
     }
     
@@ -569,6 +578,7 @@ struct L10n {
         case .english: return "Check for updates..."
         case .chinese: return "检查更新..."
         case .japanese: return "アップデートを確認..."
+        case .german: return "Nach Updates suchen..."
         }
     }
     
@@ -577,6 +587,7 @@ struct L10n {
         case .english: return "Update Available!"
         case .chinese: return "有更新可用！"
         case .japanese: return "アップデートが利用可能です！"
+        case .german: return "Update verfügbar!"
         }
     }
     
@@ -585,6 +596,7 @@ struct L10n {
         case .english: return "A new version of Thock is available. Check the menu bar for the update option."
         case .chinese: return "Thock 有新版本可用。请在菜单栏中查找更新选项。"
         case .japanese: return "Thockの新しいバージョンが利用可能です。メニューバーで更新オプションを確認してください。"
+        case .german: return "Eine neue Version von Thock ist verfügbar. Überprüfe die Menüleiste auf die Aktualisieren Option"
         }
     }
     
@@ -593,6 +605,7 @@ struct L10n {
         case .english: return "No Updates Available"
         case .chinese: return "没有可用的更新"
         case .japanese: return "利用可能なアップデートはありません"
+        case .german: return "Keine neuen Updates verfügbar"
         }
     }
     
@@ -601,6 +614,7 @@ struct L10n {
         case .english: return "You're already running the latest version of Thock."
         case .chinese: return "您已经在运行最新版本的 Thock。"
         case .japanese: return "すでに最新バージョンのThockを実行しています。"
+        case .german: return "Thock ist bereits auf dem neuesten Stand"
         }
     }
     
@@ -609,6 +623,7 @@ struct L10n {
         case .english: return "Update Check Failed"
         case .chinese: return "检查更新失败"
         case .japanese: return "アップデートの確認に失敗しました"
+        case .german: return "Suche nach Updates ist fehlgeschlagen"
         }
     }
     
@@ -617,6 +632,7 @@ struct L10n {
         case .english: return "OK"
         case .chinese: return "好"
         case .japanese: return "OK"
+        case .german: return "OK"
         }
     }
     
@@ -626,6 +642,7 @@ struct L10n {
         case .english: return "Accessibility Permissions Required"
         case .chinese: return "需要辅助功能权限"
         case .japanese: return "アクセシビリティ権限が必要です"
+        case .german: return "Berechtigungen für Bedienungshilfen erforderlich"
         }
     }
     
@@ -634,6 +651,7 @@ struct L10n {
         case .english: return "Thock needs accessibility permissions to detect keyboard input and play sounds.\n\nClick 'Open System Settings' below, then enable Thock in the Accessibility list."
         case .chinese: return "Thock 需要辅助功能权限来检测键盘输入并播放声音。\n\n请点击下方的「打开系统设置」，然后在辅助功能列表中启用 Thock。"
         case .japanese: return "Thockはキーボード入力を検出してサウンドを再生するためにアクセシビリティ権限が必要です。\n\n下の「システム設定を開く」をクリックし、アクセシビリティリストでThockを有効にしてください。"
+        case .german: return "Thock benötigt Berechtigungen für Bedienungshilfen um Tastatureingaben zu erkennen und Töne abzuspielen.\n\nKlicke unten auf 'Systemeinstellungen öffnen' und aktiviere Thock in der Bedienungshilfenliste."
         }
     }
     
@@ -642,6 +660,7 @@ struct L10n {
         case .english: return "Open System Settings"
         case .chinese: return "打开系统设置"
         case .japanese: return "システム設定を開く"
+        case .german: return "Systemeinstellungen öffnen"
         }
     }
     
@@ -650,6 +669,7 @@ struct L10n {
         case .english: return "Accessibility Permission Refresh"
         case .chinese: return "辅助功能权限刷新"
         case .japanese: return "アクセシビリティ権限の更新"
+        case .german: return "Bedienungshilfen Berechtigungen überprüfen"
         }
     }
     
@@ -658,6 +678,7 @@ struct L10n {
         case .english: return "Annoying update step ahead!\nWe'd automate this if we could, but it requires the $100 Apple Developer Program.\n\n1. Remove the old Thock entry from Accessibility and quit the app.\n2. Reopen Thock and enable the new entry that appears."
         case .chinese: return "恼人的更新步骤！\n如果可以的话我们会自动完成这一步，但这需要 $100 的 Apple 开发者计划。\n\n1. 从辅助功能中移除旧的 Thock 条目并退出应用。\n2. 重新打开 Thock 并启用出现的新条目。"
         case .japanese: return "面倒なアップデート手順です！\n自動化したいのですが、$100のApple Developer Programが必要です。\n\n1. アクセシビリティから古いThockエントリを削除してアプリを終了します。\n2. Thockを再度開き、表示される新しいエントリを有効にします。"
+        case .german: return "Nerviger Schritt voraus!\nWir würden es automatisieren wenn wir könnten, aber es setzt das 100$ Apple Developer Programm voraus.\n\n1. Entferne den alten Thock Eintrag von Bedienungshilfen und beende die App. \n2. Öffne Thock wieder und aktiviere den neuen Eintrag der erscheint."
         }
     }
     
@@ -666,6 +687,7 @@ struct L10n {
         case .english: return "Done"
         case .chinese: return "完成"
         case .japanese: return "完了"
+        case .german: return "Fertig"
         }
     }
     
@@ -674,6 +696,7 @@ struct L10n {
         case .english: return "Quit Thock"
         case .chinese: return "退出 Thock"
         case .japanese: return "Thockを終了"
+        case .german: return "Thock beenden"
         }
     }
     
@@ -682,6 +705,7 @@ struct L10n {
         case .english: return "Waiting for permissions..."
         case .chinese: return "等待权限授予..."
         case .japanese: return "権限を待っています..."
+        case .german: return "Auf Erlaubnis warten..."
         }
     }
 }
