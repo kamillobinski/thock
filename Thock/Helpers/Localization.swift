@@ -252,7 +252,7 @@ struct L10n {
         case .english: return "Filter out key events that occur too quickly in succession"
         case .chinese: return "过滤掉过快的连续按键事件"
         case .japanese: return "連続して発生する高速なキーイベントをフィルタリング"
-        case .german: return "Ignoriere zu schnell aufeinanderfolgende Tasteneingaben"
+        case .german: return "Schnell aufeinanderfolgende Tasteneingaben ignorieren"
         }
     }
     
@@ -324,7 +324,7 @@ struct L10n {
         case .english: return "- Ultra Low: most responsive, highest CPU usage\n- Low: very responsive, high CPU usage\n- Normal: balanced performance (recommended)\n- High: lower CPU usage, slight delay\n- Very High: lowest CPU usage, noticeable delay"
         case .chinese: return "- 超低：响应最快，CPU 占用最高\n- 低：响应很快，CPU 占用较高\n- 正常：性能均衡（推荐）\n- 高：CPU 占用较低，略有延迟\n- 非常高：CPU 占用最低，延迟明显"
         case .japanese: return "- 超低：最も応答性が高く、CPU使用率が最も高い\n- 低：非常に応答性が高く、CPU使用率が高い\n- 通常：バランスの取れたパフォーマンス（推奨）\n- 高：CPU使用率が低く、わずかな遅延\n- 非常に高い：CPU使用率が最も低く、顕著な遅延"
-        case .german: return "- Ultra Niedrig: am reaktionsschnellsten, höchste CPU-Auslastung\n- Niedrig: sehr reaktionsschnell, hohe CPU-Auslastung\n- Normal: ausgewogene Leistung (empfohlen)\n- Hoch: niedrigere CPU-Auslastung, leichte Verzögerungen\n- Sehr Hoch: niedrigste CPU-Auslastung, spürbare Verzögerungen"
+        case .german: return "- Ultra niedrig: am reaktionsschnellsten, höchste CPU-Auslastung\n- Niedrig: sehr reaktionsschnell, hohe CPU-Auslastung\n- Normal: Ausgewogene Leistung (empfohlen)\n- Hoch: niedrigere CPU-Auslastung, leichte Verzögerungen\n- Sehr Hoch: Niedrigste CPU-Auslastung, spürbare Verzögerungen"
         }
     }
     
@@ -333,7 +333,7 @@ struct L10n {
         case .english: return "Ultra Low"
         case .chinese: return "超低"
         case .japanese: return "超低"
-        case .german: return "Ultra Niedrig"
+        case .german: return "Ultra niedrig"
         }
     }
     
@@ -387,7 +387,7 @@ struct L10n {
         case .english: return "Stops audio engine after inactivity to reduce CPU usage.\nFirst sound after idle may have a tiny delay.\nSet to 'Never' to keep engine always running."
         case .chinese: return "闲置后停止音频引擎以降低 CPU 占用。\n空闲后的第一个声音可能会有轻微延迟。\n设置为「从不」以保持引擎始终运行。"
         case .japanese: return "非アクティブ時にオーディオエンジンを停止してCPU使用率を削減。\nアイドル後の最初のサウンドにわずかな遅延が生じる場合があります。\n「なし」に設定するとエンジンを常時稼働させます。"
-        case .german: return "Stoppt die Audio-Engine nach Inaktivität, um die CPU-Auslastung zu reduzieren.\nDer erste Ton nach dem Leerlauf kann eine kleine Verzögerung haben.\nAuf 'Nie' setzen, um die Audio-Engine immer laufen zu lassen."
+        case .german: return "Stoppt die Audio-Engine nach Inaktivität, um die CPU-Auslastung zu reduzieren.\nNach dem Leerlauf kann der erste Ton eine kleine Verzögerung aufweisen.\nAuf 'Nie' setzen, um die Audio-Engine immer laufen zu lassen."
         }
     }
     
@@ -623,7 +623,7 @@ struct L10n {
         case .english: return "Update Check Failed"
         case .chinese: return "检查更新失败"
         case .japanese: return "アップデートの確認に失敗しました"
-        case .german: return "Suche nach Updates ist fehlgeschlagen"
+        case .german: return "Suche nach Aktualisierungen ist fehlgeschlagen"
         }
     }
     
@@ -678,7 +678,7 @@ struct L10n {
         case .english: return "Annoying update step ahead!\nWe'd automate this if we could, but it requires the $100 Apple Developer Program.\n\n1. Remove the old Thock entry from Accessibility and quit the app.\n2. Reopen Thock and enable the new entry that appears."
         case .chinese: return "恼人的更新步骤！\n如果可以的话我们会自动完成这一步，但这需要 $100 的 Apple 开发者计划。\n\n1. 从辅助功能中移除旧的 Thock 条目并退出应用。\n2. 重新打开 Thock 并启用出现的新条目。"
         case .japanese: return "面倒なアップデート手順です！\n自動化したいのですが、$100のApple Developer Programが必要です。\n\n1. アクセシビリティから古いThockエントリを削除してアプリを終了します。\n2. Thockを再度開き、表示される新しいエントリを有効にします。"
-        case .german: return "Nerviger Schritt voraus!\nWir würden es automatisieren wenn wir könnten, aber es setzt das 100$ Apple Developer Programm voraus.\n\n1. Entferne den alten Thock Eintrag von Bedienungshilfen und beende die App. \n2. Öffne Thock wieder und aktiviere den neuen Eintrag der erscheint."
+        case .german: return "Lästiger Aktualisierungsschritt voraus!\nWenn wir könnten, würden es automatisieren, aber dafür ist das 100$ Apple Developer Programm erforderlich.\n\n1. Entfernen Sie den alten Thock-Eintrag aus den Bedienungshilfen und beenden Sie die Thock. \n2. Öffnen Sie erneut Thock und aktivieren Sie den neuen Eintrag, der erscheint."
         }
     }
     
