@@ -78,7 +78,7 @@ struct L10n {
         case .english: return "Sound"
         case .chinese: return "声音"
         case .japanese: return "サウンド"
-        case . german: return "Ton"
+        case .german: return "Ton"
         }
     }
     
@@ -106,7 +106,7 @@ struct L10n {
         case .english: return "Launch Thock at login"
         case .chinese: return "登录时启动 Thock"
         case .japanese: return "ログイン時にThockを起動"
-        case . german: return "Thock bei der Anmeldung öffnen"
+        case .german: return "Thock bei der Anmeldung öffnen"
         }
     }
     
