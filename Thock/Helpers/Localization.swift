@@ -243,7 +243,7 @@ struct L10n {
         case .english: return "Ignore rapid key events"
         case .chinese: return "忽略快速连续按键"
         case .japanese: return "高速キー入力を無視"
-        case .german: return "Wiederholt schnelle Tasteneingaben ignorieren"
+        case .german: return "Schnelle Tastenfolgen ignorieren"
         }
     }
     
@@ -506,7 +506,7 @@ struct L10n {
         case .english: return "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
         case .chinese: return "每次按键都会产生轻微的音调变化 - ± 您选择的值。让声音更自然，或者更诡异。"
         case .japanese: return "各キー入力が少しずつ音程を変える - ±選択した値。より人間らしく。または不気味に。"
-        case .german: return "Jeder Tastenanschlag verstimmt sich leicht - ± um den ausgwählten Wert. Klingt natürlicher. Oder spukiger"
+        case .german: return "Jeder Tastenanschlag verstimmt sich leicht - ± um den ausgewählten Wert. Klingt natürlicher. Oder gespenstisch."
         }
     }
     
@@ -596,7 +596,7 @@ struct L10n {
         case .english: return "A new version of Thock is available. Check the menu bar for the update option."
         case .chinese: return "Thock 有新版本可用。请在菜单栏中查找更新选项。"
         case .japanese: return "Thockの新しいバージョンが利用可能です。メニューバーで更新オプションを確認してください。"
-        case .german: return "Eine neue Version von Thock ist verfügbar. Überprüfe die Menüleiste auf die Aktualisieren Option"
+        case .german: return "Eine neue Version von Thock ist verfügbar. Überprüfe die Menüleiste auf die Update-Option."
         }
     }
     
@@ -614,7 +614,7 @@ struct L10n {
         case .english: return "You're already running the latest version of Thock."
         case .chinese: return "您已经在运行最新版本的 Thock。"
         case .japanese: return "すでに最新バージョンのThockを実行しています。"
-        case .german: return "Thock ist bereits auf dem neuesten Stand"
+        case .german: return "Thock ist bereits auf dem neuesten Stand."
         }
     }
     
