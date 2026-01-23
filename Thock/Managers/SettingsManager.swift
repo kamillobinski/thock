@@ -13,7 +13,7 @@ final class SettingsManager {
     static let defaultSelectedAudioDeviceUID: String? = nil
     static let defaultPerDeviceVolumes: [String: Float] = [:]
     static let defaultPitchVariation: Float = 0.0
-    static let defaultTrackpadSoundEnabled: Bool = false
+    static let defaultMouseSoundEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
     
     
@@ -68,17 +68,17 @@ final class SettingsManager {
         get { UserDefaults.perDeviceVolumes }
         set { UserDefaults.perDeviceVolumes = newValue }
     }
-
+    
     /// Pitch variation range in semitones for random pitch shifts.
     var pitchVariation: Float {
         get { UserDefaults.pitchVariation }
         set { UserDefaults.pitchVariation = newValue }
     }
     
-    /// Whether to play sound when clicking the trackpad.
-    var trackpadSoundEnabled: Bool {
-        get { UserDefaults.trackpadSoundEnabled }
-        set { UserDefaults.trackpadSoundEnabled = newValue }
+    /// Whether to play sound when clicking the mouse.
+    var mouseSoundEnabled: Bool {
+        get { UserDefaults.mouseSoundEnabled }
+        set { UserDefaults.mouseSoundEnabled = newValue }
     }
     
     /// Whether to auto-enable Thock when headphones are connected.
@@ -99,7 +99,7 @@ private extension UserDefaults {
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let perDeviceVolumes = "perDeviceVolume"
         static let pitchVariation = "pitchVariation"
-        static let trackpadSoundEnabled = "trackpadSoundEnabled"
+        static let mouseSoundEnabled = "mouseSoundEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
     }
     
@@ -198,7 +198,7 @@ private extension UserDefaults {
             standard.set(newValue, forKey: Keys.perDeviceVolumes)
         }
     }
-
+    
     static var pitchVariation: Float {
         get {
             if standard.object(forKey: Keys.pitchVariation) == nil {
@@ -211,15 +211,15 @@ private extension UserDefaults {
         }
     }
     
-    static var trackpadSoundEnabled: Bool {
+    static var mouseSoundEnabled: Bool {
         get {
-            if standard.object(forKey: Keys.trackpadSoundEnabled) == nil {
-                return SettingsManager.defaultTrackpadSoundEnabled
+            if standard.object(forKey: Keys.mouseSoundEnabled) == nil {
+                return SettingsManager.defaultMouseSoundEnabled
             }
-            return standard.bool(forKey: Keys.trackpadSoundEnabled)
+            return standard.bool(forKey: Keys.mouseSoundEnabled)
         }
         set {
-            standard.set(newValue, forKey: Keys.trackpadSoundEnabled)
+            standard.set(newValue, forKey: Keys.mouseSoundEnabled)
         }
     }
     
