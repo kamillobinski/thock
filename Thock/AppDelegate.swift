@@ -230,6 +230,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         
         ModeEngine.shared.loadInitialMode()
         
+        // Start audio device monitoring for headphone detection
+        AudioDeviceManager.shared.startMonitoring()
+        HeadphoneDetector.shared.startMonitoring()
+        
         // Update the icon
         menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
         
