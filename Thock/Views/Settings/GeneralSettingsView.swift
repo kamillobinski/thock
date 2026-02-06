@@ -67,20 +67,6 @@ struct GeneralSettingsView: View {
                             }
                             .pickerStyle(.menu)
                             .controlSize(.small)
-                        )
-                    )
-                    
-                    SettingsRowView(
-                        title: L10n.autoEnableOnHeadphone,
-                        subtitle: L10n.autoEnableOnHeadphoneSubtitle,
-                        control: AnyView(
-                            Toggle("", isOn: Binding(
-                                get: { SettingsEngine.shared.isAutoEnableOnHeadphoneEnabled() },
-                                set: { SettingsEngine.shared.setAutoEnableOnHeadphone($0) }
-                            ))
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                            .labelsHidden()
                         ),
                         isLast: true
                     )

@@ -119,6 +119,20 @@ struct SoundSettingsView: View {
                                 .onChange(of: autoMuteOnMusicPlayback) { newValue in
                                     SettingsEngine.shared.setAutoMuteOnMusicPlayback(newValue)
                                 }
+                        )
+                    )
+
+                    SettingsRowView(
+                        title: L10n.autoEnableOnHeadphone,
+                        subtitle: L10n.autoEnableOnHeadphoneSubtitle,
+                        control: AnyView(
+                            Toggle("", isOn: Binding(
+                                get: { SettingsEngine.shared.isAutoEnableOnHeadphoneEnabled() },
+                                set: { SettingsEngine.shared.setAutoEnableOnHeadphone($0) }
+                            ))
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
+                            .labelsHidden()
                         ),
                         isLast: true
                     )
