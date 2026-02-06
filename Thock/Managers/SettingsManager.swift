@@ -14,6 +14,7 @@ final class SettingsManager {
     static let defaultPerDeviceVolumes: [String: Float] = [:]
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
+    static let defaultAutoEnableOnHeadphone: Bool = false
     
     
     private init() {}
@@ -79,6 +80,12 @@ final class SettingsManager {
         get { UserDefaults.mouseSoundEnabled }
         set { UserDefaults.mouseSoundEnabled = newValue }
     }
+    
+    /// Whether to auto-enable Thock when headphones are connected.
+    var autoEnableOnHeadphone: Bool {
+        get { UserDefaults.autoEnableOnHeadphone }
+        set { UserDefaults.autoEnableOnHeadphone = newValue }
+    }
 }
 
 private extension UserDefaults {
@@ -93,6 +100,7 @@ private extension UserDefaults {
         static let perDeviceVolumes = "perDeviceVolume"
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
+        static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
     }
     
     static var openAtLogin: Bool {
@@ -212,6 +220,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.mouseSoundEnabled)
+        }
+    }
+    
+    static var autoEnableOnHeadphone: Bool {
+        get {
+            if standard.object(forKey: Keys.autoEnableOnHeadphone) == nil {
+                return SettingsManager.defaultAutoEnableOnHeadphone
+            }
+            return standard.bool(forKey: Keys.autoEnableOnHeadphone)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.autoEnableOnHeadphone)
         }
     }
 }
