@@ -282,21 +282,21 @@ struct L10n {
     
     static var autoMute: String {
         switch lang {
-        case .english: return "Auto-mute with Music and Spotify"
-        case .spanish: return "Silencio automático con Music y Spotify"
-        case .chinese: return "播放音乐时自动静音"
-        case .japanese: return "音楽再生時に自動ミュート"
-        case .german: return "Automatisch stummschalten bei Musik und Spotify"
+        case .english: return "Auto-mute with music apps"
+        case .spanish: return "Silencio automático con apps de música"
+        case .chinese: return "音乐应用播放时自动静音"
+        case .japanese: return "音楽アプリ再生時に自動ミュート"
+        case .german: return "Automatisch stummschalten bei Musik-Apps"
         }
     }
     
     static var autoMuteSubtitle: String {
         switch lang {
-        case .english: return "Automatically mute sounds when music is playing"
-        case .spanish: return "Silencia automáticamente los sonidos cuando se está reproduciendo música"
-        case .chinese: return "播放音乐时自动静音"
-        case .japanese: return "音楽再生中は自動的にミュート"
-        case .german: return "Töne werden automatisch stummgeschaltet, wenn Musik abgespielt wird"
+        case .english: return "Automatically mute sounds when Music, Spotify, or VLC is playing"
+        case .spanish: return "Silencia automáticamente cuando Music, Spotify o VLC están reproduciendo"
+        case .chinese: return "当 Music、Spotify 或 VLC 播放时自动静音"
+        case .japanese: return "Music、Spotify、VLC の再生中は自動的にミュート"
+        case .german: return "Automatisch stummschalten bei Wiedergabe in Music, Spotify oder VLC"
         }
     }
     
