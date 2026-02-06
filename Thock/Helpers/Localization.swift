@@ -510,6 +510,26 @@ struct L10n {
         }
     }
     
+    static var autoEnableOnHeadphone: String {
+        switch lang {
+        case .english: return "Auto-enable on headphone"
+        case .spanish: return "Activar automáticamente con auriculares"
+        case .chinese: return "连接耳机时自动启用"
+        case .japanese: return "ヘッドフォン接続時に自動有効化"
+        case .german: return "Automatisch aktivieren bei Kopfhörern"
+        }
+    }
+    
+    static var autoEnableOnHeadphoneSubtitle: String {
+        switch lang {
+        case .english: return "Automatically enable Thock when headphones are connected"
+        case .spanish: return "Activa Thock automáticamente cuando se conectan auriculares"
+        case .chinese: return "连接耳机时自动启用 Thock，断开时自动关闭"
+        case .japanese: return "ヘッドフォン接続時にThockを自動で有効化"
+        case .german: return "Thock automatisch aktivieren, wenn Kopfhörer angeschlossen werden"
+        }
+    }
+    
     // MARK: - Shortcuts
     static var global: String {
         switch lang {
