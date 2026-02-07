@@ -134,6 +134,8 @@ With music awareness, Thock intelligently manages your soundscape so you never h
 
 As soon as the music stops, the app instantly resumes your mechanical feedback. It's a seamless, 'set-and-forget' feature designed for deep work sessions where your focus shifts between rhythm of your keys and the rhythm of your playlist.
 
+> **Supported**: Apple Music, Spotify, VLC
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
