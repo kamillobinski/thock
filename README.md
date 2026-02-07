@@ -94,7 +94,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
     </tr>
     <tr>
       <td><b>Translation</b></td>
-      <td>Fully localized interface for English, 日本語, and 中文 users.</td>
+      <td>Fully localized interface for English, Español, 日本語, 中文, and Deutsch users.</td>
     </tr>
   </tbody>
 </table>
@@ -156,9 +156,11 @@ By exposing every core function to the system, Thock fits seamlessly into your a
 
 ### Translation
 
-With localization, Thock bridges the gap between powerful functionality and effortless usability. The interface is fully translated into English, 日本語 (Japanese) and 中文 (Chinese), allowing users to navigate the ecosystem without language barriers.
+With localization, Thock bridges the gap between powerful functionality and effortless usability. The interface is fully translated into multiple languages, allowing users to navigate the ecosystem without language barriers.
 
 Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
+
+> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
