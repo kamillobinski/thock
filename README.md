@@ -58,6 +58,8 @@ Thock is a high-performance utility designed to bring the tactile satisfaction o
 
 Started this project to challenge the status quo. While paid alternatives exist, Thock is built on the belief that the best tools should be open-source and community-driven. By focusing on a custom low-latency engine and deep system integration, Thock offers a professional-grade typing experience that stays out of your way and keeps your flow state intact.
 
+> 🍺 Homebrew: <code>brew install --cask kamillobinski/thock/thock</code><br/>
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
