@@ -246,15 +246,16 @@ Check out the [contributing guide](./docs/CONTRIBUTING.md) for everything you ne
 
 Thanks to the folks that helped make this project a reality!
 
-**Community Contribution**
-
-- [@Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) - Developed the dynamic localization system and provided the initial Japanese & Chinese language support.
-- [@distantorigin](https://github.com/distantorigin) - Fixed menu bar accessibility to ensure the app is fully responsive when using VoiceOver.
-- [@SouhailBlmn](https://github.com/SouhailBlmn) - Volume persistence across output devices, global shortcut to toggle the app
-- [@shailantani](https://github.com/shailantani) - Raycast extension ([source code](https://github.com/raycast/extensions/tree/main/extensions/thock))
-- [@qalonbudker](https://github.com/qalonbudker) - Pitch variation for key sounds
-- [@zenangst](https://github.com/zenangst) - Event handling, mode saving, perf improvements
-- [@iamsoum](https://github.com/iamsoum) - Updated the sound pack conversion instructions for improved clarity and step-by-step guidance
+| Conntributor | Contribution |
+| - | - |
+| [Bcharlit](https://github.com/Bcharlit) | German translations. |
+| [Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) | Dynamic localization (Japanese + Chinese), auto-enable on headphones, trackpad sound support. |
+| [distantorigin](https://github.com/distantorigin) | Menu bar accessibility and VoiceOver responsiveness. |
+| [SouhailBlmn](https://github.com/SouhailBlmn) | Volume persistence across output devices, global shortcut to toggle the app. |
+| [shailantani](https://github.com/shailantani) | Raycast extension ([source code](https://github.com/raycast/extensions/tree/main/extensions/thock)). |
+| [qalonbudker](https://github.com/qalonbudker) | Pitch variation for key sounds. |
+| [zenangst](https://github.com/zenangst) | Event handling, mode saving, performance improvements. |
+| [iamsoum](https://github.com/iamsoum) | Clearer step-by-step sound pack conversion instructions. |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
