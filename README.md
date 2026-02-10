@@ -246,7 +246,7 @@ Check out the [contributing guide](./docs/CONTRIBUTING.md) for everything you ne
 
 Thanks to the folks that helped make this project a reality!
 
-| Conntributor | Contribution |
+| Contributor | Contribution |
 | - | - |
 | [Bcharlit](https://github.com/Bcharlit) | German translations. |
 | [Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) | Dynamic localization (Japanese + Chinese), auto-enable on headphones, trackpad sound support. |
