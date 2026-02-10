@@ -58,6 +58,8 @@ Thock is a high-performance utility designed to bring the tactile satisfaction o
 
 Started this project to challenge the status quo. While paid alternatives exist, Thock is built on the belief that the best tools should be open-source and community-driven. By focusing on a custom low-latency engine and deep system integration, Thock offers a professional-grade typing experience that stays out of your way and keeps your flow state intact.
 
+> 🍺 Homebrew: <code>brew install --cask kamillobinski/thock/thock</code><br/>
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
@@ -94,7 +96,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
     </tr>
     <tr>
       <td><b>Translation</b></td>
-      <td>Fully localized interface for English, 日本語, and 中文 users.</td>
+      <td>Fully localized interface for English, Español, 日本語, 中文, and Deutsch users.</td>
     </tr>
   </tbody>
 </table>
@@ -134,6 +136,8 @@ With music awareness, Thock intelligently manages your soundscape so you never h
 
 As soon as the music stops, the app instantly resumes your mechanical feedback. It's a seamless, 'set-and-forget' feature designed for deep work sessions where your focus shifts between rhythm of your keys and the rhythm of your playlist.
 
+> **Supported**: Apple Music, Spotify, VLC
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
@@ -154,9 +158,11 @@ By exposing every core function to the system, Thock fits seamlessly into your a
 
 ### Translation
 
-With localization, Thock bridges the gap between powerful functionality and effortless usability. The interface is fully translated into English, 日本語 (Japanese) and 中文 (Chinese), allowing users to navigate the ecosystem without language barriers.
+With localization, Thock bridges the gap between powerful functionality and effortless usability. The interface is fully translated into multiple languages, allowing users to navigate the ecosystem without language barriers.
 
 Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
+
+> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -240,15 +246,16 @@ Check out the [contributing guide](./docs/CONTRIBUTING.md) for everything you ne
 
 Thanks to the folks that helped make this project a reality!
 
-**Community Contribution**
-
-- [@Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) - Developed the dynamic localization system and provided the initial Japanese & Chinese language support.
-- [@distantorigin](https://github.com/distantorigin) - Fixed menu bar accessibility to ensure the app is fully responsive when using VoiceOver.
-- [@SouhailBlmn](https://github.com/SouhailBlmn) - Volume persistence across output devices, global shortcut to toggle the app
-- [@shailantani](https://github.com/shailantani) - Raycast extension ([source code](https://github.com/raycast/extensions/tree/main/extensions/thock))
-- [@qalonbudker](https://github.com/qalonbudker) - Pitch variation for key sounds
-- [@zenangst](https://github.com/zenangst) - Event handling, mode saving, perf improvements
-- [@iamsoum](https://github.com/iamsoum) - Updated the sound pack conversion instructions for improved clarity and step-by-step guidance
+| Contributor | Contribution |
+| - | - |
+| [Bcharlit](https://github.com/Bcharlit) | German translations. |
+| [Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) | Dynamic localization (Japanese + Chinese), auto-enable on headphones, trackpad sound support. |
+| [distantorigin](https://github.com/distantorigin) | Menu bar accessibility and VoiceOver responsiveness. |
+| [SouhailBlmn](https://github.com/SouhailBlmn) | Volume persistence across output devices, global shortcut to toggle the app. |
+| [shailantani](https://github.com/shailantani) | Raycast extension ([source code](https://github.com/raycast/extensions/tree/main/extensions/thock)). |
+| [qalonbudker](https://github.com/qalonbudker) | Pitch variation for key sounds. |
+| [zenangst](https://github.com/zenangst) | Event handling, mode saving, performance improvements. |
+| [iamsoum](https://github.com/iamsoum) | Clearer step-by-step sound pack conversion instructions. |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
