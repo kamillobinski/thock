@@ -850,7 +850,7 @@ struct L10n {
         switch lang {
         case .english: return "Done"
         case .spanish: return "Listo"
-        case .french: return "Terminé"  
+        case .french: return "Terminé"
         case .chinese: return "完成"
         case .japanese: return "完了"
         case .german: return "Fertig"
