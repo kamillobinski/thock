@@ -629,7 +629,7 @@ struct L10n {
         switch lang {
         case .english: return "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
         case .spanish: return "Cada pulsación de tecla se desajusta un poco, ± el valor que elijas. Mantiene las cosas humanas. O embrujadas."
-        case .french: return "Chaque frappe se désaccorde légèrement - ± la valeur choisie. Garde un petit côté humain. Ou hanté."
+        case .french: return "Chaque frappe se désaccorde légèrement - ± la valeur choisie. Garde un petit côté humain. Ou carrément hanté."
         case .chinese: return "每次按键都会产生轻微的音调变化 - ± 您选择的值。让声音更自然，或者更诡异。"
         case .japanese: return "各キー入力が少しずつ音程を変える - ±選択した値。より人間らしく。または不気味に。"
         case .german: return "Jeder Tastenanschlag verstimmt sich leicht - ± um den ausgewählten Wert. Klingt natürlicher. Oder gespenstisch."
