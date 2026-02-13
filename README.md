@@ -162,7 +162,7 @@ With localization, Thock bridges the gap between powerful functionality and effo
 
 Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
 
-> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, �🇷 French, �🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German
+> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
