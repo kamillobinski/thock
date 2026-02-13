@@ -451,7 +451,7 @@ struct L10n {
         switch lang {
         case .english: return "Reduce CPU when idle"
         case .spanish: return "Reducir la CPU cuando esté en reposo"
-        case .french: return "Réduire le CPU en inactivité"
+        case .french: return "Réduire le CPU pendant l'inactivité"
         case .chinese: return "空闲时降低 CPU 占用"
         case .japanese: return "アイドル時にCPU使用率を削減"
         case .german: return "CPU-Auslastung während Untätigkeit reduzieren"
@@ -572,7 +572,7 @@ struct L10n {
         switch lang {
         case .english: return "Automatically enable Thock when headphones are connected"
         case .spanish: return "Activa Thock automáticamente cuando se conectan auriculares"
-        case .french: return "Activer automatiquement Thock lors de la connexion d'un casque"
+        case .french: return "Activer automatiquement Thock lors de la connexion d'un casque audio"
         case .chinese: return "连接耳机时自动启用 Thock，断开时自动关闭"
         case .japanese: return "ヘッドフォン接続時にThockを自動で有効化"
         case .german: return "Thock automatisch aktivieren, wenn Kopfhörer angeschlossen werden"
@@ -629,7 +629,7 @@ struct L10n {
         switch lang {
         case .english: return "Each keystroke detunes itself a little - ± your chosen value. Keeps things human. Or haunted."
         case .spanish: return "Cada pulsación de tecla se desajusta un poco, ± el valor que elijas. Mantiene las cosas humanas. O embrujadas."
-        case .french: return "Chaque frappe se désaccorde légèrement - ± la valeur choisie. Garde un côté humain. Ou hanté."
+        case .french: return "Chaque frappe se désaccorde légèrement - ± la valeur choisie. Garde un petit côté humain. Ou hanté."
         case .chinese: return "每次按键都会产生轻微的音调变化 - ± 您选择的值。让声音更自然，或者更诡异。"
         case .japanese: return "各キー入力が少しずつ音程を変える - ±選択した値。より人間らしく。または不気味に。"
         case .german: return "Jeder Tastenanschlag verstimmt sich leicht - ± um den ausgewählten Wert. Klingt natürlicher. Oder gespenstisch."
