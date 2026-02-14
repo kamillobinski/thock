@@ -462,7 +462,7 @@ struct L10n {
         switch lang {
         case .english: return "Stops audio engine after inactivity to reduce CPU usage.\nFirst sound after idle may have a tiny delay.\nSet to 'Never' to keep engine always running."
         case .spanish: return "Detiene el audio tras inactividad para reducir CPU.\nEl primer sonido puede tener un leve retraso.\nUsa 'Nunca' para mantener el motor activo."
-        case .french: return "Arrête le moteur audio après inactivité pour réduire l'utilisation du CPU.\nLe premier son après inactivité peut avoir un léger délai.\nDéfinir sur \u00ab Jamais \u00bb pour maintenir le moteur toujours actif."
+        case .french: return "Arrête le moteur audio après inactivité pour réduire l'utilisation du CPU.\nLe premier son après inactivité peut avoir un léger délai.\nDéfinir sur \u{00AB} Jamais \u{00BB} pour maintenir le moteur toujours actif."
         case .chinese: return "闲置后停止音频引擎以降低 CPU 占用。\n空闲后的第一个声音可能会有轻微延迟。\n设置为「从不」以保持引擎始终运行。"
         case .japanese: return "非アクティブ時にオーディオエンジンを停止してCPU使用率を削減。\nアイドル後の最初のサウンドにわずかな遅延が生じる場合があります。\n「なし」に設定するとエンジンを常時稼働させます。"
         case .german: return "Stoppt die Audio-Engine nach Inaktivität, um die CPU-Auslastung zu reduzieren.\nNach dem Leerlauf kann der erste Ton eine kleine Verzögerung aufweisen.\nAuf 'Nie' setzen, um die Audio-Engine immer laufen zu lassen."
