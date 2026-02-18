@@ -248,6 +248,8 @@ Thanks to the folks that helped make this project a reality!
 
 | Contributor | Contribution |
 | - | - |
+| [sasagar](https://github.com/sasagar) | VLC auto-launch prevention. |
+| [nthnbch](https://github.com/nthnbch) | French translations. |
 | [Bcharlit](https://github.com/Bcharlit) | German translations. |
 | [Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) | Dynamic localization (Japanese + Chinese), auto-enable on headphones, trackpad sound support. |
 | [distantorigin](https://github.com/distantorigin) | Menu bar accessibility and VoiceOver responsiveness. |
