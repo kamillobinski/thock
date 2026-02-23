@@ -17,6 +17,9 @@
     <a href="#" target="_blank" rel="noopener noreferrer">
       <img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/kamillobinski/thock/total?style=rounded&color=white&labelColor=000000">
     </a>
+    <a href="https://discord.gg/sGVaUxgfJx" target="_blank" rel="noopener noreferrer">
+      <img alt="Discord" src="https://img.shields.io/discord/1453196153771397286?style=rounded&color=white&labelColor=000000&label=discord">
+    </a>
     <a href="https://deepwiki.com/kamillobinski/thock" target="_blank" rel="noopener noreferrer">
       <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"/>
     </a>
@@ -248,6 +251,8 @@ Thanks to the folks that helped make this project a reality!
 
 | Contributor | Contribution |
 | - | - |
+| [sasagar](https://github.com/sasagar) | VLC auto-launch prevention. |
+| [nthnbch](https://github.com/nthnbch) | French translations. |
 | [Bcharlit](https://github.com/Bcharlit) | German translations. |
 | [Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) | Dynamic localization (Japanese + Chinese), auto-enable on headphones, trackpad sound support. |
 | [distantorigin](https://github.com/distantorigin) | Menu bar accessibility and VoiceOver responsiveness. |
