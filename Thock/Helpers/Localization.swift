@@ -105,7 +105,7 @@ struct L10n {
         case .chinese: return "快捷键"
         case .japanese: return "ショートカット"
         case .german: return "Tastenkombinationen"
-        case .italian : return "Scorciatoie"
+        case .italian: return "Scorciatoie"
         }
     }
     
