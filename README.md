@@ -99,7 +99,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
     </tr>
     <tr>
       <td><b>Translation</b></td>
-      <td>Fully localized interface for English, Español, Français, 日本語, 中文, and Deutsch users.</td>
+      <td>Fully localized interface for English, Español, Français, 日本語, 中文, Deutsch and Italiano users.</td>
     </tr>
   </tbody>
 </table>
@@ -165,7 +165,7 @@ With localization, Thock bridges the gap between powerful functionality and effo
 
 Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
 
-> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German
+> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German, 🇮🇹 Italian.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -254,6 +254,7 @@ Thanks to the folks that helped make this project a reality!
 | [sasagar](https://github.com/sasagar) | VLC auto-launch prevention. |
 | [nthnbch](https://github.com/nthnbch) | French translations. |
 | [Bcharlit](https://github.com/Bcharlit) | German translations. |
+| [Crocchetto](https://github.com/crocchetto) | Italian translations. |
 | [Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) | Dynamic localization (Japanese + Chinese), auto-enable on headphones, trackpad sound support. |
 | [distantorigin](https://github.com/distantorigin) | Menu bar accessibility and VoiceOver responsiveness. |
 | [SouhailBlmn](https://github.com/SouhailBlmn) | Volume persistence across output devices, global shortcut to toggle the app. |
