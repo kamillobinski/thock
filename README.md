@@ -99,7 +99,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
     </tr>
     <tr>
       <td><b>Translation</b></td>
-      <td>Fully localized interface for English, Español, Français, 日本語, 中文, Deutsch and Italiano users.</td>
+      <td>Fully localized interface for English, Español, Français, 日本語, 中文, Deutsch, Italiano and Vietnamese users.</td>
     </tr>
   </tbody>
 </table>
@@ -165,7 +165,7 @@ With localization, Thock bridges the gap between powerful functionality and effo
 
 Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
 
-> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German, 🇮🇹 Italian.
+> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German, 🇮🇹 Italian, 🇻🇳 Vietnamese.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -262,6 +262,7 @@ Thanks to the folks that helped make this project a reality!
 | [qalonbudker](https://github.com/qalonbudker) | Pitch variation for key sounds. |
 | [zenangst](https://github.com/zenangst) | Event handling, mode saving, performance improvements. |
 | [iamsoum](https://github.com/iamsoum) | Clearer step-by-step sound pack conversion instructions. |
+| [cattybeo](https://github.com/cattybeo) | Vietnamese translations. |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
