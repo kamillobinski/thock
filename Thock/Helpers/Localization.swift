@@ -10,6 +10,7 @@ enum AppLanguage: String, CaseIterable {
     case japanese = "ja"
     case german = "de"
     case vietnamese = "vi"
+    case italian = "it"
     
     var displayName: String {
         switch self {
@@ -20,6 +21,7 @@ enum AppLanguage: String, CaseIterable {
         case .japanese: return "日本語"
         case .german: return "Deutsch"
         case .vietnamese: return "Tiếng Việt"
+        case .italian: return "Italiano"
         }
     }
     
@@ -31,6 +33,7 @@ enum AppLanguage: String, CaseIterable {
         if preferred.hasPrefix("ja") { return .japanese }
         if preferred.hasPrefix("de") { return .german }
         if preferred.hasPrefix("vi") { return .vietnamese }
+        if preferred.hasPrefix("it") { return .italian }
         return .english
     }
 }
@@ -82,6 +85,7 @@ struct L10n {
         case .japanese: return "一般"
         case .german: return "Allgemein"
         case .vietnamese: return "Cài đặt chung"
+        case .italian: return "Generali"
         }
     }
     
@@ -94,6 +98,7 @@ struct L10n {
         case .japanese: return "サウンド"
         case .german: return "Ton"
         case .vietnamese: return "Âm thanh"
+        case .italian: return "Suono"
         }
     }
     
@@ -106,6 +111,7 @@ struct L10n {
         case .japanese: return "ショートカット"
         case .german: return "Tastenkombinationen"
         case .vietnamese: return "Phím tắt"
+        case .italian: return "Scorciatoie"
         }
     }
     
@@ -119,6 +125,7 @@ struct L10n {
         case .japanese: return "システム"
         case .german: return "System"
         case .vietnamese: return "Hệ thống"
+        case .italian: return "Sistema"
         }
     }
     
@@ -131,6 +138,7 @@ struct L10n {
         case .japanese: return "ログイン時にThockを起動"
         case .german: return "Thock bei der Anmeldung öffnen"
         case .vietnamese: return "Khởi động Thock khi đăng nhập"
+        case .italian: return "Apri Thock al login"
         }
     }
     
@@ -143,6 +151,7 @@ struct L10n {
         case .japanese: return "ログイン時にThockを自動的に起動"
         case .german: return "Thock wird beim Anmelden automatisch geöffnet"
         case .vietnamese: return "Tự động khởi động Thock khi đăng nhập"
+        case .italian: return "Apri automaticamente Thock all'avvio"
         }
     }
     
@@ -155,6 +164,7 @@ struct L10n {
         case .japanese: return "言語"
         case .german: return "Sprache"
         case .vietnamese: return "Ngôn ngữ"
+        case .italian: return "Lingua"
         }
     }
     
@@ -167,6 +177,7 @@ struct L10n {
         case .japanese: return "言語を選択"
         case .german: return "Wählen Sie Ihre bevorzugte Sprache"
         case .vietnamese: return "Chọn ngôn ngữ bạn muốn sử dụng"
+        case .italian: return "Scegli la tua lingua preferita"
         }
     }
     
@@ -180,6 +191,7 @@ struct L10n {
         case .japanese: return "その他"
         case .german: return "Mehr"
         case .vietnamese: return "Khác"
+        case .italian: return "Altro"
         }
     }
     
@@ -192,6 +204,7 @@ struct L10n {
         case .japanese: return "このバージョンについて"
         case .german: return "Über diese Version"
         case .vietnamese: return "Giới thiệu phiên bản"
+        case .italian: return "Riguardo questa versione"
         }
     }
     
@@ -204,6 +217,7 @@ struct L10n {
         case .japanese: return "貢献する"
         case .german: return "Mitwirken"
         case .vietnamese: return "Đóng góp"
+        case .italian: return "Contribuisci"
         }
     }
     
@@ -216,6 +230,7 @@ struct L10n {
         case .japanese: return "バグを報告"
         case .german: return "Einen Fehler melden"
         case .vietnamese: return "Báo cáo lỗi"
+        case .italian: return "Segnala un bug"
         }
     }
     
@@ -229,6 +244,7 @@ struct L10n {
         case .japanese: return "出力"
         case .german: return "Ausgabe"
         case .vietnamese: return "Đầu ra"
+        case .italian: return "Uscita"
         }
     }
     
@@ -241,6 +257,7 @@ struct L10n {
         case .japanese: return "音量"
         case .german: return "Lautstärke"
         case .vietnamese: return "Âm lượng"
+        case .italian: return "Volume"
         }
     }
     
@@ -253,6 +270,7 @@ struct L10n {
         case .japanese: return "サウンドの出力先"
         case .german: return "Ton wiedergeben über"
         case .vietnamese: return "Phát âm thanh qua"
+        case .italian: return "Riproduci effetti audio tramite"
         }
     }
     
@@ -265,6 +283,7 @@ struct L10n {
         case .japanese: return "システムデフォルト"
         case .german: return "Standard-Ausgabegerät"
         case .vietnamese: return "Mặc định hệ thống"
+        case .italian: return "Predefinito di sistema"
         }
     }
     
@@ -277,6 +296,7 @@ struct L10n {
         case .japanese: return "フィルター"
         case .german: return "Filter"
         case .vietnamese: return "Bộ lọc"
+        case .italian: return "Filtri"
         }
     }
     
@@ -289,6 +309,7 @@ struct L10n {
         case .japanese: return "修飾キーのサウンドを無効化"
         case .german: return "Ton für Modifikator-Tasten deaktivieren"
         case .vietnamese: return "Tắt âm cho phím chức năng"
+        case .italian: return "Disattiva i suoni per i tasti modificatori"
         }
     }
     
@@ -301,6 +322,7 @@ struct L10n {
         case .japanese: return "修飾キー（Cmd、Shiftなど）を押したときにミュート"
         case .german: return "Töne deaktivieren, wenn Modifikator-Tasten (Cmd, Shift, usw.) gedrückt sind"
         case .vietnamese: return "Tắt âm thanh khi nhấn các phím chức năng (Cmd, Shift, v.v.)"
+        case .italian: return "Silenzia i suoni quando si premono i tasti modificatori (Cmd, Shift, ecc.)"
         }
     }
     
@@ -313,6 +335,7 @@ struct L10n {
         case .japanese: return "高速キー入力を無視"
         case .german: return "Schnelle Tastenfolgen ignorieren"
         case .vietnamese: return "Bỏ qua các phím bấm quá nhanh"
+        case .italian: return "Ignora pressioni rapide dei tasti"
         }
     }
     
@@ -325,6 +348,7 @@ struct L10n {
         case .japanese: return "連続して発生する高速なキーイベントをフィルタリング"
         case .german: return "Schnell aufeinanderfolgende Tasteneingaben ignorieren"
         case .vietnamese: return "Lọc bỏ các sự kiện phím xảy ra quá nhanh"
+        case .italian: return "Filtra i tasti premuti in successione troppo velocemente"
         }
     }
     
@@ -337,6 +361,7 @@ struct L10n {
         case .japanese: return "音楽アプリ再生時に自動ミュート"
         case .german: return "Automatisch stummschalten bei Musik-Apps"
         case .vietnamese: return "Tự động tắt tiếng khi có ứng dụng nhạc"
+        case .italian: return "Silenzia automaticamente con app di musica"
         }
     }
     
@@ -349,6 +374,7 @@ struct L10n {
         case .japanese: return "Music、Spotify、VLC の再生中は自動的にミュート"
         case .german: return "Automatisch stummschalten bei Wiedergabe in Music, Spotify oder VLC"
         case .vietnamese: return "Tự động tắt tiếng khi Music, Spotify hoặc VLC đang phát"
+        case .italian: return "Silenzia automaticamente i suoni quando Musica, Spotify o VLC sono in riproduzione"
         }
     }
     
@@ -361,6 +387,7 @@ struct L10n {
         case .japanese: return "サウンドパック"
         case .german: return "Soundeffektpakete"
         case .vietnamese: return "Gói âm thanh"
+        case .italian: return "Pacchetti audio"
         }
     }
     
@@ -373,6 +400,7 @@ struct L10n {
         case .japanese: return "カスタムサウンドパックディレクトリ"
         case .german: return "Pfad für benutzerdefinierte Soundeffektpakete"
         case .vietnamese: return "Thư mục gói âm thanh tùy chỉnh"
+        case .italian: return "Cartella pacchetti audio personalizzati"
         }
     }
     
@@ -385,6 +413,7 @@ struct L10n {
         case .japanese: return "開く"
         case .german: return "Öffnen"
         case .vietnamese: return "Mở"
+        case .italian: return "Apri"
         }
     }
     
@@ -397,6 +426,7 @@ struct L10n {
         case .japanese: return "パフォーマンス"
         case .german: return "Leistung"
         case .vietnamese: return "Hiệu năng"
+        case .italian: return "Prestazioni"
         }
     }
     
@@ -409,6 +439,7 @@ struct L10n {
         case .japanese: return "オーディオ遅延"
         case .german: return "Audio-Latenz"
         case .vietnamese: return "Độ trễ âm thanh"
+        case .italian: return "Latenza audio"
         }
     }
     
@@ -421,6 +452,7 @@ struct L10n {
         case .japanese: return "- 超低：最も応答性が高く、CPU使用率が最も高い\n- 低：非常に応答性が高く、CPU使用率が高い\n- 通常：バランスの取れたパフォーマンス（推奨）\n- 高：CPU使用率が低く、わずかな遅延\n- 非常に高い：CPU使用率が最も低く、顕著な遅延"
         case .german: return "- Ultra niedrig: am reaktionsschnellsten, höchste CPU-Auslastung\n- Niedrig: sehr reaktionsschnell, hohe CPU-Auslastung\n- Normal: Ausgewogene Leistung (empfohlen)\n- Hoch: niedrigere CPU-Auslastung, leichte Verzögerungen\n- Sehr Hoch: Niedrigste CPU-Auslastung, spürbare Verzögerungen"
         case .vietnamese: return "- Cực thấp: Phản hồi nhanh nhất, tốn nhiều CPU nhất\n- Thấp: Phản hồi nhanh, tốn nhiều CPU\n- Trung bình: Hiệu năng cân bằng (khuyên dùng)\n- Cao: Tốn ít CPU hơn, có độ trễ nhẹ\n- Rất cao: Tốn ít CPU nhất, độ trễ rõ rệt"
+        case .italian: return "- Ultra Bassa: molto reattiva, altissimo utilizzo CPU\n- Bassa: molto reattiva, alto utilizzo CPU\n- Normale: prestazioni bilanciate (consigliato)\n- Alta: minor utilizzo CPU, leggero ritardo\n- Molto Alta: minimo utilizzo CPU, ritardo notevole"
         }
     }
     
@@ -433,6 +465,7 @@ struct L10n {
         case .japanese: return "超低"
         case .german: return "Ultra niedrig"
         case .vietnamese: return "Cực thấp"
+        case .italian: return "Ultra Bassa"
         }
     }
     
@@ -445,6 +478,7 @@ struct L10n {
         case .japanese: return "低"
         case .german: return "Niedrig"
         case .vietnamese: return "Thấp"
+        case .italian: return "Bassa"
         }
     }
     
@@ -457,6 +491,7 @@ struct L10n {
         case .japanese: return "通常"
         case .german: return "Normal"
         case .vietnamese: return "Trung bình"
+        case .italian: return "Normale"
         }
     }
     
@@ -469,6 +504,7 @@ struct L10n {
         case .japanese: return "高"
         case .german: return "Hoch"
         case .vietnamese: return "Cao"
+        case .italian: return "Alta"
         }
     }
     
@@ -481,6 +517,7 @@ struct L10n {
         case .japanese: return "非常に高い"
         case .german: return "Sehr Hoch"
         case .vietnamese: return "Rất cao"
+        case .italian: return "Molto Alta"
         }
     }
     
@@ -493,6 +530,7 @@ struct L10n {
         case .japanese: return "アイドル時にCPU使用率を削減"
         case .german: return "CPU-Auslastung während Untätigkeit reduzieren"
         case .vietnamese: return "Giảm mức sử dụng CPU khi không hoạt động"
+        case .italian: return "Riduci CPU quando inattivo"
         }
     }
     
@@ -505,6 +543,7 @@ struct L10n {
         case .japanese: return "非アクティブ時にオーディオエンジンを停止してCPU使用率を削減。\nアイドル後の最初のサウンドにわずかな遅延が生じる場合があります。\n「なし」に設定するとエンジンを常時稼働させます。"
         case .german: return "Stoppt die Audio-Engine nach Inaktivität, um die CPU-Auslastung zu reduzieren.\nNach dem Leerlauf kann der erste Ton eine kleine Verzögerung aufweisen.\nAuf 'Nie' setzen, um die Audio-Engine immer laufen zu lassen."
         case .vietnamese: return "Tắt âm thanh khi không dùng để giảm tải CPU.\nCó thể có chút độ trễ khi phát âm thanh trở lại.\nĐổi thành 'Không bao giờ' để giữ âm thanh hoạt động liên tục."
+        case .italian: return "Ferma il motore audio in caso di inattività per ridurre l'uso della CPU.\nIl primo suono dopo l'inattività potrebbe avere un lieve ritardo.\nImposta su 'Mai' per mantenere il motore sempre attivo."
         }
     }
     
@@ -517,6 +556,7 @@ struct L10n {
         case .japanese: return "5秒"
         case .german: return "5 Sekunden"
         case .vietnamese: return "5 giây"
+        case .italian: return "5 secondi"
         }
     }
     
@@ -529,6 +569,7 @@ struct L10n {
         case .japanese: return "10秒"
         case .german: return "10 Sekunden"
         case .vietnamese: return "10 giây"
+        case .italian: return "10 secondi"
         }
     }
     
@@ -541,6 +582,7 @@ struct L10n {
         case .japanese: return "30秒"
         case .german: return "30 Sekunden"
         case .vietnamese: return "30 giây"
+        case .italian: return "30 secondi"
         }
     }
     
@@ -553,6 +595,7 @@ struct L10n {
         case .japanese: return "1分"
         case .german: return "1 Minute"
         case .vietnamese: return "1 phút"
+        case .italian: return "1 minuto"
         }
     }
     
@@ -565,6 +608,7 @@ struct L10n {
         case .japanese: return "5分"
         case .german: return "5 Minuten"
         case .vietnamese: return "5 phút"
+        case .italian: return "5 minuti"
         }
     }
     
@@ -577,6 +621,7 @@ struct L10n {
         case .japanese: return "なし"
         case .german: return "Nie"
         case .vietnamese: return "Không bao giờ"
+        case .italian: return "Mai"
         }
     }
     
@@ -589,6 +634,7 @@ struct L10n {
         case .japanese: return "不明なデバイス（切断済み）"
         case .german: return "Unbekanntes Gerät (Getrennt)"
         case .vietnamese: return "Thiết bị lạ (Đã ngắt kết nối)"
+        case .italian: return "Dispositivo Sconosciuto (Disconnesso)"
         }
     }
     
@@ -601,6 +647,7 @@ struct L10n {
         case .japanese: return "マウスクリックのサウンドを再生"
         case .german: return "Ton für Mausklicks aktivieren"
         case .vietnamese: return "Phát âm thanh nhấp chuột"
+        case .italian: return "Riproduci suono per i clic del mouse"
         }
     }
     
@@ -613,6 +660,7 @@ struct L10n {
         case .japanese: return "ヘッドフォン接続時に自動有効化"
         case .german: return "Automatisch aktivieren bei Kopfhörern"
         case .vietnamese: return "Tự động bật khi kết nối tai nghe"
+        case .italian: return "Attiva automaticamente con le cuffie"
         }
     }
     
@@ -625,6 +673,7 @@ struct L10n {
         case .japanese: return "ヘッドフォン接続時にThockを自動で有効化"
         case .german: return "Thock automatisch aktivieren, wenn Kopfhörer angeschlossen werden"
         case .vietnamese: return "Tự bật Thock khi kết nối tai nghe, tắt khi ngắt kết nối tai nghe"
+        case .italian: return "Attiva Thock automaticamente quando si connettono delle cuffie"
         }
     }
     
@@ -638,6 +687,7 @@ struct L10n {
         case .japanese: return "グローバル"
         case .german: return "Universal"
         case .vietnamese: return "Toàn hệ thống"
+        case .italian: return "Globale"
         }
     }
     
@@ -650,6 +700,7 @@ struct L10n {
         case .japanese: return "Thockの切り替え"
         case .german: return "Thock umschalten"
         case .vietnamese: return "Bật / tắt Thock"
+        case .italian: return "Attiva/Disattiva Thock"
         }
     }
     
@@ -662,6 +713,7 @@ struct L10n {
         case .japanese: return "どこからでもThockを素早く有効/無効にする"
         case .german: return "Thock von überall schnell ein- oder ausschalten"
         case .vietnamese: return "Bật / tắt Thock nhanh từ bất kỳ đâu"
+        case .italian: return "Abilita o disabilita rapidamente Thock da ovunque"
         }
     }
     
@@ -675,6 +727,7 @@ struct L10n {
         case .japanese: return "ピッチの変化"
         case .german: return "Tonhöhenvariation"
         case .vietnamese: return "Biến tấu cao độ"
+        case .italian: return "Variazione di tonalità"
         }
     }
     
@@ -687,6 +740,7 @@ struct L10n {
         case .japanese: return "各キー入力が少しずつ音程を変える - ±選択した値。より人間らしく。または不気味に。"
         case .german: return "Jeder Tastenanschlag verstimmt sich leicht - ± um den ausgewählten Wert. Klingt natürlicher. Oder gespenstisch."
         case .vietnamese: return "Mỗi lần nhấn phím sẽ làm lệch cao độ dựa vào giá trị bạn chọn. Giữ cho âm thanh chân thực hoặc một chút méo mó."
+        case .italian: return "Ad ogni battitura si scorda leggermente - ± del valore scelto. Rende il tutto più umano. O spettrale."
         }
     }
     
@@ -699,6 +753,7 @@ struct L10n {
         case .japanese: return "終了"
         case .german: return "Beenden"
         case .vietnamese: return "Thoát"
+        case .italian: return "Esci"
         }
     }
     
@@ -711,6 +766,7 @@ struct L10n {
         case .japanese: return "バージョン"
         case .german: return "Version"
         case .vietnamese: return "Phiên bản"
+        case .italian: return "Versione"
         }
     }
     
@@ -723,6 +779,7 @@ struct L10n {
         case .japanese: return "クイックオプション..."
         case .german: return "Schnelloptionen..."
         case .vietnamese: return "Tùy chọn nhanh..."
+        case .italian: return "Opzioni rapide..."
         }
     }
     
@@ -735,6 +792,7 @@ struct L10n {
         case .japanese: return "設定..."
         case .german: return "Einstellungen..."
         case .vietnamese: return "Cài đặt..."
+        case .italian: return "Impostazioni..."
         }
     }
     
@@ -747,6 +805,7 @@ struct L10n {
         case .japanese: return "このバージョンについて"
         case .german: return "Über diese Version"
         case .vietnamese: return "Xem thông tin phiên bản này"
+        case .italian: return "Riguardo questa versione"
         }
     }
     
@@ -759,6 +818,7 @@ struct L10n {
         case .japanese: return "新しいバージョンが利用可能です！"
         case .german: return "Eine neue Version ist verfügbar!"
         case .vietnamese: return "Đã có phiên bản mới!"
+        case .italian: return "Nuova Versione Disponibile!"
         }
     }
     
@@ -771,6 +831,7 @@ struct L10n {
         case .japanese: return "↺ 今すぐ更新"
         case .german: return "↺ Jetzt aktualisieren"
         case .vietnamese: return "↺ Cập nhật ngay"
+        case .italian: return "↺ Aggiorna Ora"
         }
     }
     
@@ -783,6 +844,7 @@ struct L10n {
         case .japanese: return "アップデートを確認..."
         case .german: return "Nach Updates suchen..."
         case .vietnamese: return "Kiểm tra cập nhật..."
+        case .italian: return "Verifica aggiornamenti..."
         }
     }
     
@@ -795,6 +857,7 @@ struct L10n {
         case .japanese: return "アップデートが利用可能です！"
         case .german: return "Update verfügbar!"
         case .vietnamese: return "Đã có phiên bản cập nhật!"
+        case .italian: return "Aggiornamento Disponibile!"
         }
     }
     
@@ -807,6 +870,7 @@ struct L10n {
         case .japanese: return "Thockの新しいバージョンが利用可能です。メニューバーで更新オプションを確認してください。"
         case .german: return "Eine neue Version von Thock ist verfügbar. Überprüfe die Menüleiste auf die Update-Option."
         case .vietnamese: return "Đã có phiên bản mới của Thock. Kiểm tra thanh menu để cập nhật."
+        case .italian: return "È disponibile una nuova versione di Thock. Controlla la barra dei menu per l'opzione di aggiornamento."
         }
     }
     
@@ -819,6 +883,7 @@ struct L10n {
         case .japanese: return "利用可能なアップデートはありません"
         case .german: return "Keine neuen Updates verfügbar"
         case .vietnamese: return "Chưa có bản cập nhật mới"
+        case .italian: return "Nessun Aggiornamento Disponibile"
         }
     }
     
@@ -831,6 +896,7 @@ struct L10n {
         case .japanese: return "すでに最新バージョンのThockを実行しています。"
         case .german: return "Thock ist bereits auf dem neuesten Stand."
         case .vietnamese: return "Bạn đang chạy phiên bản mới nhất của Thock."
+        case .italian: return "Stai già utilizzando l'ultima versione di Thock."
         }
     }
     
@@ -843,6 +909,7 @@ struct L10n {
         case .japanese: return "アップデートの確認に失敗しました"
         case .german: return "Suche nach Aktualisierungen ist fehlgeschlagen"
         case .vietnamese: return "Kiểm tra cập nhật thất bại"
+        case .italian: return "Ricerca Aggiornamenti Fallita"
         }
     }
     
@@ -855,6 +922,7 @@ struct L10n {
         case .japanese: return "OK"
         case .german: return "OK"
         case .vietnamese: return "OK"
+        case .italian: return "OK"
         }
     }
     
@@ -868,6 +936,7 @@ struct L10n {
         case .japanese: return "アクセシビリティ権限が必要です"
         case .german: return "Berechtigungen für Bedienungshilfen erforderlich"
         case .vietnamese: return "Ứng dụng cần quyền truy cập trợ năng (Accessibility)"
+        case .italian: return "Permessi di Accessibilità Richiesti"
         }
     }
     
@@ -880,6 +949,7 @@ struct L10n {
         case .japanese: return "Thockはキーボード入力を検出してサウンドを再生するためにアクセシビリティ権限が必要です。\n\n下の「システム設定を開く」をクリックし、アクセシビリティリストでThockを有効にしてください。"
         case .german: return "Thock benötigt Berechtigungen für Bedienungshilfen um Tastatureingaben zu erkennen und Töne abzuspielen.\n\nKlicke unten auf 'Systemeinstellungen öffnen' und aktiviere Thock in der Bedienungshilfenliste."
         case .vietnamese: return "Thock cần quyền truy cập trợ năng (Accessibility) để phát hiện đầu vào bàn phím và phát âm thanh.\n\nNhấn 'Mở Cài đặt hệ thống' dưới đây, sau đó bật Thock trong danh sách Trợ năng."
+        case .italian: return "Thock ha bisogno dei permessi di accessibilità per rilevare l'input della tastiera e riprodurre i suoni.\n\nFai clic su 'Apri Impostazioni di Sistema' qui sotto, poi abilita Thock nella lista Accessibilità."
         }
     }
     
@@ -892,6 +962,7 @@ struct L10n {
         case .japanese: return "システム設定を開く"
         case .german: return "Systemeinstellungen öffnen"
         case .vietnamese: return "Mở Cài đặt hệ thống"
+        case .italian: return "Apri Impostazioni di Sistema"
         }
     }
     
@@ -904,6 +975,7 @@ struct L10n {
         case .japanese: return "アクセシビリティ権限の更新"
         case .german: return "Bedienungshilfen Berechtigungen überprüfen"
         case .vietnamese: return "Cập nhật lại quyền trợ năng"
+        case .italian: return "Aggiorna Permessi Accessibilità"
         }
     }
     
@@ -916,6 +988,7 @@ struct L10n {
         case .japanese: return "面倒なアップデート手順です！\n自動化したいのですが、$100のApple Developer Programが必要です。\n\n1. アクセシビリティから古いThockエントリを削除してアプリを終了します。\n2. Thockを再度開き、表示される新しいエントリを有効にします。"
         case .german: return "Lästiger Aktualisierungsschritt voraus!\nWenn wir könnten, würden es automatisieren, aber dafür ist das 100$ Apple Developer Programm erforderlich.\n\n1. Entfernen Sie den alten Thock-Eintrag aus den Bedienungshilfen und beenden Sie die Thock. \n2. Öffnen Sie erneut Thock und aktivieren Sie den neuen Eintrag, der erscheint."
         case .vietnamese: return "Cập nhật hơi phiền phức một chút!\nChúng tôi rất muốn tự động hoá bước này, nhưng việc đó yêu cầu phải đóng phí duy trì 100$ cho Apple Developer Program.\n\n1. Xóa mục Thock cũ trong phần trợ năng và thoát ứng dụng.\n2. Mở lại Thock và bật mục mới vừa xuất hiện."
+        case .italian: return "In arrivo una noiosa procedura di aggiornamento!\nLo automatizzeremmo se potessimo, ma richiede l'iscrizione da 100$ all'Apple Developer Program.\n\n1. Rimuovi la vecchia voce di Thock da Accessibilità ed esci dall'app.\n2. Riapri Thock e abilita la nuova voce che appare."
         }
     }
     
@@ -928,6 +1001,7 @@ struct L10n {
         case .japanese: return "完了"
         case .german: return "Fertig"
         case .vietnamese: return "Hoàn thành"
+        case .italian: return "Fatto"
         }
     }
     
@@ -940,6 +1014,7 @@ struct L10n {
         case .japanese: return "Thockを終了"
         case .german: return "Thock beenden"
         case .vietnamese: return "Thoát khỏi Thock"
+        case .italian: return "Esci da Thock"
         }
     }
     
@@ -952,6 +1027,7 @@ struct L10n {
         case .japanese: return "権限を待っています..."
         case .german: return "Auf Erlaubnis warten..."
         case .vietnamese: return "Đang đợi cấp quyền truy cập..."
+        case .italian: return "In attesa dei permessi..."
         }
     }
 }
