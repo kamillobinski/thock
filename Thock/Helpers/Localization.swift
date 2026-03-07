@@ -633,7 +633,7 @@ struct L10n {
         case .chinese: return "未知设备（已断开）"
         case .japanese: return "不明なデバイス（切断済み）"
         case .german: return "Unbekanntes Gerät (Getrennt)"
-        case .vietnamese: return "Thiết bị lạ (Đã ngắt kết nối)"
+        case .vietnamese: return "Thiết bị không xác định (Đã ngắt kết nối)"
         case .italian: return "Dispositivo Sconosciuto (Disconnesso)"
         }
     }
