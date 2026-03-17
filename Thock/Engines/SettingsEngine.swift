@@ -43,6 +43,25 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    // MARK: - Cleaning Mode
+    
+    func isCleaningModeEnabled() -> Bool {
+        return SettingsManager.shared.isCleaningMode
+    }
+    
+    @discardableResult
+    func toggleCleaningMode() -> Bool {
+        let newState = !SettingsManager.shared.isCleaningMode
+        SettingsManager.shared.isCleaningMode = newState
+        NotificationCenter.default.post(name: .cleaningModeDidChange, object: nil)
+        return newState
+    }
+    
+    func setCleaningMode(_ enabled: Bool) {
+        SettingsManager.shared.isCleaningMode = enabled
+        NotificationCenter.default.post(name: .cleaningModeDidChange, object: nil)
+    }
+    
     // MARK: - Mode Selection
     
     func selectMode(mode: Mode) {
@@ -195,4 +214,5 @@ extension Notification.Name {
     static let volumeDidChange = Notification.Name("volumeDidChange")
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
     static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
+    static let cleaningModeDidChange = Notification.Name("cleaningModeDidChange")
 }

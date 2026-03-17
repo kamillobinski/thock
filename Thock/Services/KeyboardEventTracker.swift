@@ -1,4 +1,5 @@
 import Cocoa
+import KeyboardShortcuts
 
 class KeyboardEventTracker {
     private var pressedKeys: Set<Int64> = []
@@ -17,7 +18,8 @@ class KeyboardEventTracker {
         let eventMask: CGEventMask =
         (1 << CGEventType.keyDown.rawValue) |
         (1 << CGEventType.keyUp.rawValue) |
-        (1 << CGEventType.flagsChanged.rawValue)
+        (1 << CGEventType.flagsChanged.rawValue) |
+        CGEventMask(1 << 14) // NSSystemDefined
         
         let observer = Unmanaged.passRetained(self).toOpaque()
         lastEventTime = currentTime()
@@ -30,6 +32,20 @@ class KeyboardEventTracker {
             callback: { _, type, event, userInfo in
                 let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+                
+                if SettingsEngine.shared.isCleaningModeEnabled() {
+                    if type == .keyDown,
+                       let shortcut = KeyboardShortcuts.getShortcut(for: .toggleCleaningMode),
+                       let shortcutKey = shortcut.key {
+                        let relevantFlags: CGEventFlags = [.maskShift, .maskControl, .maskAlternate, .maskCommand]
+                        let eventModifiers = event.flags.intersection(relevantFlags)
+                        let shortcutModifiers = CGEventFlags(rawValue: UInt64(shortcut.modifiers.rawValue)).intersection(relevantFlags)
+                        if keyCode == Int64(shortcutKey.rawValue), eventModifiers == shortcutModifiers {
+                            DispatchQueue.main.async { SettingsEngine.shared.toggleCleaningMode() }
+                        }
+                    }
+                    return nil
+                }
                 
                 // Start latency measurement
                 let latencyId = startLatencyMeasurement()

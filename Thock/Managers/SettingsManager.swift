@@ -86,6 +86,12 @@ final class SettingsManager {
         get { UserDefaults.autoEnableOnHeadphone }
         set { UserDefaults.autoEnableOnHeadphone = newValue }
     }
+    
+    /// Whether keyboard cleaning mode is active. NOT PERSISTED
+    var isCleaningMode: Bool {
+        get { UtilityManager.shared.isCleaningMode }
+        set { UtilityManager.shared.isCleaningMode = newValue }
+    }
 }
 
 private extension UserDefaults {
