@@ -1018,6 +1018,86 @@ struct L10n {
         }
     }
     
+    // MARK: - Utilities
+    
+    static var utilities: String {
+        switch lang {
+        case .english: return "Utilities"
+        case .spanish: return "Utilidades"
+        case .french: return "Utilitaires"
+        case .chinese: return "实用工具"
+        case .japanese: return "ユーティリティ"
+        case .german: return "Dienstprogramme"
+        case .vietnamese: return "Tiện ích"
+        case .italian: return "Utilità"
+        }
+    }
+    
+    static var keyboardCleaning: String {
+        switch lang {
+        case .english: return "Keyboard Cleaning"
+        case .spanish: return "Limpieza de teclado"
+        case .french: return "Nettoyage du clavier"
+        case .chinese: return "键盘清洁"
+        case .japanese: return "キーボードクリーニング"
+        case .german: return "Tastatur reinigen"
+        case .vietnamese: return "Vệ sinh bàn phím"
+        case .italian: return "Pulizia tastiera"
+        }
+    }
+    
+    static var blockKeyboardInput: String {
+        switch lang {
+        case .english: return "Block keyboard input"
+        case .spanish: return "Bloquear entrada del teclado"
+        case .french: return "Bloquer les saisies clavier"
+        case .chinese: return "屏蔽键盘输入"
+        case .japanese: return "キーボード入力をブロック"
+        case .german: return "Tastatureingaben blockieren"
+        case .vietnamese: return "Chặn đầu vào bàn phím"
+        case .italian: return "Blocca input da tastiera"
+        }
+    }
+    
+    static var keyboardCleaningSubtitle: String {
+        switch lang {
+        case .english: return "Blocks all keyboard input so you can clean your keys without triggering any actions"
+        case .spanish: return "Bloquea toda la entrada del teclado para que puedas limpiar las teclas sin activar acciones"
+        case .french: return "Bloque toutes les saisies clavier pour nettoyer vos touches sans déclencher d'actions"
+        case .chinese: return "屏蔽所有键盘输入，让您清洁按键时不会触发任何操作"
+        case .japanese: return "キーボード入力をすべてブロックし、キーを掃除してもアクションが実行されません"
+        case .german: return "Blockiert alle Tastatureingaben, damit du die Tasten reinigen kannst, ohne Aktionen auszulösen"
+        case .vietnamese: return "Chặn toàn bộ đầu vào bàn phím để bạn có thể vệ sinh phím mà không kích hoạt thao tác nào"
+        case .italian: return "Blocca tutti gli input della tastiera per pulire i tasti senza attivare azioni"
+        }
+    }
+    
+    static var toggleCleaningMode: String {
+        switch lang {
+        case .english: return "Toggle Cleaning Mode"
+        case .spanish: return "Activar modo limpieza"
+        case .french: return "Activer le mode nettoyage"
+        case .chinese: return "切换清洁模式"
+        case .japanese: return "クリーニングモードの切替"
+        case .german: return "Reinigungsmodus umschalten"
+        case .vietnamese: return "Bật/tắt chế độ vệ sinh"
+        case .italian: return "Attiva modalità pulizia"
+        }
+    }
+    
+    static var toggleCleaningModeSubtitle: String {
+        switch lang {
+        case .english: return "Keyboard shortcut to enable or disable keyboard cleaning mode"
+        case .spanish: return "Atajo de teclado para activar o desactivar el modo de limpieza"
+        case .french: return "Raccourci clavier pour activer ou désactiver le mode nettoyage"
+        case .chinese: return "用于启用或禁用键盘清洁模式的快捷键"
+        case .japanese: return "キーボードクリーニングモードの有効・無効を切り替えるショートカット"
+        case .german: return "Tastenkombination zum Aktivieren oder Deaktivieren des Reinigungsmodus"
+        case .vietnamese: return "Phím tắt để bật hoặc tắt chế độ vệ sinh bàn phím"
+        case .italian: return "Scorciatoia da tastiera per attivare o disattivare la modalità pulizia"
+        }
+    }
+    
     static var waitingForPermissions: String {
         switch lang {
         case .english: return "Waiting for permissions..."

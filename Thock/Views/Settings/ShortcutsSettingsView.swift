@@ -13,6 +13,14 @@ struct ShortcutsSettingsView: View {
                         subtitle: L10n.toggleThockSubtitle,
                         control: AnyView(
                             KeyboardShortcuts.Recorder("", name: .toggleThock)
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.toggleCleaningMode,
+                        subtitle: L10n.toggleCleaningModeSubtitle,
+                        control: AnyView(
+                            KeyboardShortcuts.Recorder("", name: .toggleCleaningMode)
                         ),
                         isLast: true
                     )

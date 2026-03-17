@@ -5,12 +5,14 @@ enum SettingsTab: String, CaseIterable {
     case general
     case sound
     case shortcuts
+    case utilities
     
     var localizedName: String {
         switch self {
         case .general: return L10n.general
         case .sound: return L10n.sound
         case .shortcuts: return L10n.shortcuts
+        case .utilities: return L10n.utilities
         }
     }
     
@@ -19,6 +21,7 @@ enum SettingsTab: String, CaseIterable {
         case .general: return "gearshape.fill"
         case .sound: return "speaker.wave.2.fill"
         case .shortcuts: return "command"
+        case .utilities: return "wrench.and.screwdriver.fill"
         }
     }
 }
@@ -56,6 +59,8 @@ struct SettingsView: View {
                 SoundSettingsView()
             case .shortcuts:
                 ShortcutsSettingsView()
+            case .utilities:
+                UtilitiesSettingsView()
             }
         }
         .id(refreshID)
