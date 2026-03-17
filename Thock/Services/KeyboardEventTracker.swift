@@ -41,7 +41,7 @@ class KeyboardEventTracker {
                         let eventModifiers = event.flags.intersection(relevantFlags)
                         let shortcutModifiers = CGEventFlags(rawValue: UInt64(shortcut.modifiers.rawValue)).intersection(relevantFlags)
                         if keyCode == Int64(shortcutKey.rawValue), eventModifiers == shortcutModifiers {
-                            DispatchQueue.main.async { SettingsEngine.shared.toggleCleaningMode() }
+                            SettingsEngine.shared.toggleCleaningMode()
                         }
                     }
                     return nil

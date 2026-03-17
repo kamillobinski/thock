@@ -14,9 +14,7 @@ class GlobalShortcutManager {
         }
         
         KeyboardShortcuts.onKeyDown(for: .toggleCleaningMode) {
-            DispatchQueue.main.async {
-                SettingsEngine.shared.toggleCleaningMode()
-            }
+            SettingsEngine.shared.toggleCleaningMode()
         }
     }
     
