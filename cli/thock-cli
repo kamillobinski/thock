@@ -3,7 +3,7 @@
 # thock-cli
 # A simple shell wrapper to send commands to the Thock macOS app via named pipe.
 # Usage:
-#   thock-cli set-mode "oreo" --brand "everglide" --author "mechvibes"
+#   thock-cli set-soundpack "9313abf0-0f55-4f01-b587-03f8d481b57f"
 
 # Define the path to the Thock named pipe
 PIPE="$HOME/Library/Application Support/thock/thock.pipe"

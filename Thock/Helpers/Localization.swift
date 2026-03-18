@@ -391,16 +391,42 @@ struct L10n {
         }
     }
     
-    static var customSoundpackDir: String {
+    static var explore: String {
         switch lang {
-        case .english: return "Custom soundpack directory"
-        case .spanish: return "Directorio personalizado de soundpack"
-        case .french: return "Répertoire de packs de sons personnalisés"
-        case .chinese: return "自定义音效包目录"
-        case .japanese: return "カスタムサウンドパックディレクトリ"
-        case .german: return "Pfad für benutzerdefinierte Soundeffektpakete"
-        case .vietnamese: return "Thư mục gói âm thanh tùy chỉnh"
-        case .italian: return "Cartella pacchetti audio personalizzati"
+        case .english: return "Explore"
+        case .spanish: return "Explorar"
+        case .french: return "Explorer"
+        case .chinese: return "探索"
+        case .japanese: return "探索"
+        case .german: return "Erkunden"
+        case .vietnamese: return "Khám phá"
+        case .italian: return "Esplora"
+        }
+    }
+    
+    static var soundpackDirectory: String {
+        switch lang {
+        case .english: return "Soundpack directory"
+        case .spanish: return "Directorio de soundpack"
+        case .french: return "Répertoire de packs de sons"
+        case .chinese: return "音效包目录"
+        case .japanese: return "サウンドパックディレクトリ"
+        case .german: return "Soundpaket-Verzeichnis"
+        case .vietnamese: return "Thư mục gói âm thanh"
+        case .italian: return "Cartella pacchetti audio"
+        }
+    }
+    
+    static var soundpackCreationGuide: String {
+        switch lang {
+        case .english: return "Soundpack creation guide"
+        case .spanish: return "Guía para crear un paquete de sonido"
+        case .french: return "Guide de création de pack de sons"
+        case .chinese: return "音效包创建指南"
+        case .japanese: return "サウンドパック作成ガイド"
+        case .german: return "Anleitung zur Soundpaket-Erstellung"
+        case .vietnamese: return "Hướng dẫn tạo gói âm thanh"
+        case .italian: return "Guida alla creazione di pacchetti audio"
         }
     }
     
@@ -635,6 +661,32 @@ struct L10n {
         case .german: return "Unbekanntes Gerät (Getrennt)"
         case .vietnamese: return "Thiết bị không xác định (Đã ngắt kết nối)"
         case .italian: return "Dispositivo Sconosciuto (Disconnesso)"
+        }
+    }
+    
+    static var keyboard: String {
+        switch lang {
+        case .english: return "Keyboard"
+        case .spanish: return "Teclado"
+        case .french: return "Clavier"
+        case .chinese: return "键盘"
+        case .japanese: return "キーボード"
+        case .german: return "Tastatur"
+        case .vietnamese: return "Bàn phím"
+        case .italian: return "Tastiera"
+        }
+    }
+    
+    static var mouse: String {
+        switch lang {
+        case .english: return "Mouse"
+        case .spanish: return "Ratón"
+        case .french: return "Souris"
+        case .chinese: return "鼠标"
+        case .japanese: return "マウス"
+        case .german: return "Maus"
+        case .vietnamese: return "Chuột"
+        case .italian: return "Mouse"
         }
     }
     

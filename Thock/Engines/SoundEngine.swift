@@ -13,9 +13,12 @@ final class SoundEngine {
     
     // MARK: - Sound Loading
     
-    /// Preloads all sounds for a given mode into memory
-    func preloadSounds(for mode: Mode) {
-        SoundManager.shared.preloadSounds(for: mode)
+    func preloadSounds(for soundpack: Soundpack) {
+        SoundManager.shared.preloadSounds(for: soundpack)
+    }
+    
+    func preloadMouseSounds(for soundpack: Soundpack, config: SoundpackConfig) {
+        SoundManager.shared.preloadMouseSoundsFromPack(for: soundpack, config: config)
     }
     
     // MARK: - Playback
@@ -34,8 +37,8 @@ final class SoundEngine {
         // Map key code to key type and get appropriate sounds
         let keyType = KeyMapper.fromKeyCode(keyCode)
         let keySoundList = isKeyDown
-        ? ModeEngine.shared.getKeyDownSounds(for: keyType)
-        : ModeEngine.shared.getKeyUpSounds(for: keyType)
+        ? SoundpackEngine.shared.getKeyDownSounds(for: keyType)
+        : SoundpackEngine.shared.getKeyUpSounds(for: keyType)
         
         // Play random sound from the list
         if let soundFileName = keySoundList.randomElement() {

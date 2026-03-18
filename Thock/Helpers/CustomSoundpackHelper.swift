@@ -23,6 +23,6 @@ enum CustomSoundpackHelper {
     static func getCustomSoundpackDirectory() -> URL {
         return FileManager.default
             .homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/Thock/CustomSounds", isDirectory: true)
+            .appendingPathComponent("Library/Application Support/Thock/Soundpacks", isDirectory: true)
     }
 }

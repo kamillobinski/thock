@@ -182,6 +182,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         }
     }
     
+    /// Migrates the legacy CustomSounds directory to Soundpacks on first run after rename.
+    private func migrateCustomSoundsDirectoryIfNeeded() {
+        let support = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Thock")
+        let old = support.appendingPathComponent("CustomSounds")
+        let new = support.appendingPathComponent("Soundpacks")
+        
+        guard FileManager.default.fileExists(atPath: old.path),
+              !FileManager.default.fileExists(atPath: new.path) else { return }
+        
+        try? FileManager.default.moveItem(at: old, to: new)
+    }
+    
     /// Sets up monitoring for system sleep/wake events.
     private func setupSleepWakeMonitoring() {
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -228,7 +241,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         initializeMouseEventTracker()
         initializeAudioMonitor()
         
-        ModeEngine.shared.loadInitialMode()
+        migrateCustomSoundsDirectoryIfNeeded()
+        SoundpackEngine.shared.loadInitialSoundpacks()
         
         // Start audio device monitoring for headphone detection
         AudioDeviceManager.shared.startMonitoring()

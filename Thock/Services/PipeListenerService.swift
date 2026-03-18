@@ -1,17 +1,3 @@
-//
-//  PipeListenerService.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 28/03/2025.
-//
-
-//
-//  PipeListenerService.swift
-//  Thock
-//
-//  Created by Kamil Łobiński on 28/03/2025.
-//
-
 import Foundation
 
 final class PipeListenerService {
@@ -108,8 +94,8 @@ final class PipeListenerService {
         }
         
         switch commandName {
-        case "set-mode":
-            handleSetModeCommand(components: components)
+        case "set-soundpack":
+            handleSetSoundpackCommand(components: components)
         case "set-enabled":
             handleSetEnabledCommand(components: components)
         default:
@@ -117,49 +103,31 @@ final class PipeListenerService {
         }
     }
     
-    private func handleSetModeCommand(components: [String]) {
+    private func handleSetSoundpackCommand(components: [String]) {
         guard components.count >= 2 else {
-            print("[COMMAND] Invalid set-mode format")
+            print("[COMMAND] Invalid set-soundpack format. Usage: set-soundpack <id>")
             return
         }
         
-        let modeName = components[1]
-        var brand: String?
-        var author: String?
-        
-        var index = 2
-        while index < components.count {
-            let key = components[index]
-            let value = index + 1 < components.count ? components[index + 1] : nil
-            
-            switch key {
-            case "--brand":
-                brand = value
-                index += 2
-            case "--author":
-                author = value
-                index += 2
-            default:
-                print("[COMMAND] Unknown flag \(key)")
-                index += 1
-            }
-        }
+        let idString = components[1]
         
         DispatchQueue.main.async {
-            guard let brand = brand, let author = author else {
-                print("[COMMAND] Missing brand or author")
+            guard let uuid = UUID(uuidString: idString) else {
+                print("[COMMAND] Invalid UUID '\(idString)'")
                 return
             }
             
-            let mode = ModeDatabase().getMode(byName: modeName, authorName: author, brandName: brand)
-            
-            guard let mode = mode else {
-                print("[COMMAND] Mode '\(modeName)' not found for author '\(author)' and brand '\(brand)'")
+            guard let soundpack = SoundpackDatabase().getSoundpack(by: uuid) else {
+                print("[COMMAND] Soundpack '\(idString)' not found")
                 return
             }
             
-            ModeEngine.shared.apply(mode: mode)
-            print("[COMMAND] Mode '\(modeName)' applied successfully")
+            if soundpack.category == "mouse" {
+                SoundpackEngine.shared.applyMouse(soundpack: soundpack)
+            } else {
+                SoundpackEngine.shared.applyKeyboard(soundpack: soundpack)
+            }
+            print("[COMMAND] Soundpack '\(soundpack.name)' applied successfully")
         }
     }
     
