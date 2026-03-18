@@ -71,11 +71,14 @@ def convert_to_thock(mechvibes_data: dict) -> dict:
 
     return {
         "id": str(uuid.uuid4()),
-        "name": mechvibes_data.get("name", "converted_sound_pack"),
-        "isNew": True,
-        "source": "converted from MechVibes",
+        "metadata": {
+            "name": mechvibes_data.get("name", "converted_sound_pack"),
+            "brand": "Unknown",
+            "author": "Unknown",
+            "category": "keyboard",
+            "supportsKeyUp": False,
+        },
         "license": {"type": "unknown", "url": ""},
-        "supportsKeyUp": False,
         "sounds": sounds,
     }
 
@@ -121,7 +124,7 @@ def create_thock_pack(mechvibes_path: str):
     mechvibes_data = load_mechvibes_config(mechvibes_path)
     thock_data = convert_to_thock(mechvibes_data)
 
-    pack_name_safe = sanitize_name(thock_data["name"])
+    pack_name_safe = sanitize_name(thock_data["metadata"]["name"])
     script_dir = os.path.dirname(os.path.abspath(__file__))
     sound_src_dir = get_sound_source_dir(script_dir, pack_name_safe)
 
