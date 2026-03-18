@@ -5,7 +5,7 @@
 
 `thock-cli` is a simple command-line interface for controlling Thock from your terminal, scripts or automation tools like Raycast.
 
-It sends commands to Thock via a macOS named pipe. This allows you to toggle modes, set parameters or trigger app behavior without interacting with the GUI.
+Most commands communicate with Thock via a macOS named pipe.
 
 
 
@@ -31,7 +31,7 @@ It sends commands to Thock via a macOS named pipe. This allows you to toggle mod
 `thock-cli` is bundled automatically when you install Thock via Homebrew:
 
 ```sh
-brew install thock
+brew install --cask kamillobinski/thock/thock
 ```
 
 The CLI will be available globally via:
@@ -48,14 +48,12 @@ If installed manually, make sure `thock-cli` is executable and somewhere in your
 
 ## Usage
 
-> [!IMPORTANT]  
-> Requires Thock to be running in the background.
-
 ```sh
 thock-cli <command> [arguments]
 ```
 
-All arguments are automatically wrapped in quotes before being passed into Thock.
+> [!IMPORTANT]
+> Commands that control the app (`set-enabled`, `set-soundpack`) require Thock to be running. Commands that read local data (`ls`) work without the app.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -63,46 +61,98 @@ All arguments are automatically wrapped in quotes before being passed into Thock
 
 ## Available Commands
 
-Below is a list of supported commands you can use with `thock-cli`:
+### `ls`
 
-### `set-mode`
-Sets the active sound mode.
+Lists all installed soundpacks. Does not require Thock to be running.
 
 **Arguments:**
-- `modeName` - the name of the mode (required)
-- `--brand <brand>` - Brand name of the sound mode (required)
-- `--author <author>` - author name of the sound mode (required)
+- `--json` — output as JSON instead of plain text (optional)
 
 **Example:**
 ```sh
-thock-cli set-mode "oreo" --brand "everglide" --author "mechvibes"
+thock-cli ls
+thock-cli ls --json
 ```
 
-*(More commands may be added in future releases.)*
+**Plain output:**
+```
+Keyboard
+  Alps SKCM Blue  by tplai    52722920-07ec-45b4-91cc-6f29cad794d2
+Mouse
+  Pixabay-01      by pixabay  fd09c274-76e2-493a-b3d7-1dbc4add746f
+```
+
+**JSON output:**
+```json
+[
+  {
+    "id": "52722920-07ec-45b4-91cc-6f29cad794d2",
+    "name": "Alps SKCM Blue",
+    "brand": "Alps",
+    "author": "tplai",
+    "category": "keyboard"
+  },
+  {
+    "id": "fd09c274-76e2-493a-b3d7-1dbc4add746f",
+    "name": "Pixabay-01",
+    "brand": "Unknown",
+    "author": "pixabay",
+    "category": "mouse"
+  }
+]
+```
+
+---
+
+### `set-soundpack`
+
+Sets the active soundpack by its ID. Requires Thock to be running.
+
+**Arguments:**
+- `id` — UUID of the soundpack (required)
+
+**Example:**
+```sh
+thock-cli set-soundpack "52722920-07ec-45b4-91cc-6f29cad794d2"
+```
+
+> [!TIP]
+> Use `thock-cli ls` to find the ID of an installed soundpack.
+
+---
+
+### `set-enabled`
+
+Enables or disables Thock. Requires Thock to be running.
+
+**Arguments:**
+- `true` / `false` — also accepts `1/0`, `yes/no`, `on/off`
+
+**Example:**
+```sh
+thock-cli set-enabled true
+thock-cli set-enabled false
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-### Examples
+## Examples
 
-Set enabled/disabled state
-
-```sh
-thock-cli set-enabled "true"
-```
-
-Set a mode with metadata:
+List installed soundpacks and switch to one:
 
 ```sh
-thock-cli set-mode "oreo" --brand "everglide" --author "mechvibes"
+thock-cli ls
+thock-cli set-soundpack "52722920-07ec-45b4-91cc-6f29cad794d2"
 ```
 
-You can also script this:
+Use JSON output in a script:
 
 ```sh
 #!/bin/bash
-thock-cli set-mode "oreo" --brand "everglide" --author "mechvibes"
+soundpacks=$(thock-cli ls --json)
+echo "$soundpacks" | python3 -c "import json,sys; [print(s['name']) for s in json.load(sys.stdin)]"
 ```
 
 Or use it inside an automation (e.g. Raycast, launchd, etc.)
@@ -113,7 +163,7 @@ Or use it inside an automation (e.g. Raycast, launchd, etc.)
 
 ## How It Works
 
-`thock-cli` communicates with the Thock app by writing to a named pipe:
+Commands that control the app write to a named pipe:
 
 ```sh
 ~/Library/Application Support/thock/thock.pipe
@@ -121,10 +171,10 @@ Or use it inside an automation (e.g. Raycast, launchd, etc.)
 
 This pipe is created when Thock launches. If it doesn't exist, the CLI will exit with an error.
 
-You can see the raw command being sent by printing the output before piping:
+The `ls` command bypasses the pipe entirely and reads directly from the soundpacks directory:
 
 ```sh
-echo 'set-mode "Muted" --brand "Cherry MX"' > ~/Library/Application\ Support/thock/thock.pipe
+~/Library/Application Support/Thock/Soundpacks/
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -133,9 +183,10 @@ echo 'set-mode "Muted" --brand "Cherry MX"' > ~/Library/Application\ Support/tho
 
 ## Troubleshooting
 
-- Make sure Thock is running before using `thock-cli`
+- Make sure Thock is running before using commands that require the pipe
 - If you see: `Error: Thock pipe not found`, that means the named pipe hasn't been created yet
 - You may need to open the app manually after install, then try again
+- `ls` works without the app running (if it returns nothing, no soundpacks are installed yet)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -144,8 +195,9 @@ echo 'set-mode "Muted" --brand "Cherry MX"' > ~/Library/Application\ Support/tho
 ## Tips
 
 - Pair with tools like Raycast, Alfred or Automator for quick-access macros
-- Combine with Apple Shortcuts to bind mode switching to key combos
-- Use in scripts to auto-switch modes based on time of day or app context
+- Combine with Apple Shortcuts to bind soundpack switching to key combos
+- Use `ls --json` when building integrations (the structured output is easier to parse)
+- Use in scripts to auto-switch soundpacks based on time of day or app context
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -153,11 +205,10 @@ echo 'set-mode "Muted" --brand "Cherry MX"' > ~/Library/Application\ Support/tho
 
 ## Contribute
 
-Got an idea for more CLI features or arguments?  
-Feel free to open a [feature request](https://github.com/kamillobinski/thock/issues) or contribute directly.  
+Got an idea for more CLI features or arguments?
+Feel free to open a [feature request](https://github.com/kamillobinski/thock/issues) or contribute directly.
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
