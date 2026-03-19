@@ -34,6 +34,16 @@ final class SoundpackEngine {
         SettingsEngine.shared.refreshMenu()
     }
     
+    // MARK: - Post-Removal
+    
+    func reloadAfterRemoval(for category: String) {
+        if category == "mouse" {
+            handleMissingMouseSoundpack()
+        } else {
+            handleMissingKeyboardSoundpack()
+        }
+    }
+    
     // MARK: - Initial Load
     
     func loadInitialSoundpacks() {

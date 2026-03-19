@@ -10,6 +10,8 @@ final class SoundpackRegistryService: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var downloadingIds: Set<UUID> = []
     @Published var installedIds: Set<UUID> = []
+    @Published var customKeyboardSoundpacks: [Soundpack] = []
+    @Published var customMouseSoundpacks: [Soundpack] = []
     
     init() {
         refreshInstalledIds()
@@ -30,7 +32,9 @@ final class SoundpackRegistryService: ObservableObject {
             errorMessage = error.localizedDescription
         }
         
+        refreshCustomSoundpacks()
         isLoading = false
+        NotificationCenter.default.post(name: .soundpackLibraryDidChange, object: nil)
     }
     
     func install(_ entry: SoundpackRegistryEntry) async {
@@ -80,20 +84,7 @@ final class SoundpackRegistryService: ObservableObject {
     func uninstall(_ entry: SoundpackRegistryEntry) {
         let folder = customSoundsDirectory().appendingPathComponent(entry.id.uuidString)
         try? FileManager.default.removeItem(at: folder)
-        
-        SoundpackManager.shared.reloadCurrentSoundpacks()
-        
-        let category = entry.category
-        if category == "mouse" {
-            if let fallback = SoundpackManager.shared.getCurrentMouseSoundpack() {
-                SoundpackEngine.shared.applyMouse(soundpack: fallback)
-            }
-        } else {
-            if let fallback = SoundpackManager.shared.getCurrentKeyboardSoundpack() {
-                SoundpackEngine.shared.applyKeyboard(soundpack: fallback)
-            }
-        }
-        
+        SoundpackEngine.shared.reloadAfterRemoval(for: entry.category)
         refreshInstalledIds()
         NotificationCenter.default.post(name: .soundpackLibraryDidChange, object: nil)
     }
@@ -107,6 +98,25 @@ final class SoundpackRegistryService: ObservableObject {
             return
         }
         installedIds = Set(subdirs.compactMap { UUID(uuidString: $0.lastPathComponent) })
+    }
+    
+    func refreshCustomSoundpacks() {
+        let registryIds = Set(keyboardEntries.map(\.id) + mouseEntries.map(\.id))
+        let allInstalled = SoundpackDatabase.loadInstalled()
+        let custom = allInstalled.filter { !registryIds.contains($0.id) }
+        customKeyboardSoundpacks = custom.filter { $0.category == "keyboard" }
+        customMouseSoundpacks = custom.filter { $0.category == "mouse" }
+    }
+    
+    func uninstallCustom(_ soundpack: Soundpack) {
+        let base = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Thock")
+        let folder = base.appendingPathComponent(soundpack.path)
+        try? FileManager.default.removeItem(at: folder)
+        SoundpackEngine.shared.reloadAfterRemoval(for: soundpack.category)
+        refreshInstalledIds()
+        refreshCustomSoundpacks()
+        NotificationCenter.default.post(name: .soundpackLibraryDidChange, object: nil)
     }
     
     private func customSoundsDirectory() -> URL {

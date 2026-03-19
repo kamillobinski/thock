@@ -52,6 +52,13 @@ class MenuBarController {
         
         NotificationCenter.default.addObserver(
             self,
+            selector: #selector(handleSettingsUpdate),
+            name: .soundpackLibraryDidChange,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
             selector: #selector(handleAppStateUpdate),
             name: .appStateDidChange,
             object: nil

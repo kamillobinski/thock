@@ -4,67 +4,24 @@ struct SoundpacksSettingsView: View {
     @StateObject private var service = SoundpackRegistryService()
     
     var body: some View {
-        Group {
-            if service.isLoading {
-                loadingView
-            } else if let error = service.errorMessage {
-                errorView(error)
-            } else if service.keyboardEntries.isEmpty && service.mouseEntries.isEmpty {
-                emptyView
-            } else {
-                listView
+        listView
+            .task {
+                await service.fetchManifest()
             }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .offset(y: -20)
-        .task {
-            await service.fetchManifest()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .soundpackLibraryDidChange)) { _ in
-            service.refreshInstalledIds()
-        }
+            .onReceive(NotificationCenter.default.publisher(for: .soundpackLibraryDidChange)) { _ in
+                service.refreshInstalledIds()
+                service.refreshCustomSoundpacks()
+            }
     }
     
     // MARK: - Subviews
     
-    private var loadingView: some View {
-        VStack(spacing: 8) {
-            ProgressView()
-                .scaleEffect(0.8)
-            Text("Loading soundpacks...")
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-        }
+    private var sortedKeyboardEntries: [SoundpackRegistryEntry] {
+        service.keyboardEntries.sorted { service.installedIds.contains($0.id) && !service.installedIds.contains($1.id) }
     }
     
-    private func errorView(_ message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28))
-                .foregroundColor(.secondary)
-            Text("Failed to load soundpacks")
-                .font(.system(size: 13, weight: .medium))
-            Text(message)
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 300)
-            Button("Retry") {
-                Task { await service.fetchManifest() }
-            }
-            .controlSize(.small)
-        }
-    }
-    
-    private var emptyView: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "square.stack.3d.up.slash")
-                .font(.system(size: 28))
-                .foregroundColor(.secondary)
-            Text("No soundpacks available")
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-        }
+    private var sortedMouseEntries: [SoundpackRegistryEntry] {
+        service.mouseEntries.sorted { service.installedIds.contains($0.id) && !service.installedIds.contains($1.id) }
     }
     
     private var listView: some View {
@@ -99,58 +56,148 @@ struct SoundpacksSettingsView: View {
                     )
                 }
                 
-                if !service.keyboardEntries.isEmpty {
-                    SettingsSectionView(title: L10n.keyboard) {
-                        ForEach(Array(service.keyboardEntries.enumerated()), id: \.element.id) { index, entry in
-                            SoundpackRegistryRowView(
-                                entry: entry,
-                                isInstalled: service.installedIds.contains(entry.id),
-                                isDownloading: service.downloadingIds.contains(entry.id),
-                                isLast: index == service.keyboardEntries.count - 1,
-                                onInstall: {
-                                    Task { await service.install(entry) }
-                                },
-                                onUninstall: {
-                                    service.uninstall(entry)
-                                }
-                            )
-                        }
-                    }
-                }
+                let installedKeyboard = sortedKeyboardEntries.filter { service.installedIds.contains($0.id) }
+                let uninstalledKeyboard = sortedKeyboardEntries.filter { !service.installedIds.contains($0.id) }
+                let customKeyboard = service.customKeyboardSoundpacks
+                let keyboardRegistryEmpty = service.keyboardEntries.isEmpty
+                let keyboardHasInlineState = keyboardRegistryEmpty && customKeyboard.isEmpty && (service.isLoading || service.errorMessage != nil)
                 
-                if !service.mouseEntries.isEmpty {
-                    SettingsSectionView(title: L10n.mouse) {
-                        ForEach(Array(service.mouseEntries.enumerated()), id: \.element.id) { index, entry in
-                            SoundpackRegistryRowView(
-                                entry: entry,
-                                isInstalled: service.installedIds.contains(entry.id),
-                                isDownloading: service.downloadingIds.contains(entry.id),
-                                isLast: index == service.mouseEntries.count - 1,
-                                onInstall: {
-                                    Task { await service.install(entry) }
-                                },
-                                onUninstall: {
-                                    service.uninstall(entry)
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                HStack {
-                    Spacer()
-                    Button {
-                        Task { await service.fetchManifest() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                            .font(.system(size: 12))
+                SettingsSectionView(title: L10n.keyboard, trailing: {
+                    Button { Task { await service.fetchManifest() } } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
                     .disabled(service.isLoading)
+                }) {
+                    ForEach(Array(installedKeyboard.enumerated()), id: \.element.id) { index, entry in
+                        SoundpackRegistryRowView(
+                            entry: entry,
+                            isInstalled: true,
+                            isDownloading: service.downloadingIds.contains(entry.id),
+                            isLast: false,
+                            onInstall: { Task { await service.install(entry) } },
+                            onUninstall: { service.uninstall(entry) }
+                        )
+                    }
+                    ForEach(Array(customKeyboard.enumerated()), id: \.element.id) { index, soundpack in
+                        SoundpackCustomRowView(
+                            soundpack: soundpack,
+                            isLast: index == customKeyboard.count - 1 && uninstalledKeyboard.isEmpty && !keyboardHasInlineState,
+                            onUninstall: { service.uninstallCustom(soundpack) }
+                        )
+                    }
+                    ForEach(Array(uninstalledKeyboard.enumerated()), id: \.element.id) { index, entry in
+                        SoundpackRegistryRowView(
+                            entry: entry,
+                            isInstalled: false,
+                            isDownloading: service.downloadingIds.contains(entry.id),
+                            isLast: index == uninstalledKeyboard.count - 1,
+                            onInstall: { Task { await service.install(entry) } },
+                            onUninstall: { service.uninstall(entry) }
+                        )
+                    }
+                    if keyboardRegistryEmpty && customKeyboard.isEmpty {
+                        if service.isLoading {
+                            SettingsRowView(
+                                title: "Fetching soundpacks...",
+                                subtitle: nil,
+                                control: AnyView(ProgressView().controlSize(.small).scaleEffect(0.8)),
+                                isLast: true
+                            )
+                        } else if service.errorMessage != nil {
+                            SettingsRowView(
+                                title: "Failed to load soundpacks",
+                                subtitle: nil,
+                                control: AnyView(
+                                    Button("Retry") { Task { await service.fetchManifest() } }
+                                        .controlSize(.small)
+                                ),
+                                isLast: true
+                            )
+                        } else {
+                            SettingsRowView(
+                                title: "No soundpacks available",
+                                subtitle: nil,
+                                control: AnyView(EmptyView()),
+                                isLast: true
+                            )
+                        }
+                    }
                 }
-                .padding(.top, 8)
-                .padding(.horizontal, 10)
+                
+                let installedMouse = sortedMouseEntries.filter { service.installedIds.contains($0.id) }
+                let uninstalledMouse = sortedMouseEntries.filter { !service.installedIds.contains($0.id) }
+                let customMouse = service.customMouseSoundpacks
+                let mouseRegistryEmpty = service.mouseEntries.isEmpty
+                let mouseHasInlineState = mouseRegistryEmpty && customMouse.isEmpty && (service.isLoading || service.errorMessage != nil)
+                
+                SettingsSectionView(title: L10n.mouse, trailing: {
+                    Button { Task { await service.fetchManifest() } } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(service.isLoading)
+                }) {
+                    ForEach(Array(installedMouse.enumerated()), id: \.element.id) { index, entry in
+                        SoundpackRegistryRowView(
+                            entry: entry,
+                            isInstalled: true,
+                            isDownloading: service.downloadingIds.contains(entry.id),
+                            isLast: false,
+                            onInstall: { Task { await service.install(entry) } },
+                            onUninstall: { service.uninstall(entry) }
+                        )
+                    }
+                    ForEach(Array(customMouse.enumerated()), id: \.element.id) { index, soundpack in
+                        SoundpackCustomRowView(
+                            soundpack: soundpack,
+                            isLast: index == customMouse.count - 1 && uninstalledMouse.isEmpty && !mouseHasInlineState,
+                            onUninstall: { service.uninstallCustom(soundpack) }
+                        )
+                    }
+                    ForEach(Array(uninstalledMouse.enumerated()), id: \.element.id) { index, entry in
+                        SoundpackRegistryRowView(
+                            entry: entry,
+                            isInstalled: false,
+                            isDownloading: service.downloadingIds.contains(entry.id),
+                            isLast: index == uninstalledMouse.count - 1,
+                            onInstall: { Task { await service.install(entry) } },
+                            onUninstall: { service.uninstall(entry) }
+                        )
+                    }
+                    if mouseRegistryEmpty && customMouse.isEmpty {
+                        if service.isLoading {
+                            SettingsRowView(
+                                title: "Fetching soundpacks...",
+                                subtitle: nil,
+                                control: AnyView(ProgressView().controlSize(.small).scaleEffect(0.8)),
+                                isLast: true
+                            )
+                        } else if service.errorMessage != nil {
+                            SettingsRowView(
+                                title: "Failed to load soundpacks",
+                                subtitle: nil,
+                                control: AnyView(
+                                    Button("Retry") { Task { await service.fetchManifest() } }
+                                        .controlSize(.small)
+                                ),
+                                isLast: true
+                            )
+                        } else {
+                            SettingsRowView(
+                                title: "No soundpacks available",
+                                subtitle: nil,
+                                control: AnyView(EmptyView()),
+                                isLast: true
+                            )
+                        }
+                    }
+                }
+                
             }
             .padding([.leading, .trailing, .bottom], 20)
         }
@@ -209,6 +256,38 @@ private struct SoundpackRegistryRowView: View {
             .buttonStyle(.plain)
             .help("Install soundpack")
         }
+    }
+}
+
+// MARK: - Custom Row View
+
+private struct SoundpackCustomRowView: View {
+    let soundpack: Soundpack
+    let isLast: Bool
+    let onUninstall: () -> Void
+    
+    private var subtitle: String {
+        var parts = ["Custom"]
+        if !soundpack.brand.isEmpty { parts.append(soundpack.brand) }
+        if !soundpack.author.isEmpty { parts.append("by \(soundpack.author)") }
+        return parts.joined(separator: " · ")
+    }
+    
+    var body: some View {
+        SettingsRowView(
+            title: soundpack.name,
+            subtitle: subtitle,
+            control: AnyView(
+                Button(action: onUninstall) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.secondary.opacity(0.6))
+                }
+                    .buttonStyle(.plain)
+                    .help("Remove soundpack")
+            ),
+            isLast: isLast
+        )
     }
 }
 
