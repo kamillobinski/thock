@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # thock-cli (Control Thock from the terminal, scripts, or tools like Raycast)
-# Docs: https://github.com/kamillobinski/thock/blob/main/docs/THOCK-CLI.md
+# Docs: https://thockapp.com/docs/<VERSION>/cli/introduction
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 

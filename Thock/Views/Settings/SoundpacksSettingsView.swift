@@ -94,7 +94,7 @@ struct SoundpacksSettingsView: View {
                     )
                     SettingsLinkRowView(
                         title: L10n.soundpackCreationGuide,
-                        url: "https://github.com/kamillobinski/thock/blob/main/docs/CUSTOM-SOUNDPACK.md",
+                        url: "https://thockapp.com/docs/\(AppInfoHelper.appVersion)/features/custom-soundpacks",
                         showDivider: false
                     )
                 }
