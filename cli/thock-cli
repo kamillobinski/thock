@@ -69,6 +69,84 @@ EOF
   exit 0
 fi
 
+# ─── set-soundpack (name or UUID) ─────────────────────────────────────────────
+
+if [[ "$1" == "set-soundpack" ]]; then
+  if [[ -z "$2" ]]; then
+    echo "Usage: thock-cli set-soundpack <name|uuid> [--brand <brand>] [--author <author>]"
+    exit 1
+  fi
+
+  INPUT="$2"
+  FILTER_BRAND=""
+  FILTER_AUTHOR=""
+
+  shift 2
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --brand)  FILTER_BRAND="$2";  shift 2 ;;
+      --author) FILTER_AUTHOR="$2"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+
+  UUID_REGEX='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+  if [[ "$INPUT" =~ $UUID_REGEX ]]; then
+    RESOLVED_UUID="$INPUT"
+  else
+    RESOLVED_UUID=$(python3 - "$SOUNDPACKS_DIR" "$INPUT" "$FILTER_BRAND" "$FILTER_AUTHOR" <<'EOF'
+import json, os, re, sys
+
+directory, query, brand, author = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+matches = []
+
+for name in os.listdir(directory):
+    config_path = os.path.join(directory, name, "config.json")
+    if not os.path.isfile(config_path):
+        continue
+    with open(config_path) as f:
+        raw = re.sub(r",\s*([}\]])", r"\1", f.read())
+    try:
+        c = json.loads(raw)
+        m = c["metadata"]
+    except (json.JSONDecodeError, KeyError):
+        continue
+    if m["name"].lower() != query.lower():
+        continue
+    if brand and m.get("brand", "").lower() != brand.lower():
+        continue
+    if author and m.get("author", "").lower() != author.lower():
+        continue
+    matches.append(c["id"])
+
+if len(matches) == 1:
+    print(matches[0])
+elif len(matches) > 1:
+    print("ERROR:ambiguous")
+else:
+    print("ERROR:notfound")
+EOF
+    )
+
+    if [[ "$RESOLVED_UUID" == "ERROR:ambiguous" ]]; then
+      echo "Error: multiple soundpacks match '$INPUT'. Use --brand or --author to narrow it down."
+      exit 1
+    elif [[ "$RESOLVED_UUID" == "ERROR:notfound" ]]; then
+      echo "Error: no soundpack found matching '$INPUT'."
+      exit 1
+    fi
+  fi
+
+  if [[ ! -p "$PIPE" ]]; then
+    echo "Error: Thock pipe not found at: $PIPE"
+    echo "Make sure Thock is running and has created the named pipe."
+    exit 1
+  fi
+
+  echo "\"set-soundpack\" \"$RESOLVED_UUID\"" > "$PIPE"
+  exit 0
+fi
+
 # ─── Pipe commands ────────────────────────────────────────────────────────────
 
 if [[ ! -p "$PIPE" ]]; then
