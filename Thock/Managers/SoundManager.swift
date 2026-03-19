@@ -36,7 +36,7 @@ final class SoundManager {
     
     // MARK: - Sound Storage
     private var soundLibrary: [String: PCMSound] = [:]
-    private var mouseSoundLibrary: [MouseButtonEvent: PCMSound] = [:]
+    private var mouseSoundLibrary: [MouseButtonEvent: [PCMSound]] = [:]
     private var activeSounds: [ActiveSound] = []
     private let activeSoundsLock = NSLock()
     
@@ -791,11 +791,11 @@ final class SoundManager {
         activeSoundsLock.unlock()
     }
     
-    func preloadSounds(for mode: Mode) {
+    func preloadSounds(for soundpack: Soundpack) {
         soundLibrary.removeAll()
         
-        guard let soundDirectory = resolveSoundDirectory(for: mode) else {
-            Logger.audio.error("Sound directory not found for mode: '\(mode.name)'")
+        guard let soundDirectory = resolveSoundDirectory(for: soundpack) else {
+            Logger.audio.error("Sound directory not found for soundpack: '\(soundpack.name)'")
             return
         }
         
@@ -810,52 +810,44 @@ final class SoundManager {
                 }
             }
             
-            Logger.audio.info("Preloaded \(self.soundLibrary.count) sounds for mode: '\(mode.name)'")
+            Logger.audio.info("Preloaded \(self.soundLibrary.count) sounds for soundpack: '\(soundpack.name)'")
         } catch {
             Logger.audio.error("Failed to load sound files: \(error.localizedDescription)")
         }
-        
-        // Also preload mouse sounds
-        preloadMouseSounds()
     }
     
-    /// Preloads mouse button sounds from the bundle.
-    /// Call this during app initialization for low-latency playback.
-    func preloadMouseSounds() {
-        guard mouseSoundLibrary.isEmpty else { return }
+    /// Preloads mouse sounds from a downloaded soundpack.
+    /// Config sounds keys: "left" (down/up arrays) and "right" (down/up arrays).
+    func preloadMouseSoundsFromPack(for soundpack: Soundpack, config: SoundpackConfig) {
+        mouseSoundLibrary.removeAll()
         
-        // Map event types to sound file names
-        // Expected directory: Resources/Sounds/Mouse/
-        // Expected files: left_down.wav, left_up.wav, right_down.wav, right_up.wav
-        let soundFiles: [(MouseButtonEvent, String)] = [
-            (.leftDown, "left_down"),
-            (.leftUp, "left_up"),
-            (.rightDown, "right_down"),
-            (.rightUp, "right_up")
+        guard let dir = resolveSoundDirectory(for: soundpack) else {
+            Logger.audio.error("Mouse sound directory not found for soundpack: '\(soundpack.name)'")
+            return
+        }
+        
+        let mapping: [(MouseButtonEvent, String, Bool)] = [
+            (.leftDown,  "left",  false),
+            (.leftUp,    "left",  true),
+            (.rightDown, "right", false),
+            (.rightUp,   "right", true)
         ]
         
-        for (event, fileName) in soundFiles {
-            if let soundURL = Bundle.main.url(forResource: fileName, withExtension: "wav", subdirectory: "Resources/Sounds/Mouse") {
-                if let pcmSound = loadPCMSound(from: soundURL) {
-                    mouseSoundLibrary[event] = pcmSound
-                    Logger.audio.info("Loaded mouse sound: \(fileName).wav")
-                }
-            } else {
-                Logger.audio.warning("Mouse sound not found: \(fileName).wav")
+        for (event, key, isUp) in mapping {
+            guard let keySound = config.sounds[key] else { continue }
+            let fileNames = isUp ? keySound.up : keySound.down
+            let sounds = fileNames.compactMap { loadPCMSound(from: dir.appendingPathComponent($0)) }
+            if !sounds.isEmpty {
+                mouseSoundLibrary[event] = sounds
             }
         }
         
-        Logger.audio.info("Preloaded \(self.mouseSoundLibrary.count)/4 mouse sounds")
+        Logger.audio.info("Preloaded mouse sounds: \(self.mouseSoundLibrary.count) events for '\(soundpack.name)'")
     }
     
     /// Plays a sound for the specified mouse button event.
     func playMouseSound(for event: MouseButtonEvent) {
-        // If mouse sounds not loaded yet, try loading now
-        if mouseSoundLibrary.isEmpty {
-            preloadMouseSounds()
-        }
-        
-        guard let sound = mouseSoundLibrary[event] else {
+        guard let sounds = mouseSoundLibrary[event], let sound = sounds.randomElement() else {
             Logger.audio.warning("Mouse sound not found for event: \(event)")
             return
         }
@@ -1131,9 +1123,9 @@ final class SoundManager {
     
     // MARK: - Helpers
     
-    private func resolveSoundDirectory(for mode: Mode) -> URL? {
-        let isCustom = mode.path.hasPrefix("CustomSounds/")
-        let trimmedPath = mode.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    private func resolveSoundDirectory(for soundpack: Soundpack) -> URL? {
+        let isCustom = soundpack.path.hasPrefix("Soundpacks/")
+        let trimmedPath = soundpack.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         
         if isCustom {
             return FileManager.default.homeDirectoryForCurrentUser

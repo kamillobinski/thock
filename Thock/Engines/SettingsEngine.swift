@@ -62,10 +62,14 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .cleaningModeDidChange, object: nil)
     }
     
-    // MARK: - Mode Selection
+    // MARK: - Soundpack Selection
     
-    func selectMode(mode: Mode) {
-        ModeEngine.shared.apply(mode: mode)
+    func selectKeyboardSoundpack(_ soundpack: Soundpack) {
+        SoundpackEngine.shared.applyKeyboard(soundpack: soundpack)
+    }
+    
+    func selectMouseSoundpack(_ soundpack: Soundpack) {
+        SoundpackEngine.shared.applyMouse(soundpack: soundpack)
     }
     
     func refreshMenu() {

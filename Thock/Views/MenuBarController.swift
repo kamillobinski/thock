@@ -52,6 +52,13 @@ class MenuBarController {
         
         NotificationCenter.default.addObserver(
             self,
+            selector: #selector(handleSettingsUpdate),
+            name: .soundpackLibraryDidChange,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
             selector: #selector(handleAppStateUpdate),
             name: .appStateDidChange,
             object: nil
@@ -61,6 +68,13 @@ class MenuBarController {
             self,
             selector: #selector(handleLanguageChange),
             name: .languageDidChange,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleLibraryChange),
+            name: .soundpackLibraryDidChange,
             object: nil
         )
     }
@@ -99,7 +113,7 @@ class MenuBarController {
         addToggleMenuItem()
         addVolumeSliderItem()
         addPitchButtonRowItem()
-        addSoundModesMenu()
+        addSoundpacksMenu()
         addQuickSettingsMenu()
         addSettingsMenuItem()
         if hasUpdate {
@@ -239,20 +253,71 @@ class MenuBarController {
         menu.addItem(quitItem)
     }
     
-    /// Adds a submenu for selecting sound modes.
-    private func addSoundModesMenu() {
-        let modeDatabase = ModeDatabase()
-        let currentMode = ModeEngine.shared.getModeCurrentMode()
+    /// Adds submenus for selecting keyboard and mouse soundpacks, each grouped by brand.
+    private func addSoundpacksMenu() {
+        let db = SoundpackDatabase()
+        let currentKeyboard = SoundpackEngine.shared.getCurrentKeyboardSoundpack()
+        let currentMouse = SoundpackEngine.shared.getCurrentMouseSoundpack()
         
-        for brand in modeDatabase.getAllBrands() {
-            let brandSubMenu = createBrandSubMenu(for: brand, currentMode: currentMode, modeDatabase: modeDatabase)
-            let brandMenuItem = createBrandMenuItem(brand: brand, isActive: brandSubMenu.items.contains { $0.state == .on })
-            
-            menu.addItem(brandMenuItem)
-            menu.setSubmenu(brandSubMenu, for: brandMenuItem)
-        }
+        addSoundpackSection(
+            label: L10n.keyboard,
+            soundpacks: db.getSoundpacks(for: "keyboard"),
+            current: currentKeyboard,
+            brands: db.getBrands(for: "keyboard")
+        )
+        
+        addSoundpackSection(
+            label: L10n.mouse,
+            soundpacks: db.getSoundpacks(for: "mouse"),
+            current: currentMouse,
+            brands: db.getBrands(for: "mouse")
+        )
         
         menu.addItem(NSMenuItem.separator())
+    }
+    
+    private func addSoundpackSection(label: String, soundpacks: [Soundpack], current: Soundpack?, brands: [String]) {
+        guard !soundpacks.isEmpty else { return }
+        
+        menu.addItem(createMenuLabel(label))
+        
+        for brand in brands {
+            let brandPacks = soundpacks.filter { $0.brand == brand }
+            guard !brandPacks.isEmpty else { continue }
+            
+            let subMenu = NSMenu()
+            var hasActive = false
+            
+            let authors = Array(Set(brandPacks.map { $0.author })).sorted()
+            for author in authors {
+                let authorPacks = brandPacks.filter { $0.author == author }.sorted { $0.name < $1.name }
+                
+                if !author.isEmpty {
+                    subMenu.addItem(createMenuLabel("by \(author)"))
+                }
+                
+                for soundpack in authorPacks {
+                    let item = NSMenuItem(title: soundpack.name, action: #selector(changeSoundpack(_:)), keyEquivalent: "")
+                    item.state = (soundpack == current) ? .on : .off
+                    item.representedObject = soundpack
+                    item.target = self
+                    if item.state == .on { hasActive = true }
+                    subMenu.addItem(item)
+                }
+                
+                subMenu.addItem(NSMenuItem.separator())
+            }
+            
+            let brandItem = NSMenuItem(title: brand, action: nil, keyEquivalent: "")
+            if hasActive {
+                brandItem.attributedTitle = NSAttributedString(
+                    string: brand,
+                    attributes: [.font: NSFont.systemFont(ofSize: 13, weight: .bold)]
+                )
+            }
+            menu.addItem(brandItem)
+            menu.setSubmenu(subMenu, for: brandItem)
+        }
     }
     
     // MARK: - Menu Creation Helpers
@@ -319,47 +384,6 @@ class MenuBarController {
         return item
     }
     
-    /// Creates a submenu for a given brand, including its authors and modes.
-    private func createBrandSubMenu(for brand: Brand, currentMode: Mode, modeDatabase: ModeDatabase) -> NSMenu {
-        let brandSubMenu = NSMenu()
-        
-        for author in modeDatabase.getAuthors(for: brand) {
-            guard let modes = modeDatabase.getModes(for: brand, author: author), !modes.isEmpty else { continue }
-            
-            if author.rawValue != Author.custom.rawValue {
-                brandSubMenu.addItem(createMenuLabel("by \(author.rawValue)"))
-            }
-            
-            for mode in modes {
-                let modeItem = NSMenuItem(title: mode.name, action: #selector(changeMode(_:)), keyEquivalent: "")
-                modeItem.state = (mode == currentMode) ? .on : .off
-                modeItem.representedObject = mode
-                modeItem.target = self
-                if #available(macOS 14, *), mode.isNew {
-                    modeItem.badge = NSMenuItemBadge(string: "NEW")
-                }
-                brandSubMenu.addItem(modeItem)
-            }
-            
-            brandSubMenu.addItem(NSMenuItem.separator())
-        }
-        
-        return brandSubMenu
-    }
-    
-    /// Creates a brand menu item with optional styling if it's active.
-    private func createBrandMenuItem(brand: Brand, isActive: Bool) -> NSMenuItem {
-        let brandMenuItem = NSMenuItem(title: brand.rawValue, action: nil, keyEquivalent: "")
-        
-        if isActive {
-            brandMenuItem.attributedTitle = NSAttributedString(
-                string: brand.rawValue,
-                attributes: [.font: NSFont.systemFont(ofSize: 13, weight: .bold)]
-            )
-        }
-        
-        return brandMenuItem
-    }
     
     private func createQuickSettingsSubmenu() -> NSMenu {
         let subMenu = NSMenu()
@@ -485,7 +509,13 @@ class MenuBarController {
     
     @objc private func handleLanguageChange() {
         DispatchQueue.main.async {
-            self.setupMenu()  // Rebuild menu with new language
+            self.setupMenu()
+        }
+    }
+    
+    @objc private func handleLibraryChange() {
+        DispatchQueue.main.async {
+            self.setupMenu()
         }
     }
     
@@ -511,9 +541,12 @@ class MenuBarController {
         }
     }
     
-    @objc private func changeMode(_ sender: NSMenuItem) {
-        if let mode = sender.representedObject as? Mode {
-            SettingsEngine.shared.selectMode(mode: mode)
+    @objc private func changeSoundpack(_ sender: NSMenuItem) {
+        guard let soundpack = sender.representedObject as? Soundpack else { return }
+        if soundpack.category == "mouse" {
+            SettingsEngine.shared.selectMouseSoundpack(soundpack)
+        } else {
+            SettingsEngine.shared.selectKeyboardSoundpack(soundpack)
         }
     }
     
