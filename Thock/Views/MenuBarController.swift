@@ -281,13 +281,24 @@ class MenuBarController {
             let subMenu = NSMenu()
             var hasActive = false
             
-            for soundpack in brandPacks {
-                let item = NSMenuItem(title: soundpack.name, action: #selector(changeSoundpack(_:)), keyEquivalent: "")
-                item.state = (soundpack == current) ? .on : .off
-                item.representedObject = soundpack
-                item.target = self
-                if item.state == .on { hasActive = true }
-                subMenu.addItem(item)
+            let authors = Array(Set(brandPacks.map { $0.author })).sorted()
+            for author in authors {
+                let authorPacks = brandPacks.filter { $0.author == author }.sorted { $0.name < $1.name }
+                
+                if !author.isEmpty {
+                    subMenu.addItem(createMenuLabel("by \(author)"))
+                }
+                
+                for soundpack in authorPacks {
+                    let item = NSMenuItem(title: soundpack.name, action: #selector(changeSoundpack(_:)), keyEquivalent: "")
+                    item.state = (soundpack == current) ? .on : .off
+                    item.representedObject = soundpack
+                    item.target = self
+                    if item.state == .on { hasActive = true }
+                    subMenu.addItem(item)
+                }
+                
+                subMenu.addItem(NSMenuItem.separator())
             }
             
             let brandItem = NSMenuItem(title: brand, action: nil, keyEquivalent: "")
