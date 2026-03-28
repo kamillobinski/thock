@@ -130,9 +130,13 @@ class MenuBarController {
     }
     
     private func addAuthorizeMenuItem() {
-        let item = NSMenuItem(title: "⚠️ \(L10n.grantAccess)", action: #selector(openAccessibilitySettings), keyEquivalent: "")
+        menu.addItem(createMenuLabel(L10n.missingPermissions))
+        let item = NSMenuItem(title: L10n.grantAccess, action: #selector(openAccessibilitySettings), keyEquivalent: "")
         item.target = self
         menu.addItem(item)
+        let docsItem = NSMenuItem(title: L10n.openDocs, action: #selector(openPermissionsDocs), keyEquivalent: "")
+        docsItem.target = self
+        menu.addItem(docsItem)
         menu.addItem(NSMenuItem.separator())
     }
     
@@ -551,6 +555,12 @@ class MenuBarController {
     
     @objc private func openAccessibilitySettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility")!)
+    }
+    
+    @objc private func openPermissionsDocs() {
+        if let url = URL(string: "https://thockapp.com/docs/\(AppInfoHelper.appVersion)/getting-started/permissions") {
+            NSWorkspace.shared.open(url)
+        }
     }
     
     @objc private func openChangelog() {

@@ -1070,4 +1070,30 @@ struct L10n {
         case .italian: return "Concedi accesso"
         }
     }
+    
+    static var missingPermissions: String {
+        switch lang {
+        case .english: return "⚠️ Missing Permissions"
+        case .spanish: return "⚠️ Sin permisos"
+        case .french: return "⚠️ Permissions manquantes"
+        case .chinese: return "⚠️ 缺少权限"
+        case .japanese: return "⚠️ 権限不足"
+        case .german: return "⚠️ Keine Berechtigungen"
+        case .vietnamese: return "⚠️ Thiếu quyền truy cập"
+        case .italian: return "⚠️ Permessi mancanti"
+        }
+    }
+    
+    static var openDocs: String {
+        switch lang {
+        case .english: return "Open docs"
+        case .spanish: return "Abrir docs"
+        case .french: return "Ouvrir les docs"
+        case .chinese: return "打开文档"
+        case .japanese: return "Docsを開く"
+        case .german: return "Docs öffnen"
+        case .vietnamese: return "Mở tài liệu"
+        case .italian: return "Apri docs"
+        }
+    }
 }
