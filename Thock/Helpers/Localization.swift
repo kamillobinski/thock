@@ -978,98 +978,6 @@ struct L10n {
         }
     }
     
-    // MARK: - Permissions
-    static var permissionRequired: String {
-        switch lang {
-        case .english: return "Accessibility Permissions Required"
-        case .spanish: return "Se requieren permisos de accesibilidad"
-        case .french: return "Autorisations d'accessibilité requises"
-        case .chinese: return "需要辅助功能权限"
-        case .japanese: return "アクセシビリティ権限が必要です"
-        case .german: return "Berechtigungen für Bedienungshilfen erforderlich"
-        case .vietnamese: return "Ứng dụng cần quyền truy cập trợ năng (Accessibility)"
-        case .italian: return "Permessi di Accessibilità Richiesti"
-        }
-    }
-    
-    static var permissionMessage: String {
-        switch lang {
-        case .english: return "Thock needs accessibility permissions to detect keyboard input and play sounds.\n\nClick 'Open System Settings' below, then enable Thock in the Accessibility list."
-        case .spanish: return "Thock necesita permisos de accesibilidad para detectar la entrada del teclado y reproducir sonidos.\n\nHaz clic en 'Abrir Configuración del sistema' más abajo y luego activa Thock en la lista de Accesibilidad."
-        case .french: return "Thock a besoin des autorisations d'accessibilité pour détecter les entrées du clavier et jouer des sons.\n\nCliquez sur 'Ouvrir les paramètres système' ci-dessous, puis activez Thock dans la liste d'accessibilité."
-        case .chinese: return "Thock 需要辅助功能权限来检测键盘输入并播放声音。\n\n请点击下方的「打开系统设置」，然后在辅助功能列表中启用 Thock。"
-        case .japanese: return "Thockはキーボード入力を検出してサウンドを再生するためにアクセシビリティ権限が必要です。\n\n下の「システム設定を開く」をクリックし、アクセシビリティリストでThockを有効にしてください。"
-        case .german: return "Thock benötigt Berechtigungen für Bedienungshilfen um Tastatureingaben zu erkennen und Töne abzuspielen.\n\nKlicke unten auf 'Systemeinstellungen öffnen' und aktiviere Thock in der Bedienungshilfenliste."
-        case .vietnamese: return "Thock cần quyền truy cập trợ năng (Accessibility) để phát hiện đầu vào bàn phím và phát âm thanh.\n\nNhấn 'Mở Cài đặt hệ thống' dưới đây, sau đó bật Thock trong danh sách Trợ năng."
-        case .italian: return "Thock ha bisogno dei permessi di accessibilità per rilevare l'input della tastiera e riprodurre i suoni.\n\nFai clic su 'Apri Impostazioni di Sistema' qui sotto, poi abilita Thock nella lista Accessibilità."
-        }
-    }
-    
-    static var openSystemSettings: String {
-        switch lang {
-        case .english: return "Open System Settings"
-        case .spanish: return "Abrir Ajustes"
-        case .french: return "Ouvrir les paramètres système"
-        case .chinese: return "打开系统设置"
-        case .japanese: return "システム設定を開く"
-        case .german: return "Systemeinstellungen öffnen"
-        case .vietnamese: return "Mở Cài đặt hệ thống"
-        case .italian: return "Apri Impostazioni di Sistema"
-        }
-    }
-    
-    static var permissionRefresh: String {
-        switch lang {
-        case .english: return "Accessibility Permission Refresh"
-        case .spanish: return "Actualizar permisos"
-        case .french: return "Actualiser les autorisations d'accessibilité"
-        case .chinese: return "辅助功能权限刷新"
-        case .japanese: return "アクセシビリティ権限の更新"
-        case .german: return "Bedienungshilfen Berechtigungen überprüfen"
-        case .vietnamese: return "Cập nhật lại quyền trợ năng"
-        case .italian: return "Aggiorna Permessi Accessibilità"
-        }
-    }
-    
-    static var permissionRefreshMessage: String {
-        switch lang {
-        case .english: return "Annoying update step ahead!\nWe'd automate this if we could, but it requires the $100 Apple Developer Program.\n\n1. Remove the old Thock entry from Accessibility and quit the app.\n2. Reopen Thock and enable the new entry that appears."
-        case .spanish: return "¡Molesto paso de actualización!\nRequiere el Apple Developer Program de $100.\n\n1. Quita Thock de Accesibilidad y cierra la app.\n2. Reabre Thock y activa la nueva entrada."
-        case .french: return "Étape de mise à jour ennuyeuse droit devant !\nNous l'automatiserions si nous le pouvions, mais cela nécessite le programme Apple Developer à 100 $.\n\n1. Supprimez l'ancienne entrée Thock dans Accessibilité et quittez l'application.\n2. Rouvrez Thock et activez la nouvelle entrée qui apparaît."
-        case .chinese: return "恼人的更新步骤！\n如果可以的话我们会自动完成这一步，但这需要 $100 的 Apple 开发者计划。\n\n1. 从辅助功能中移除旧的 Thock 条目并退出应用。\n2. 重新打开 Thock 并启用出现的新条目。"
-        case .japanese: return "面倒なアップデート手順です！\n自動化したいのですが、$100のApple Developer Programが必要です。\n\n1. アクセシビリティから古いThockエントリを削除してアプリを終了します。\n2. Thockを再度開き、表示される新しいエントリを有効にします。"
-        case .german: return "Lästiger Aktualisierungsschritt voraus!\nWenn wir könnten, würden es automatisieren, aber dafür ist das 100$ Apple Developer Programm erforderlich.\n\n1. Entfernen Sie den alten Thock-Eintrag aus den Bedienungshilfen und beenden Sie die Thock. \n2. Öffnen Sie erneut Thock und aktivieren Sie den neuen Eintrag, der erscheint."
-        case .vietnamese: return "Cập nhật hơi phiền phức một chút!\nChúng tôi rất muốn tự động hoá bước này, nhưng việc đó yêu cầu phải đóng phí duy trì 100$ cho Apple Developer Program.\n\n1. Xóa mục Thock cũ trong phần trợ năng và thoát ứng dụng.\n2. Mở lại Thock và bật mục mới vừa xuất hiện."
-        case .italian: return "In arrivo una noiosa procedura di aggiornamento!\nLo automatizzeremmo se potessimo, ma richiede l'iscrizione da 100$ all'Apple Developer Program.\n\n1. Rimuovi la vecchia voce di Thock da Accessibilità ed esci dall'app.\n2. Riapri Thock e abilita la nuova voce che appare."
-        }
-    }
-    
-    static var done: String {
-        switch lang {
-        case .english: return "Done"
-        case .spanish: return "Listo"
-        case .french: return "Terminé"
-        case .chinese: return "完成"
-        case .japanese: return "完了"
-        case .german: return "Fertig"
-        case .vietnamese: return "Hoàn thành"
-        case .italian: return "Fatto"
-        }
-    }
-    
-    static var quitThock: String {
-        switch lang {
-        case .english: return "Quit Thock"
-        case .spanish: return "Salir de Thock"
-        case .french: return "Quitter Thock"
-        case .chinese: return "退出 Thock"
-        case .japanese: return "Thockを終了"
-        case .german: return "Thock beenden"
-        case .vietnamese: return "Thoát khỏi Thock"
-        case .italian: return "Esci da Thock"
-        }
-    }
-    
     // MARK: - Utilities
     
     static var utilities: String {
@@ -1150,16 +1058,16 @@ struct L10n {
         }
     }
     
-    static var waitingForPermissions: String {
+    static var grantAccess: String {
         switch lang {
-        case .english: return "Waiting for permissions..."
-        case .spanish: return "Esperando permisos..."
-        case .french: return "En attente des autorisations..."
-        case .chinese: return "等待权限授予..."
-        case .japanese: return "権限を待っています..."
-        case .german: return "Auf Erlaubnis warten..."
-        case .vietnamese: return "Đang đợi cấp quyền truy cập..."
-        case .italian: return "In attesa dei permessi..."
+        case .english: return "Grant Access"
+        case .spanish: return "Conceder acceso"
+        case .french: return "Accorder l'accès"
+        case .chinese: return "授予访问权限"
+        case .japanese: return "アクセスを許可"
+        case .german: return "Zugriff gewähren"
+        case .vietnamese: return "Cấp quyền truy cập"
+        case .italian: return "Concedi accesso"
         }
     }
 }

@@ -31,6 +31,12 @@ class KeyboardEventTracker {
             eventsOfInterest: eventMask,
             callback: { _, type, event, userInfo in
                 let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo!).takeUnretainedValue()
+                
+                if type.rawValue == 0xFFFFFFFE || type.rawValue == 0xFFFFFFFF {
+                    DispatchQueue.main.async { tracker.stopTracking() }
+                    return nil
+                }
+                
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                 
                 if SettingsEngine.shared.isCleaningModeEnabled() {
@@ -64,30 +70,39 @@ class KeyboardEventTracker {
                     return Unmanaged.passUnretained(event)
                 }
                 
-                defer {
-                    switch type {
-                    case .keyDown where !tracker.pressedKeys.contains(keyCode):
-                        tracker.pressedKeys.insert(keyCode)
-                        SoundEngine.shared.play(for: keyCode, isKeyDown: true, latencyId: latencyId)
-                        
-                    case .keyUp:
-                        tracker.pressedKeys.remove(keyCode)
-                        SoundEngine.shared.play(for: keyCode, isKeyDown: false, latencyId: latencyId)
-                        
-                    case .flagsChanged:
-                        // Respect the user setting to ignore modifier key sounds
-                        if !SettingsEngine.shared.isModifierKeySoundDisabled() {
-                            if tracker.pressedKeys.remove(keyCode) == nil {
-                                tracker.pressedKeys.insert(keyCode)
-                                SoundEngine.shared.play(for: keyCode, isKeyDown: true, latencyId: latencyId)
-                            } else {
-                                SoundEngine.shared.play(for: keyCode, isKeyDown: false, latencyId: latencyId)
-                            }
+                let soundAction: (keyCode: Int64, isKeyDown: Bool)?
+                switch type {
+                case .keyDown where !tracker.pressedKeys.contains(keyCode):
+                    tracker.pressedKeys.insert(keyCode)
+                    soundAction = (keyCode, true)
+                    
+                case .keyUp:
+                    tracker.pressedKeys.remove(keyCode)
+                    soundAction = (keyCode, false)
+                    
+                case .flagsChanged:
+                    // Respect the user setting to ignore modifier key sounds
+                    if !SettingsEngine.shared.isModifierKeySoundDisabled() {
+                        if tracker.pressedKeys.remove(keyCode) == nil {
+                            tracker.pressedKeys.insert(keyCode)
+                            soundAction = (keyCode, true)
+                        } else {
+                            soundAction = (keyCode, false)
                         }
-                    default:
-                        break
+                    } else {
+                        soundAction = nil
+                    }
+                    
+                default:
+                    soundAction = nil
+                }
+                
+                if let action = soundAction {
+                    DispatchQueue.global(qos: .userInteractive).async {
+                        SoundEngine.shared.play(for: action.keyCode, isKeyDown: action.isKeyDown, latencyId: latencyId)
                     }
                 }
+                
                 return Unmanaged.passUnretained(event)
             },
             userInfo: observer

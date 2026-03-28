@@ -6,6 +6,7 @@ class MenuBarController {
     private var statusBarItem: NSStatusItem
     private weak var delegate: MenuBarControllerDelegate?
     private var hasUpdate: Bool = false
+    private var needsAuthorization: Bool = false
     
     private enum MenuItemTitle {
         static var app: String { AppInfoHelper.appName }
@@ -85,6 +86,11 @@ class MenuBarController {
         return menu
     }
     
+    public func setNeedsAuthorization(_ needs: Bool) {
+        needsAuthorization = needs
+        DispatchQueue.main.async { self.setupMenu() }
+    }
+    
     public func setUpdateAvailable(_ isAvailable: Bool) {
         self.hasUpdate = isAvailable
         DispatchQueue.main.async {
@@ -111,6 +117,7 @@ class MenuBarController {
         updateMenuBarIcon(for: AppEngine.shared.isEnabled())
         
         addToggleMenuItem()
+        if needsAuthorization { addAuthorizeMenuItem() }
         addVolumeSliderItem()
         addPitchButtonRowItem()
         addSoundpacksMenu()
@@ -120,6 +127,13 @@ class MenuBarController {
             addUpdateMenuItem()
         }
         addQuitMenuItem()
+    }
+    
+    private func addAuthorizeMenuItem() {
+        let item = NSMenuItem(title: "⚠️ \(L10n.grantAccess)", action: #selector(openAccessibilitySettings), keyEquivalent: "")
+        item.target = self
+        menu.addItem(item)
+        menu.addItem(NSMenuItem.separator())
     }
     
     private func addPitchButtonRowItem() {
@@ -533,6 +547,10 @@ class MenuBarController {
     
     @objc private func toggleAutoMuteOnMusicPlayback(_ sender: NSMenuItem) {
         sender.state = SettingsEngine.shared.toggleAutoMuteOnMusicPlayback() ? .on : .off
+    }
+    
+    @objc private func openAccessibilitySettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility")!)
     }
     
     @objc private func openChangelog() {

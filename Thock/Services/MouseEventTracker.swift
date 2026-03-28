@@ -71,6 +71,10 @@ class MouseEventTracker {
             options: .listenOnly,
             eventsOfInterest: eventMask,
             callback: { _, type, event, _ in
+                if type.rawValue == 0xFFFFFFFE || type.rawValue == 0xFFFFFFFF {
+                    return nil
+                }
+                
                 // Don't play if app is disabled
                 guard AppEngine.shared.isEnabled() else {
                     return Unmanaged.passUnretained(event)
@@ -97,7 +101,7 @@ class MouseEventTracker {
                 }
                 
                 if let mouseEvent = mouseEvent {
-                    SoundManager.shared.playMouseSound(for: mouseEvent)
+                    DispatchQueue.global(qos: .userInteractive).async { SoundManager.shared.playMouseSound(for: mouseEvent) }
                 }
                 
                 return Unmanaged.passUnretained(event)
