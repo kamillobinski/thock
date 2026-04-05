@@ -10,6 +10,7 @@ final class SoundManager {
     
     // MARK: - Constants
     private static let defaultDeviceUID = "default"
+    private static let bluetoothMinimumBufferSize: UInt32 = 512
     
     // MARK: - State
     private(set) var isReady = false
@@ -24,6 +25,7 @@ final class SoundManager {
     private var idleTimeoutTimer: DispatchSourceTimer?
     private let timerLock = NSLock()
     private let queueStateLock = NSLock() // Protects audioQueue, isQueueRunning, isReady, initRetryCount and audioQueueGeneration
+    private var keepsQueueWarmForCurrentDevice = false
     
     // MARK: - Audio Format
     private var sampleRate: Float64 = 44100.0
@@ -37,11 +39,9 @@ final class SoundManager {
     // MARK: - Sound Storage
     private var soundLibrary: [String: PCMSound] = [:]
     private var mouseSoundLibrary: [MouseButtonEvent: [PCMSound]] = [:]
+    private let soundLibraryLock = NSLock()
     private var activeSounds: [ActiveSound] = []
     private let activeSoundsLock = NSLock()
-    
-    // MARK: - Idle State Tracking
-    private var idleCallbackCount: Int = 0
     
     // MARK: - Volume Control
     private var volume: Float = 0.5
@@ -236,6 +236,7 @@ final class SoundManager {
         audioBuffers = []
         isQueueRunning = false
         isReady = false
+        keepsQueueWarmForCurrentDevice = false
         if !isRetry {
             initRetryCount = 0
         }
@@ -281,6 +282,15 @@ final class SoundManager {
             idleTimeoutTimer = nil
             return
         }
+
+        queueStateLock.lock()
+        let shouldKeepWarm = keepsQueueWarmForCurrentDevice
+        queueStateLock.unlock()
+
+        guard !shouldKeepWarm else {
+            idleTimeoutTimer = nil
+            return
+        }
         
         let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
         timer.schedule(deadline: .now() + timeoutSeconds, repeating: .never)
@@ -322,6 +332,16 @@ final class SoundManager {
             Logger.audio.debug("Queue was reinitialized, aborting stop")
             return
         }
+
+        // A key could have arrived while we were preparing to stop.
+        activeSoundsLock.lock()
+        let stillIdle = activeSounds.isEmpty
+        activeSoundsLock.unlock()
+
+        guard stillIdle else {
+            Logger.audio.debug("Queue stop aborted because playback resumed")
+            return
+        }
         
         let status = AudioQueueStop(queue, true)
         if status == noErr {
@@ -358,7 +378,6 @@ final class SoundManager {
             return
         }
         
-        idleCallbackCount = 0
         // Re-prime all buffers
         Logger.audio.debug("Re-priming \(self.audioBuffers.count) buffers before restart")
         for buffer in audioBuffers {
@@ -442,6 +461,16 @@ final class SoundManager {
             return
         }
         let defaultDeviceID = preferredDeviceID
+
+        let useConservativeMode = configurePlaybackProfile(for: defaultDeviceID)
+        if useConservativeMode {
+            let latencyMs = (Double(framesPerBuffer) / sampleRate) * 1000.0
+            Logger.audio.info(
+                "Bluetooth output detected, using conservative software buffer: \(self.framesPerBuffer) frames (~\(String(format: "%.1f", latencyMs))ms) and keeping queue warm"
+            )
+            measureHardwareLatency(deviceID: defaultDeviceID)
+            return
+        }
         
         var bufferSize: UInt32 = currentBufferSize
         var bufferAddress = AudioObjectPropertyAddress(
@@ -469,7 +498,8 @@ final class SoundManager {
     
     // MARK: - Audio Queue Creation
     
-    /// Creates audio queue, ensuring it's always on the main thread's runloop
+    /// Creates audio queue. We still create it on the main thread for lifecycle consistency,
+    /// but the callback itself runs on AudioQueue's internal thread so UI work cannot starve audio.
     private func createAudioQueue() {
         if !Thread.isMainThread {
             DispatchQueue.main.sync {
@@ -488,8 +518,8 @@ final class SoundManager {
             &audioFormat,
             audioQueueCallback,
             selfPointer,
-            CFRunLoopGetMain(),
-            CFRunLoopMode.commonModes.rawValue,
+            nil,
+            nil,
             0,
             &audioQueue
         )
@@ -602,22 +632,15 @@ final class SoundManager {
         activeSoundsLock.lock()
         
         if activeSounds.isEmpty {
-            // No active sounds, output silence and return early
-            let shouldClear = idleCallbackCount < numberOfBuffers
-            idleCallbackCount += 1
             activeSoundsLock.unlock()
-            
-            if shouldClear {
-                memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
-            }
-            
+
+            // Always clear idle buffers to avoid stale samples leaking into the next cycle.
+            memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
             buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
             AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
             return
         }
-        
-        idleCallbackCount = 0
-        
+
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
@@ -747,22 +770,16 @@ final class SoundManager {
             return
         }
         
-        guard let pcmSound = soundLibrary[name] else {
+        guard let pcmSound = keyboardSound(named: name) else {
             Logger.audio.warning("Sound file not found: '\(name)'")
             return
         }
         
-        // Restart queue if stopped due to idle timeout
         queueStateLock.lock()
-        let isRunning = isQueueRunning
-        let stillReady = isReady // could have changed during device reinit
+        let stillReady = isReady
         queueStateLock.unlock()
         
-        if stillReady && !isRunning {
-            restartQueue()
-        } else if stillReady && isRunning {
-            resetIdleTimer()
-        } else {
+        guard stillReady else {
             Logger.audio.debug("Playback blocked: audio system became not ready during play()")
             return
         }
@@ -789,28 +806,37 @@ final class SoundManager {
         activeSoundsLock.lock()
         activeSounds.append(activeSound)
         activeSoundsLock.unlock()
+
+        resetIdleTimer()
+        restartQueue()
     }
     
     func preloadSounds(for soundpack: Soundpack) {
-        soundLibrary.removeAll()
-        
         guard let soundDirectory = resolveSoundDirectory(for: soundpack) else {
+            soundLibraryLock.lock()
+            soundLibrary = [:]
+            soundLibraryLock.unlock()
             Logger.audio.error("Sound directory not found for soundpack: '\(soundpack.name)'")
             return
         }
         
         do {
+            var loadedSounds: [String: PCMSound] = [:]
             let soundFiles = try FileManager.default.contentsOfDirectory(atPath: soundDirectory.path)
                 .filter { $0.hasSuffix(".mp3") || $0.hasSuffix(".wav") }
             
             for file in soundFiles {
                 let fileURL = soundDirectory.appendingPathComponent(file)
                 if let pcmSound = loadPCMSound(from: fileURL) {
-                    soundLibrary[file] = pcmSound
+                    loadedSounds[file] = pcmSound
                 }
             }
+
+            soundLibraryLock.lock()
+            soundLibrary = loadedSounds
+            soundLibraryLock.unlock()
             
-            Logger.audio.info("Preloaded \(self.soundLibrary.count) sounds for soundpack: '\(soundpack.name)'")
+            Logger.audio.info("Preloaded \(loadedSounds.count) sounds for soundpack: '\(soundpack.name)'")
         } catch {
             Logger.audio.error("Failed to load sound files: \(error.localizedDescription)")
         }
@@ -819,13 +845,15 @@ final class SoundManager {
     /// Preloads mouse sounds from a downloaded soundpack.
     /// Config sounds keys: "left" (down/up arrays) and "right" (down/up arrays).
     func preloadMouseSoundsFromPack(for soundpack: Soundpack, config: SoundpackConfig) {
-        mouseSoundLibrary.removeAll()
-        
         guard let dir = resolveSoundDirectory(for: soundpack) else {
+            soundLibraryLock.lock()
+            mouseSoundLibrary = [:]
+            soundLibraryLock.unlock()
             Logger.audio.error("Mouse sound directory not found for soundpack: '\(soundpack.name)'")
             return
         }
         
+        var loadedMouseSounds: [MouseButtonEvent: [PCMSound]] = [:]
         let mapping: [(MouseButtonEvent, String, Bool)] = [
             (.leftDown,  "left",  false),
             (.leftUp,    "left",  true),
@@ -838,16 +866,20 @@ final class SoundManager {
             let fileNames = isUp ? keySound.up : keySound.down
             let sounds = fileNames.compactMap { loadPCMSound(from: dir.appendingPathComponent($0)) }
             if !sounds.isEmpty {
-                mouseSoundLibrary[event] = sounds
+                loadedMouseSounds[event] = sounds
             }
         }
+
+        soundLibraryLock.lock()
+        mouseSoundLibrary = loadedMouseSounds
+        soundLibraryLock.unlock()
         
-        Logger.audio.info("Preloaded mouse sounds: \(self.mouseSoundLibrary.count) events for '\(soundpack.name)'")
+        Logger.audio.info("Preloaded mouse sounds: \(loadedMouseSounds.count) events for '\(soundpack.name)'")
     }
     
     /// Plays a sound for the specified mouse button event.
     func playMouseSound(for event: MouseButtonEvent) {
-        guard let sounds = mouseSoundLibrary[event], let sound = sounds.randomElement() else {
+        guard let sound = mouseSound(for: event) else {
             Logger.audio.warning("Mouse sound not found for event: \(event)")
             return
         }
@@ -861,17 +893,11 @@ final class SoundManager {
             return
         }
         
-        // Restart queue if stopped due to idle timeout
         queueStateLock.lock()
-        let isRunning = isQueueRunning
         let stillReady = isReady
         queueStateLock.unlock()
         
-        if stillReady && !isRunning {
-            restartQueue()
-        } else if stillReady && isRunning {
-            resetIdleTimer()
-        } else {
+        guard stillReady else {
             Logger.audio.debug("Mouse sound blocked: audio system became not ready")
             return
         }
@@ -896,6 +922,9 @@ final class SoundManager {
         activeSoundsLock.lock()
         activeSounds.append(activeSound)
         activeSoundsLock.unlock()
+
+        resetIdleTimer()
+        restartQueue()
     }
     
     // MARK: - Sound Loading
@@ -1122,6 +1151,63 @@ final class SoundManager {
     }
     
     // MARK: - Helpers
+
+    private func configurePlaybackProfile(for deviceID: AudioDeviceID) -> Bool {
+        let isBluetoothOutput = isBluetoothDevice(deviceID)
+        let effectiveBufferSize = isBluetoothOutput
+            ? max(currentBufferSize, Self.bluetoothMinimumBufferSize)
+            : currentBufferSize
+
+        queueStateLock.lock()
+        framesPerBuffer = effectiveBufferSize
+        keepsQueueWarmForCurrentDevice = isBluetoothOutput
+        queueStateLock.unlock()
+
+        return isBluetoothOutput
+    }
+
+    private func isBluetoothDevice(_ deviceID: AudioDeviceID) -> Bool {
+        guard let transportType = getTransportType(for: deviceID) else {
+            return false
+        }
+
+        return transportType == kAudioDeviceTransportTypeBluetooth ||
+               transportType == kAudioDeviceTransportTypeBluetoothLE
+    }
+
+    private func getTransportType(for deviceID: AudioDeviceID) -> UInt32? {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyTransportType,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        var transportType: UInt32 = 0
+        var dataSize = UInt32(MemoryLayout<UInt32>.size)
+
+        let status = AudioObjectGetPropertyData(
+            deviceID,
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &transportType
+        )
+
+        return status == noErr ? transportType : nil
+    }
+
+    private func keyboardSound(named name: String) -> PCMSound? {
+        soundLibraryLock.lock()
+        defer { soundLibraryLock.unlock() }
+        return soundLibrary[name]
+    }
+
+    private func mouseSound(for event: MouseButtonEvent) -> PCMSound? {
+        soundLibraryLock.lock()
+        defer { soundLibraryLock.unlock() }
+        return mouseSoundLibrary[event]?.randomElement()
+    }
     
     private func resolveSoundDirectory(for soundpack: Soundpack) -> URL? {
         let isCustom = soundpack.path.hasPrefix("Soundpacks/")
