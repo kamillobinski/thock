@@ -12,6 +12,7 @@ final class SettingsManager {
     static let defaultAudioBufferSize: UInt32 = 256
     static let defaultSelectedAudioDeviceUID: String? = nil
     static let defaultPerDeviceVolumes: [String: Float] = [:]
+    static let defaultConstantVolumeEnabled: Bool = false
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
@@ -69,6 +70,12 @@ final class SettingsManager {
         set { UserDefaults.perDeviceVolumes = newValue }
     }
     
+    /// Whether Thock compensates for output device volume changes.
+    var constantVolumeEnabled: Bool {
+        get { UserDefaults.constantVolumeEnabled }
+        set { UserDefaults.constantVolumeEnabled = newValue }
+    }
+
     /// Pitch variation range in semitones for random pitch shifts.
     var pitchVariation: Float {
         get { UserDefaults.pitchVariation }
@@ -104,6 +111,7 @@ private extension UserDefaults {
         static let audioBufferSize = "audioBufferSize"
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let perDeviceVolumes = "perDeviceVolume"
+        static let constantVolumeEnabled = "constantVolumeEnabled"
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
@@ -205,6 +213,18 @@ private extension UserDefaults {
         }
     }
     
+    static var constantVolumeEnabled: Bool {
+        get {
+            if standard.object(forKey: Keys.constantVolumeEnabled) == nil {
+                return SettingsManager.defaultConstantVolumeEnabled
+            }
+            return standard.bool(forKey: Keys.constantVolumeEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.constantVolumeEnabled)
+        }
+    }
+
     static var pitchVariation: Float {
         get {
             if standard.object(forKey: Keys.pitchVariation) == nil {

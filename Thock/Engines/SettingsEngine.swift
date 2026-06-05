@@ -170,6 +170,15 @@ final class SettingsEngine {
         setVolume(volume, for: deviceUID)
     }
     
+    func isConstantVolumeEnabled() -> Bool {
+        return SettingsManager.shared.constantVolumeEnabled
+    }
+
+    func setConstantVolume(_ enabled: Bool) {
+        SettingsManager.shared.constantVolumeEnabled = enabled
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
     // MARK: - Pitch Variation
     
     func getPitchVariation() -> Float {

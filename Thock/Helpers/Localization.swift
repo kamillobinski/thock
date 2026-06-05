@@ -278,6 +278,32 @@ struct L10n {
         }
     }
     
+    static var constantVolume: String {
+        switch lang {
+        case .english: return "Constant volume"
+        case .spanish: return "Volumen constante"
+        case .french: return "Volume constant"
+        case .chinese: return "恒定音量"
+        case .japanese: return "一定音量"
+        case .german: return "Konstante Lautstärke"
+        case .vietnamese: return "Âm lượng không đổi"
+        case .italian: return "Volume costante"
+        }
+    }
+
+    static var constantVolumeSubtitle: String {
+        switch lang {
+        case .english: return "Compensate for system output volume changes while keeping Thock's volume setting"
+        case .spanish: return "Compensa los cambios del volumen del sistema manteniendo el volumen de Thock"
+        case .french: return "Compense les changements de volume du système tout en conservant le volume de Thock"
+        case .chinese: return "在保持 Thock 音量设置的同时补偿系统输出音量变化"
+        case .japanese: return "Thock の音量設定を保ちながらシステム出力音量の変化を補正"
+        case .german: return "Gleicht Änderungen der Systemlautstärke aus und behält Thocks Lautstärke bei"
+        case .vietnamese: return "Bù thay đổi âm lượng hệ thống trong khi giữ cài đặt âm lượng của Thock"
+        case .italian: return "Compensa le modifiche al volume di sistema mantenendo il volume di Thock"
+        }
+    }
+
     static var playThrough: String {
         switch lang {
         case .english: return "Play sound effects through"

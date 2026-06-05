@@ -1,5 +1,6 @@
 import Foundation
 import CoreAudio
+import AudioToolbox
 import OSLog
 
 final class AudioDeviceManager {
@@ -80,6 +81,18 @@ final class AudioDeviceManager {
         return availableDevices.first { $0.id == uid }
     }
     
+    func getOutputVolume(forUID uid: String?) -> Float? {
+        let deviceID: AudioDeviceID?
+        if let uid {
+            deviceID = findDevice(byUID: uid)?.deviceID
+        } else {
+            deviceID = getSystemDefaultDeviceID()
+        }
+
+        guard let deviceID else { return nil }
+        return getOutputVolume(for: deviceID)
+    }
+
     /// Starts monitoring for device changes
     func startMonitoring() {
         guard !isMonitoring else { return }
@@ -304,6 +317,106 @@ final class AudioDeviceManager {
         return status == noErr ? defaultDeviceID : nil
     }
     
+    private func getOutputVolume(for deviceID: AudioDeviceID) -> Float? {
+        if let decibelVolume = getOutputDecibelVolume(for: deviceID) {
+            return decibelVolume
+        }
+
+        if let virtualMasterVolume = getVirtualMasterOutputVolume(for: deviceID) {
+            return virtualMasterVolume
+        }
+
+        return getScalarOutputVolume(for: deviceID)
+    }
+
+    private func getOutputDecibelVolume(for deviceID: AudioDeviceID) -> Float? {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyVolumeDecibels,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        guard AudioObjectHasProperty(deviceID, &propertyAddress) else {
+            return nil
+        }
+
+        var decibels = Float32(0)
+        var dataSize = UInt32(MemoryLayout<Float32>.size)
+        let status = AudioObjectGetPropertyData(
+            deviceID,
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &decibels
+        )
+
+        guard status == noErr else {
+            return nil
+        }
+
+        let linearVolume = pow(10.0, decibels / 20.0)
+        return max(0.0, min(1.0, linearVolume))
+    }
+
+    private func getVirtualMasterOutputVolume(for deviceID: AudioDeviceID) -> Float? {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        guard AudioObjectHasProperty(deviceID, &propertyAddress) else {
+            return nil
+        }
+
+        var volume = Float32(0)
+        var dataSize = UInt32(MemoryLayout<Float32>.size)
+        let status = AudioObjectGetPropertyData(
+            deviceID,
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &volume
+        )
+
+        guard status == noErr else {
+            return nil
+        }
+
+        return max(0.0, min(1.0, volume))
+    }
+
+    private func getScalarOutputVolume(for deviceID: AudioDeviceID) -> Float? {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyVolumeScalar,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        guard AudioObjectHasProperty(deviceID, &propertyAddress) else {
+            return nil
+        }
+
+        var volume = Float32(0)
+        var dataSize = UInt32(MemoryLayout<Float32>.size)
+        let status = AudioObjectGetPropertyData(
+            deviceID,
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &volume
+        )
+
+        guard status == noErr else {
+            return nil
+        }
+
+        return max(0.0, min(1.0, volume))
+    }
+
     // MARK: - Private Methods - Device Monitoring
     
     private func setupDeviceListListener() {

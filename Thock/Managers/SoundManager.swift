@@ -45,6 +45,8 @@ final class SoundManager {
     
     // MARK: - Volume Control
     private var volume: Float = 0.5
+    private var systemOutputVolume: Float = 1.0
+    private var constantVolumeEnabled = false
     private let volumeLock = NSLock()
     
     // MARK: - Models
@@ -123,6 +125,7 @@ final class SoundManager {
         
         // Initialize volume from settings
         updateVolumeFromSettings()
+        updateSystemOutputVolume()
         
         // Start monitoring audio device changes
         AudioDeviceManager.shared.startMonitoring()
@@ -130,6 +133,7 @@ final class SoundManager {
     
     @objc private func handleSettingsChange() {
         let newBufferSize = SettingsManager.shared.audioBufferSize
+        updateVolumeFromSettings()
         
         // Handle buffer size change
         if newBufferSize != currentBufferSize {
@@ -198,9 +202,11 @@ final class SoundManager {
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
         let newVolume = SettingsEngine.shared.getVolume(for: deviceUID)
+        let newConstantVolumeEnabled = SettingsEngine.shared.isConstantVolumeEnabled()
         
         volumeLock.lock()
         volume = newVolume
+        constantVolumeEnabled = newConstantVolumeEnabled
         volumeLock.unlock()
         
         if postNotification {
@@ -208,6 +214,31 @@ final class SoundManager {
         }
     }
     
+    private func updateSystemOutputVolume() {
+        let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID()
+        let newSystemVolume = AudioDeviceManager.shared.getOutputVolume(forUID: selectedUID) ?? 1.0
+
+        volumeLock.lock()
+        systemOutputVolume = newSystemVolume
+        volumeLock.unlock()
+    }
+
+    private func currentRenderVolume() -> Float {
+        let appVolume = volume
+
+        guard constantVolumeEnabled else {
+            return appVolume
+        }
+
+        let minimumSystemVolume: Float = 0.01
+        let maximumGain: Float = 2.0
+        let compensationExponent: Float = 1.08
+        let outputVolume = max(systemOutputVolume, minimumSystemVolume)
+        let compensatedVolume = appVolume / pow(outputVolume, compensationExponent)
+
+        return min(compensatedVolume, maximumGain)
+    }
+
     private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false) {
         detectHardwareSampleRate()
         
@@ -622,7 +653,7 @@ final class SoundManager {
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
         // No lock here coz float reads are atomic
-        let currentVolume = volume
+        let currentVolume = currentRenderVolume()
         
         for sound in activeSounds {
             // Report playback started on first render
@@ -771,6 +802,8 @@ final class SoundManager {
             recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
         }
         
+        updateSystemOutputVolume()
+
         // Gen pitch offset [-variation, +variation]
         let pitchOffset: Float
         if pitchVariation > 0.0 {
@@ -878,6 +911,7 @@ final class SoundManager {
         
         // Get pitch variation
         let pitchVariation = SettingsEngine.shared.getPitchVariation()
+        updateSystemOutputVolume()
         
         let pitchOffset: Float
         if pitchVariation > 0.0 {
