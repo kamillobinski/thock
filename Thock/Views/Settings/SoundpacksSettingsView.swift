@@ -76,16 +76,20 @@ struct SoundpacksSettingsView: View {
                             entry: entry,
                             isInstalled: true,
                             isDownloading: service.downloadingIds.contains(entry.id),
+                            isPreviewing: service.previewingIds.contains(entry.id),
                             isLast: false,
                             onInstall: { Task { await service.install(entry) } },
-                            onUninstall: { service.uninstall(entry) }
+                            onUninstall: { service.uninstall(entry) },
+                            onPreview: { Task { await service.preview(entry) } }
                         )
                     }
                     ForEach(Array(customKeyboard.enumerated()), id: \.element.id) { index, soundpack in
                         SoundpackCustomRowView(
                             soundpack: soundpack,
+                            isPreviewing: service.previewingIds.contains(soundpack.id),
                             isLast: index == customKeyboard.count - 1 && uninstalledKeyboard.isEmpty && !keyboardHasInlineState,
-                            onUninstall: { service.uninstallCustom(soundpack) }
+                            onUninstall: { service.uninstallCustom(soundpack) },
+                            onPreview: { Task { await service.previewCustom(soundpack) } }
                         )
                     }
                     ForEach(Array(uninstalledKeyboard.enumerated()), id: \.element.id) { index, entry in
@@ -93,9 +97,11 @@ struct SoundpacksSettingsView: View {
                             entry: entry,
                             isInstalled: false,
                             isDownloading: service.downloadingIds.contains(entry.id),
+                            isPreviewing: service.previewingIds.contains(entry.id),
                             isLast: index == uninstalledKeyboard.count - 1,
                             onInstall: { Task { await service.install(entry) } },
-                            onUninstall: { service.uninstall(entry) }
+                            onUninstall: { service.uninstall(entry) },
+                            onPreview: { Task { await service.preview(entry) } }
                         )
                     }
                     if keyboardRegistryEmpty && customKeyboard.isEmpty {
@@ -147,16 +153,20 @@ struct SoundpacksSettingsView: View {
                             entry: entry,
                             isInstalled: true,
                             isDownloading: service.downloadingIds.contains(entry.id),
+                            isPreviewing: service.previewingIds.contains(entry.id),
                             isLast: false,
                             onInstall: { Task { await service.install(entry) } },
-                            onUninstall: { service.uninstall(entry) }
+                            onUninstall: { service.uninstall(entry) },
+                            onPreview: { Task { await service.preview(entry) } }
                         )
                     }
                     ForEach(Array(customMouse.enumerated()), id: \.element.id) { index, soundpack in
                         SoundpackCustomRowView(
                             soundpack: soundpack,
+                            isPreviewing: service.previewingIds.contains(soundpack.id),
                             isLast: index == customMouse.count - 1 && uninstalledMouse.isEmpty && !mouseHasInlineState,
-                            onUninstall: { service.uninstallCustom(soundpack) }
+                            onUninstall: { service.uninstallCustom(soundpack) },
+                            onPreview: { Task { await service.previewCustom(soundpack) } }
                         )
                     }
                     ForEach(Array(uninstalledMouse.enumerated()), id: \.element.id) { index, entry in
@@ -164,9 +174,11 @@ struct SoundpacksSettingsView: View {
                             entry: entry,
                             isInstalled: false,
                             isDownloading: service.downloadingIds.contains(entry.id),
+                            isPreviewing: service.previewingIds.contains(entry.id),
                             isLast: index == uninstalledMouse.count - 1,
                             onInstall: { Task { await service.install(entry) } },
-                            onUninstall: { service.uninstall(entry) }
+                            onUninstall: { service.uninstall(entry) },
+                            onPreview: { Task { await service.preview(entry) } }
                         )
                     }
                     if mouseRegistryEmpty && customMouse.isEmpty {
@@ -211,15 +223,22 @@ private struct SoundpackRegistryRowView: View {
     let entry: SoundpackRegistryEntry
     let isInstalled: Bool
     let isDownloading: Bool
+    let isPreviewing: Bool
     let isLast: Bool
     let onInstall: () -> Void
     let onUninstall: () -> Void
-    
+    let onPreview: () -> Void
+
     var body: some View {
         SettingsRowView(
             title: entry.metadata.name,
             subtitle: "\(entry.metadata.brand) · by \(entry.metadata.author) · \(formattedSize)",
-            control: AnyView(actionControl),
+            control: AnyView(
+                HStack(spacing: 10) {
+                    SoundpackPreviewButton(isPreviewing: isPreviewing, action: onPreview)
+                    actionControl
+                }
+            ),
             isLast: isLast
         )
     }
@@ -259,13 +278,39 @@ private struct SoundpackRegistryRowView: View {
     }
 }
 
+// MARK: - Preview Button
+
+private struct SoundpackPreviewButton: View {
+    let isPreviewing: Bool
+    let action: () -> Void
+
+    var body: some View {
+        if isPreviewing {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 15))
+                .foregroundColor(.accentColor)
+                .frame(width: 20, height: 20)
+        } else {
+            Button(action: action) {
+                Image(systemName: "play.circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Preview soundpack")
+        }
+    }
+}
+
 // MARK: - Custom Row View
 
 private struct SoundpackCustomRowView: View {
     let soundpack: Soundpack
+    let isPreviewing: Bool
     let isLast: Bool
     let onUninstall: () -> Void
-    
+    let onPreview: () -> Void
+
     private var subtitle: String {
         var parts = ["Custom"]
         if !soundpack.brand.isEmpty { parts.append(soundpack.brand) }
@@ -278,13 +323,17 @@ private struct SoundpackCustomRowView: View {
             title: soundpack.name,
             subtitle: subtitle,
             control: AnyView(
-                Button(action: onUninstall) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.secondary.opacity(0.6))
-                }
+                HStack(spacing: 10) {
+                    SoundpackPreviewButton(isPreviewing: isPreviewing, action: onPreview)
+
+                    Button(action: onUninstall) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.secondary.opacity(0.6))
+                    }
                     .buttonStyle(.plain)
                     .help("Remove soundpack")
+                }
             ),
             isLast: isLast
         )
