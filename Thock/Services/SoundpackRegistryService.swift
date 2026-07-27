@@ -9,6 +9,7 @@ final class SoundpackRegistryService: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
     @Published var downloadingIds: Set<UUID> = []
+    @Published var previewingIds: Set<UUID> = []
     @Published var installedIds: Set<UUID> = []
     @Published var customKeyboardSoundpacks: [Soundpack] = []
     @Published var customMouseSoundpacks: [Soundpack] = []
@@ -49,15 +50,7 @@ final class SoundpackRegistryService: ObservableObject {
             let destination = customSoundsDirectory()
                 .appendingPathComponent(entry.id.uuidString, isDirectory: true)
             
-            try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
-            
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-            process.arguments = ["-x", "-k", tempURL.path, destination.path]
-            try process.run()
-            process.waitUntilExit()
-            
-            try? FileManager.default.removeItem(at: tempURL)
+            try unzip(tempURL, to: destination)
             
             refreshInstalledIds()
             
@@ -81,6 +74,54 @@ final class SoundpackRegistryService: ObservableObject {
         downloadingIds.remove(entry.id)
     }
     
+    /// Plays a few keystrokes from a registry soundpack. Nothing is installed: a pack the
+    /// user doesn't have is unpacked into a temporary directory that is removed right after.
+    func preview(_ entry: SoundpackRegistryEntry) async {
+        guard !previewingIds.contains(entry.id), !downloadingIds.contains(entry.id) else { return }
+        previewingIds.insert(entry.id)
+
+        let installed = customSoundsDirectory().appendingPathComponent(entry.id.uuidString, isDirectory: true)
+        var temporary: URL? = nil
+
+        do {
+            let directory: URL
+            if FileManager.default.fileExists(atPath: installed.appendingPathComponent("config.json").path) {
+                directory = installed
+            } else {
+                guard let downloadURL = URL(string: entry.download.url) else { throw URLError(.badURL) }
+                let (tempURL, _) = try await URLSession.shared.download(from: downloadURL)
+                let unpacked = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("ThockPreview-\(entry.id.uuidString)", isDirectory: true)
+                try unzip(tempURL, to: unpacked)
+                directory = unpacked
+                temporary = unpacked
+            }
+
+            try await playPreview(in: directory)
+        } catch {
+            print("Failed to preview soundpack \(entry.metadata.name): \(error)")
+        }
+
+        if let temporary {
+            try? FileManager.default.removeItem(at: temporary)
+        }
+        previewingIds.remove(entry.id)
+    }
+
+    /// Plays a few keystrokes from an installed custom soundpack.
+    func previewCustom(_ soundpack: Soundpack) async {
+        guard !previewingIds.contains(soundpack.id) else { return }
+        previewingIds.insert(soundpack.id)
+
+        do {
+            try await playPreview(in: customSoundpackDirectory(for: soundpack))
+        } catch {
+            print("Failed to preview soundpack \(soundpack.name): \(error)")
+        }
+
+        previewingIds.remove(soundpack.id)
+    }
+
     func uninstall(_ entry: SoundpackRegistryEntry) {
         let folder = customSoundsDirectory().appendingPathComponent(entry.id.uuidString)
         try? FileManager.default.removeItem(at: folder)
@@ -109,10 +150,7 @@ final class SoundpackRegistryService: ObservableObject {
     }
     
     func uninstallCustom(_ soundpack: Soundpack) {
-        let base = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/Thock")
-        let folder = base.appendingPathComponent(soundpack.path)
-        try? FileManager.default.removeItem(at: folder)
+        try? FileManager.default.removeItem(at: customSoundpackDirectory(for: soundpack))
         SoundpackEngine.shared.reloadAfterRemoval(for: soundpack.category)
         refreshInstalledIds()
         refreshCustomSoundpacks()
@@ -121,6 +159,30 @@ final class SoundpackRegistryService: ObservableObject {
     
     private func customSoundsDirectory() -> URL {
         return CustomSoundpackHelper.getCustomSoundpackDirectory()
+    }
+
+    private func customSoundpackDirectory(for soundpack: Soundpack) -> URL {
+        return FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Thock")
+            .appendingPathComponent(soundpack.path)
+    }
+
+    private func unzip(_ archive: URL, to destination: URL) throws {
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+        process.arguments = ["-x", "-k", archive.path, destination.path]
+        try process.run()
+        process.waitUntilExit()
+
+        try? FileManager.default.removeItem(at: archive)
+    }
+
+    /// Waits for the preview to finish so the row keeps showing its playing state.
+    private func playPreview(in directory: URL) async throws {
+        let duration = try SoundpackPreviewPlayer.shared.play(packDirectory: directory)
+        try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
     }
 }
 
