@@ -69,6 +69,168 @@ EOF
   exit 0
 fi
 
+# ─── preview (name or UUID, installed or not) ─────────────────────────────────
+
+if [[ "$1" == "preview" ]]; then
+  if [[ -z "$2" ]]; then
+    echo "Usage: thock-cli preview <name|uuid> [--brand <brand>] [--author <author>]"
+    exit 1
+  fi
+
+  INPUT="$2"
+  FILTER_BRAND=""
+  FILTER_AUTHOR=""
+
+  shift 2
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --brand)  FILTER_BRAND="$2";  shift 2 ;;
+      --author) FILTER_AUTHOR="$2"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+
+  python3 - "$SOUNDPACKS_DIR" "$INPUT" "$FILTER_BRAND" "$FILTER_AUTHOR" <<'EOF'
+import io, json, os, random, re, subprocess, sys, tempfile, urllib.request, wave, zipfile
+
+MANIFEST_URL = "https://raw.githubusercontent.com/kamillobinski/thock-soundpacks/refs/heads/main/manifest.json"
+KEYSTROKES = 6
+GAP_SECONDS = 0.06
+
+directory, query, brand, author = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+uuid_re = re.compile(r"^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$")
+
+
+def read_config(text):
+    return json.loads(re.sub(r",\s*([}\]])", r"\1", text))
+
+
+def matches(pack_id, m):
+    if uuid_re.match(query):
+        return pack_id.lower() == query.lower()
+    if m["name"].lower() != query.lower():
+        return False
+    if brand and m.get("brand", "").lower() != brand.lower():
+        return False
+    if author and m.get("author", "").lower() != author.lower():
+        return False
+    return True
+
+
+# Registry entries first - previewing one that isn't installed yet is the point.
+candidates = []
+try:
+    with urllib.request.urlopen(MANIFEST_URL, timeout=20) as response:
+        manifest = json.load(response)
+except Exception as e:
+    print(f"Warning: could not reach the soundpack registry ({e}).")
+    manifest = {}
+
+for entries in manifest.get("soundpacks", {}).values():
+    for e in entries:
+        candidates.append((e["id"], e["metadata"], e["download"]["url"]))
+
+known = {c[0].lower() for c in candidates}
+
+# Plus anything installed the registry doesn't know about (custom soundpacks).
+if os.path.isdir(directory):
+    for name in os.listdir(directory):
+        config_path = os.path.join(directory, name, "config.json")
+        if not os.path.isfile(config_path):
+            continue
+        try:
+            with open(config_path) as f:
+                c = read_config(f.read())
+            if c["id"].lower() not in known:
+                candidates.append((c["id"], c["metadata"], None))
+        except (json.JSONDecodeError, KeyError, OSError):
+            continue
+
+matched = [c for c in candidates if matches(c[0], c[1])]
+
+if len(matched) > 1:
+    print(f"Error: multiple soundpacks match '{query}'. Use --brand or --author to narrow it down.")
+    sys.exit(1)
+if not matched:
+    print(f"Error: no soundpack found matching '{query}'.")
+    sys.exit(1)
+
+pack_id, metadata, download_url = matched[0]
+
+
+def pick_keystrokes(pack_dir):
+    """A few keystrokes, each the sound files to play for it (key down, then key up)."""
+    with open(os.path.join(pack_dir, "config.json")) as f:
+        sounds = read_config(f.read())["sounds"]
+    # "default" is the fallback group for keyboard packs; mouse packs only have named ones.
+    group = sounds.get("default") or next(iter(sounds.values()), {})
+    down, up = group.get("down") or [], group.get("up") or []
+    if not down:
+        return []
+    keystrokes = []
+    for _ in range(KEYSTROKES):
+        files = [random.choice(down)] + ([random.choice(up)] if up else [])
+        keystrokes.append([os.path.join(pack_dir, f) for f in files])
+    return keystrokes
+
+
+def stitch(keystrokes, out_path):
+    """Join the samples into one WAV so playback is a single afplay, not one per sound.
+
+    Spawning afplay per sound costs roughly a second each, which makes the preview
+    sound like laggy typing rather than like the soundpack.
+    """
+    frames, params = [], None
+    for keystroke in keystrokes:
+        for path in keystroke:
+            with wave.open(path) as w:
+                if params is None:
+                    params = w.getparams()
+                elif w.getparams()[:3] != params[:3]:
+                    raise ValueError(f"'{path}' does not match the pack's audio format")
+                frames.append(w.readframes(w.getnframes()))
+        # Silence between keystrokes only, so key down and key up stay paired.
+        frames.append(bytes(int(params.framerate * GAP_SECONDS) * params.nchannels * params.sampwidth))
+    with wave.open(out_path, "wb") as out:
+        out.setparams(params)
+        out.writeframes(b"".join(frames))
+
+
+def play(pack_dir):
+    print(f"Previewing {metadata['name']} by {metadata['author']} ({metadata['brand']})")
+    keystrokes = pick_keystrokes(pack_dir)
+    if not keystrokes:
+        print("Error: this soundpack has no key down sounds to preview.")
+        sys.exit(1)
+    with tempfile.NamedTemporaryFile(suffix=".wav") as stitched:
+        try:
+            stitch(keystrokes, stitched.name)
+        except (wave.Error, ValueError, EOFError):
+            # Custom soundpacks may use formats the wave module can't read (mp3, m4a).
+            for path in (p for keystroke in keystrokes for p in keystroke):
+                subprocess.run(["afplay", path])
+            return
+        subprocess.run(["afplay", stitched.name])
+
+
+installed_dir = os.path.join(directory, pack_id)
+
+if os.path.isfile(os.path.join(installed_dir, "config.json")):
+    play(installed_dir)
+elif download_url:
+    with urllib.request.urlopen(download_url, timeout=60) as response:
+        archive = zipfile.ZipFile(io.BytesIO(response.read()))
+    # Extracted to a temp dir so a preview never installs the soundpack.
+    with tempfile.TemporaryDirectory() as tmp:
+        archive.extractall(tmp)
+        play(tmp)
+else:
+    print(f"Error: soundpack '{query}' is not installed and has no download URL.")
+    sys.exit(1)
+EOF
+  exit $?
+fi
+
 # ─── set-soundpack (name or UUID) ─────────────────────────────────────────────
 
 if [[ "$1" == "set-soundpack" ]]; then
