@@ -31,16 +31,8 @@ enum AppLanguage: String, CaseIterable {
     
     static func fromSystem() -> AppLanguage {
         guard let preferred = Locale.preferredLanguages.first else { return .english }
-        if preferred.hasPrefix("pt") { return .portuguese }
-        if preferred.hasPrefix("es") { return .spanish }
-        if preferred.hasPrefix("fr") { return .french }
-        if preferred.hasPrefix("zh") { return .chinese }
-        if preferred.hasPrefix("ja") { return .japanese }
-        if preferred.hasPrefix("de") { return .german }
-        if preferred.hasPrefix("vi") { return .vietnamese }
-        if preferred.hasPrefix("it") { return .italian }
-        if preferred.hasPrefix("pl") { return .polish }
-        return .english
+        let languageCode = String(preferred.prefix(2))
+        return AppLanguage(rawValue: languageCode) ?? .english
     }
 }
 
