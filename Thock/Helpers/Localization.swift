@@ -418,7 +418,7 @@ struct L10n {
         case .vietnamese: return "Tự động tắt tiếng khi Music, Spotify hoặc VLC đang phát"
         case .italian: return "Silenzia automaticamente i suoni quando Musica, Spotify o VLC sono in riproduzione"
         case .portuguese: return "Silenciar automaticamente quando Music, Spotify ou VLC estiverem reproduzindo"
-        case .polish: return "Automatycznie wycisz dźwięki podczas gdy odwtarzania z Muzyki, Spotify lub VLC"
+        case .polish: return "Automatycznie wycisz dźwięki podczas odwtarzania Muzyki, Spotify lub VLC"
         }
     }
     
