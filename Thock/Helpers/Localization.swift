@@ -1080,7 +1080,7 @@ struct L10n {
         case .vietnamese: return "Bạn đang chạy phiên bản mới nhất của Thock."
         case .italian: return "Stai già utilizzando l'ultima versione di Thock."
         case .portuguese: return "Você já usa a versão mais recente do Thock."
-        case .polish: return "Masz już najnowszą wersję Thock"
+        case .polish: return "Masz już najnowszą wersję Thock."
         }
     }
     
