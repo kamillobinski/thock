@@ -165,7 +165,7 @@ With localization, Thock bridges the gap between powerful functionality and effo
 
 Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
 
-> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German, 🇮🇹 Italian, 🇻🇳 Vietnamese, 🇧🇷 Portuguese.
+> **Supported**:  🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German, 🇮🇹 Italian, 🇻🇳 Vietnamese, 🇧🇷 Portuguese and 🇵🇱 Polish.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -263,6 +263,7 @@ Thanks to the folks that helped make this project a reality!
 | [zenangst](https://github.com/zenangst) | Event handling, mode saving, performance improvements. |
 | [iamsoum](https://github.com/iamsoum) | Clearer step-by-step sound pack conversion instructions. |
 | [cattybeo](https://github.com/cattybeo) | Vietnamese translations. |
+| [slithergroove](https://github.com/slithergroove) | Polish translations. |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
