@@ -115,7 +115,7 @@ struct L10n {
         case .vietnamese: return "Phím tắt"
         case .italian: return "Scorciatoie"
         case .portuguese: return "Atalhos"
-        case .polish: return "Skróty klawiaturowe"
+        case .polish: return "Skróty klawiszowe"
         }
     }
     
