@@ -2,100 +2,72 @@ import Testing
 import Foundation
 @testable import Thock
 
+@Suite(.serialized)
 struct SoundManagerTests {
     
     // MARK: - Volume Control Tests
     
     @Test func volumeStartsAtDefaultValue() {
-        let manager = SoundManager.shared
-        let volume = manager.getVolume()
-        
+        let volume = SettingsEngine.shared.getVolume()
         #expect(volume >= 0.0 && volume <= 1.0)
     }
     
     @Test func setVolumeWithinBounds() {
-        let manager = SoundManager.shared
+        SettingsEngine.shared.setVolume(0.7)
+        #expect(abs(SettingsEngine.shared.getVolume() - 0.7) < 0.001)
         
-        manager.setVolume(0.7)
-        #expect(manager.getVolume() == 0.7)
-        
-        manager.setVolume(0.3)
-        #expect(manager.getVolume() == 0.3)
+        SettingsEngine.shared.setVolume(0.3)
+        #expect(abs(SettingsEngine.shared.getVolume() - 0.3) < 0.001)
     }
     
     @Test func setVolumeClampsBelowZero() {
-        let manager = SoundManager.shared
-        
-        manager.setVolume(-0.5)
-        #expect(manager.getVolume() == 0.0)
+        SettingsEngine.shared.setVolume(-0.5)
+        #expect(SettingsEngine.shared.getVolume() == 0.0)
     }
     
     @Test func setVolumeClampsAboveOne() {
-        let manager = SoundManager.shared
-        
-        manager.setVolume(1.5)
-        #expect(manager.getVolume() == 1.0)
+        SettingsEngine.shared.setVolume(1.5)
+        #expect(SettingsEngine.shared.getVolume() == 1.0)
     }
     
     @Test func setVolumeHandlesEdgeCases() {
-        let manager = SoundManager.shared
+        SettingsEngine.shared.setVolume(0.0)
+        #expect(SettingsEngine.shared.getVolume() == 0.0)
         
-        manager.setVolume(0.0)
-        #expect(manager.getVolume() == 0.0)
-        
-        manager.setVolume(1.0)
-        #expect(manager.getVolume() == 1.0)
+        SettingsEngine.shared.setVolume(1.0)
+        #expect(SettingsEngine.shared.getVolume() == 1.0)
     }
     
-    // MARK: - Device Management Tests
+    // MARK: - Soundpack Loading Tests
     
-    @Test func getCurrentOutputDeviceUIDReturnsString() {
+    @Test func preloadSoundsWithValidSoundpack() {
         let manager = SoundManager.shared
-        let deviceUID = manager.getCurrentOutputDeviceUID()
-        
-        #expect(!deviceUID.isEmpty)
-    }
-    
-    @Test func applyPerDeviceVolumeDoesNotCrash() {
-        let manager = SoundManager.shared
-        
-        // Should not crash even if no volume is saved
-        manager.applyPerDeviceVolume()
-        
-        #expect(manager.getVolume() >= 0.0)
-    }
-    
-    // MARK: - Sound Library Tests
-    
-    @Test func preloadSoundsWithValidMode() {
-        let manager = SoundManager.shared
-        let mode = Mode(
+        let soundpack = Soundpack(
             id: UUID(),
-            name: "Test Mode",
-            isNew: false,
+            name: "Test Soundpack",
+            brand: "Custom",
+            author: "Thock",
+            category: "Linear",
             path: "Sounds/Keyboard/Topre"
         )
         
-        // Should not crash with valid mode
-        manager.preloadSounds(for: mode)
-        
-        // Manager should remain ready
-        #expect(manager.isReady == true)
+        // Should not crash with valid soundpack
+        manager.preloadSounds(for: soundpack)
     }
     
     @Test func preloadSoundsWithInvalidPathDoesNotCrash() {
         let manager = SoundManager.shared
-        let mode = Mode(
+        let soundpack = Soundpack(
             id: UUID(),
-            name: "Invalid Mode",
-            isNew: false,
+            name: "Invalid Soundpack",
+            brand: "Custom",
+            author: "Thock",
+            category: "Linear",
             path: "NonExistent/Path"
         )
         
         // Should handle gracefully without crashing
-        manager.preloadSounds(for: mode)
-        
-        #expect(manager.isReady == true)
+        manager.preloadSounds(for: soundpack)
     }
     
     // MARK: - Playback Tests
@@ -105,8 +77,6 @@ struct SoundManagerTests {
         
         // Should log warning but not crash
         manager.play(sound: "nonexistent.mp3", latencyId: nil)
-        
-        #expect(manager.isReady == true)
     }
     
     @Test func playSoundWithLatencyIdDoesNotCrash() {
@@ -115,33 +85,39 @@ struct SoundManagerTests {
         
         // Should handle latency tracking without crashing
         manager.play(sound: "test.mp3", latencyId: latencyId)
-        
-        #expect(manager.isReady == true)
     }
     
-    // MARK: - Initialization Tests
+    // MARK: - Auto Volume Compensation Settings Tests
     
-    @Test func managerInitializesSuccessfully() {
-        let manager = SoundManager.shared
+    @Test func autoVolumeCompensationSettingsToggle() {
+        SettingsEngine.shared.setAutoVolumeCompensation(true)
+        #expect(SettingsEngine.shared.isAutoVolumeCompensationEnabled() == true)
         
-        #expect(manager.isReady == true)
+        SettingsEngine.shared.setAutoVolumeCompensation(false)
+        #expect(SettingsEngine.shared.isAutoVolumeCompensationEnabled() == false)
+    }
+    
+    @Test func soundpackNormalizationSettingsToggle() {
+        SettingsEngine.shared.setSoundpackNormalization(true)
+        #expect(SettingsEngine.shared.isSoundpackNormalizationEnabled() == true)
+        
+        SettingsEngine.shared.setSoundpackNormalization(false)
+        #expect(SettingsEngine.shared.isSoundpackNormalizationEnabled() == false)
     }
     
     // MARK: - Thread Safety Tests
     
     @Test func concurrentVolumeChangesAreSafe() async {
-        let manager = SoundManager.shared
-        
         await withTaskGroup(of: Void.self) { group in
             for i in 0..<100 {
                 group.addTask {
                     let volume = Float(i % 10) / 10.0
-                    manager.setVolume(volume)
+                    SettingsEngine.shared.setVolume(volume)
                 }
             }
         }
         
-        let finalVolume = manager.getVolume()
+        let finalVolume = SettingsEngine.shared.getVolume()
         #expect(finalVolume >= 0.0 && finalVolume <= 1.0)
     }
     
@@ -155,7 +131,5 @@ struct SoundManagerTests {
                 }
             }
         }
-        
-        #expect(manager.isReady == true)
     }
 }
