@@ -306,6 +306,62 @@ struct L10n {
         }
     }
     
+    static var autoVolumeCompensation: String {
+        switch lang {
+        case .english: return "System volume compensation"
+        case .spanish: return "Compensación de volumen del sistema"
+        case .french: return "Compensation du volume système"
+        case .chinese: return "系统音量恒定补偿"
+        case .japanese: return "システム音量連動補正"
+        case .german: return "System-Lautstärkekompensation"
+        case .vietnamese: return "Bù âm lượng hệ thống"
+        case .italian: return "Compensazione volume di sistema"
+        case .portuguese: return "Compensação de volume do sistema"
+        }
+    }
+    
+    static var autoVolumeCompensationSubtitle: String {
+        switch lang {
+        case .english: return "Keep typing loudness steady when adjusting macOS master volume"
+        case .spanish: return "Mantiene el volumen constante al ajustar el volumen principal de macOS"
+        case .french: return "Maintenir un volume de frappe constant lors du réglage du volume macOS"
+        case .chinese: return "调整 macOS 主音量时自动保持按键声音大小恒定"
+        case .japanese: return "macOSの音量を変更しても打鍵音の大きさを一定に維持"
+        case .german: return "Tastenlautstärke beim Anpassen der macOS-Hauptlautstärke konstant halten"
+        case .vietnamese: return "Giữ âm lượng gõ phím ổn định khi chỉnh âm lượng macOS"
+        case .italian: return "Mantiene costante il volume di digitazione regolando il volume di macOS"
+        case .portuguese: return "Mantém o volume de digitação constante ao ajustar o volume principal do macOS"
+        }
+    }
+    
+    static var soundpackNormalization: String {
+        switch lang {
+        case .english: return "Normalize soundpack loudness"
+        case .spanish: return "Normalizar sonoridad de paquetes"
+        case .french: return "Normaliser le volume des packs"
+        case .chinese: return "音效包响度均衡"
+        case .japanese: return "サウンドパック音量を均一化"
+        case .german: return "Soundpaket-Lautstärke anpassen"
+        case .vietnamese: return "Cân bằng âm lượng gói âm thanh"
+        case .italian: return "Normalizza volume dei pacchetti"
+        case .portuguese: return "Normalizar volume dos pacotes"
+        }
+    }
+    
+    static var soundpackNormalizationSubtitle: String {
+        switch lang {
+        case .english: return "Prevent sudden volume jumps between different soundpacks"
+        case .spanish: return "Evitar saltos bruscos de volumen entre diferentes paquetes"
+        case .french: return "Éviter les écarts de volume importants entre les différents packs"
+        case .chinese: return "消除不同音效包之间的音量差异"
+        case .japanese: return "サウンドパック間の音量のばらつきを自動調整"
+        case .german: return "Plötzliche Lautstärkesprünge zwischen verschiedenen Soundpaketen verhindern"
+        case .vietnamese: return "Tránh âm lượng thay đổi đột ngột giữa các gói âm thanh khác nhau"
+        case .italian: return "Evita sbalzi improvvisi di volume tra pacchetti diversi"
+        case .portuguese: return "Evita saltos repentinos de volume entre diferentes pacotes"
+        }
+    }
+    
     static var filters: String {
         switch lang {
         case .english: return "Filters"

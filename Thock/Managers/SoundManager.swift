@@ -121,6 +121,14 @@ final class SoundManager {
             object: nil
         )
         
+        // Listen for system master volume changes (for volume compensation)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSystemVolumeChange),
+            name: .systemVolumeDidChange,
+            object: nil
+        )
+        
         // Initialize volume from settings
         updateVolumeFromSettings()
         
@@ -136,6 +144,8 @@ final class SoundManager {
             reinitializeAudioQueue(with: newBufferSize)
             return
         }
+        
+        updateVolumeFromSettings()
         
         // Reset idle timer with new timeout value
         resetIdleTimer()
@@ -159,6 +169,10 @@ final class SoundManager {
     }
     
     @objc private func handleVolumeChange() {
+        updateVolumeFromSettings()
+    }
+    
+    @objc private func handleSystemVolumeChange() {
         updateVolumeFromSettings()
     }
     
@@ -197,10 +211,24 @@ final class SoundManager {
     
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
-        let newVolume = SettingsEngine.shared.getVolume(for: deviceUID)
+        let baseVolume = SettingsEngine.shared.getVolume(for: deviceUID)
+        
+        let targetVolume: Float
+        if SettingsEngine.shared.isAutoVolumeCompensationEnabled() {
+            let sysVol = AudioDeviceManager.shared.getDeviceVolume(getPreferredOutputDeviceID())
+            if sysVol <= 0.01 {
+                targetVolume = 0.0
+            } else {
+                let clampedSysVol = max(0.08, min(1.0, sysVol))
+                let compensationRatio = min(3.0, max(0.25, 0.5 / clampedSysVol))
+                targetVolume = min(1.0, baseVolume * compensationRatio)
+            }
+        } else {
+            targetVolume = baseVolume
+        }
         
         volumeLock.lock()
-        volume = newVolume
+        volume = targetVolume
         volumeLock.unlock()
         
         if postNotification {
@@ -913,8 +941,13 @@ final class SoundManager {
             try file.read(into: buffer)
             
             // Convert to stereo Float32 array
-            guard let pcmData = convertToStereoFloat(buffer: buffer) else {
+            guard var pcmData = convertToStereoFloat(buffer: buffer) else {
                 return nil
+            }
+            
+            // Normalize loudness across soundpacks if enabled
+            if SettingsEngine.shared.isSoundpackNormalizationEnabled() {
+                normalizeLoudness(pcmData: &pcmData)
             }
             
             return PCMSound(data: pcmData, frameCount: Int(buffer.frameLength))
@@ -923,6 +956,26 @@ final class SoundManager {
             Logger.audio.error("PCM decode failed: \(error.localizedDescription)")
             return nil
         }
+    }
+    
+    /// Normalizes PCM loudness using root-mean-square (RMS) measurement to target reference dBFS level.
+    private func normalizeLoudness(pcmData: inout [Float]) {
+        guard !pcmData.isEmpty else { return }
+        
+        var rms: Float = 0.0
+        vDSP_rmsqv(pcmData, 1, &rms, vDSP_Length(pcmData.count))
+        
+        // Skip normalization for pure silence or extreme noise floor
+        guard rms > 0.005 else { return }
+        
+        // Target reference RMS (-18 dBFS ~ 0.12)
+        let targetRMS: Float = 0.12
+        var scale = targetRMS / rms
+        
+        // Clamp scaling factor to avoid extreme distortion or complete silence
+        scale = max(0.25, min(3.0, scale))
+        
+        vDSP_vsmul(pcmData, 1, &scale, &pcmData, 1, vDSP_Length(pcmData.count))
     }
     
     private func convertToStereoFloat(buffer: AVAudioPCMBuffer) -> [Float]? {

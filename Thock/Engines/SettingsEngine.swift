@@ -208,6 +208,26 @@ final class SettingsEngine {
             AppEngine.shared.setEnabled(headphoneConnected)
         }
     }
+    
+    // MARK: - Auto Volume Compensation & Normalization
+    
+    func isAutoVolumeCompensationEnabled() -> Bool {
+        return SettingsManager.shared.autoVolumeCompensation
+    }
+    
+    func setAutoVolumeCompensation(_ enabled: Bool) {
+        SettingsManager.shared.autoVolumeCompensation = enabled
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    func isSoundpackNormalizationEnabled() -> Bool {
+        return SettingsManager.shared.soundpackNormalization
+    }
+    
+    func setSoundpackNormalization(_ enabled: Bool) {
+        SettingsManager.shared.soundpackNormalization = enabled
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
 }
 
 // MARK: - Notifications
@@ -219,4 +239,5 @@ extension Notification.Name {
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
     static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
     static let cleaningModeDidChange = Notification.Name("cleaningModeDidChange")
+    static let systemVolumeDidChange = Notification.Name("systemVolumeDidChange")
 }

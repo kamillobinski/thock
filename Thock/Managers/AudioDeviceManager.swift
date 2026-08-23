@@ -1,5 +1,6 @@
 import Foundation
 import CoreAudio
+import AudioToolbox
 import OSLog
 
 final class AudioDeviceManager {
@@ -27,6 +28,8 @@ final class AudioDeviceManager {
     private var isMonitoring = false
     private var deviceListListenerAddress: AudioObjectPropertyAddress?
     private var defaultDeviceListenerAddress: AudioObjectPropertyAddress?
+    private var volumeListenerAddress: AudioObjectPropertyAddress?
+    private var monitoredVolumeDeviceID: AudioDeviceID?
     
     // Debouncing for device list changes
     private var deviceListChangeWorkItem: DispatchWorkItem?
@@ -80,12 +83,13 @@ final class AudioDeviceManager {
         return availableDevices.first { $0.id == uid }
     }
     
-    /// Starts monitoring for device changes
+    /// Starts monitoring for device changes and volume
     func startMonitoring() {
         guard !isMonitoring else { return }
         
         setupDeviceListListener()
         setupDefaultDeviceListener()
+        updateVolumeListener()
         isMonitoring = true
         Logger.audio.info("Started monitoring audio device changes")
     }
@@ -114,6 +118,8 @@ final class AudioDeviceManager {
             )
         }
         
+        removeVolumeListener()
+        
         // Cancel any pending debounced work
         workItemLock.lock()
         deviceListChangeWorkItem?.cancel()
@@ -124,6 +130,105 @@ final class AudioDeviceManager {
         deviceListListenerAddress = nil
         defaultDeviceListenerAddress = nil
         Logger.audio.info("Stopped monitoring audio device changes")
+    }
+    
+    // MARK: - Volume Monitoring
+    
+    /// Returns the volume scalar (0.0 - 1.0) of a specific device or default device.
+    func getDeviceVolume(_ deviceID: AudioDeviceID? = nil) -> Float {
+        guard let targetDeviceID = deviceID ?? getSystemDefaultDeviceID() else {
+            return 1.0
+        }
+        
+        var volume: Float32 = 1.0
+        var size = UInt32(MemoryLayout<Float32>.size)
+        
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        if AudioObjectHasProperty(targetDeviceID, &address) {
+            let status = AudioObjectGetPropertyData(targetDeviceID, &address, 0, nil, &size, &volume)
+            if status == noErr {
+                return volume
+            }
+        }
+        
+        // Fallback to kAudioDevicePropertyVolumeScalar
+        address.mSelector = kAudioDevicePropertyVolumeScalar
+        if AudioObjectHasProperty(targetDeviceID, &address) {
+            let status = AudioObjectGetPropertyData(targetDeviceID, &address, 0, nil, &size, &volume)
+            if status == noErr {
+                return volume
+            }
+        }
+        
+        // Fallback to channel 1
+        address.mElement = 1
+        if AudioObjectHasProperty(targetDeviceID, &address) {
+            let status = AudioObjectGetPropertyData(targetDeviceID, &address, 0, nil, &size, &volume)
+            if status == noErr {
+                return volume
+            }
+        }
+        
+        return 1.0
+    }
+    
+    /// Sets up or updates the volume listener for the current output device.
+    func updateVolumeListener(for deviceID: AudioDeviceID? = nil) {
+        removeVolumeListener()
+        
+        guard let targetDeviceID = deviceID ?? getSystemDefaultDeviceID() else { return }
+        
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        if !AudioObjectHasProperty(targetDeviceID, &address) {
+            address.mSelector = kAudioDevicePropertyVolumeScalar
+            if !AudioObjectHasProperty(targetDeviceID, &address) {
+                address.mElement = 1
+            }
+        }
+        
+        let status = AudioObjectAddPropertyListener(
+            targetDeviceID,
+            &address,
+            deviceVolumeChangedCallback,
+            Unmanaged.passUnretained(self).toOpaque()
+        )
+        
+        if status == noErr {
+            volumeListenerAddress = address
+            monitoredVolumeDeviceID = targetDeviceID
+            Logger.audio.debug("Volume listener added for device ID \(targetDeviceID)")
+        }
+    }
+    
+    private func removeVolumeListener() {
+        guard let deviceID = monitoredVolumeDeviceID, let address = volumeListenerAddress else { return }
+        var mutableAddress = address
+        AudioObjectRemovePropertyListener(
+            deviceID,
+            &mutableAddress,
+            deviceVolumeChangedCallback,
+            Unmanaged.passUnretained(self).toOpaque()
+        )
+        volumeListenerAddress = nil
+        monitoredVolumeDeviceID = nil
+    }
+    
+    fileprivate func handleVolumeChange() {
+        Logger.audio.debug("System output volume changed")
+        NotificationCenter.default.post(
+            name: .systemVolumeDidChange,
+            object: nil
+        )
     }
     
     /// Re-enumerates and caches all available audio devices.
@@ -352,6 +457,7 @@ final class AudioDeviceManager {
     
     fileprivate func handleDefaultDeviceChange() {
         Logger.audio.info("System default audio device changed")
+        updateVolumeListener()
         NotificationCenter.default.post(
             name: .systemDefaultAudioDeviceDidChange,
             object: nil
@@ -361,6 +467,7 @@ final class AudioDeviceManager {
     fileprivate func handleDeviceListChange() {
         Logger.audio.info("Audio device list changed, re-enumerating devices")
         enumerateAndCacheDevices()
+        updateVolumeListener()
         NotificationCenter.default.post(
             name: .audioDeviceListDidChange,
             object: nil
@@ -415,6 +522,27 @@ private func defaultDeviceChangedCallback(
     
     DispatchQueue.main.async {
         manager.handleDefaultDeviceChange()
+    }
+    
+    return noErr
+}
+
+// MARK: - Callback for volume change
+
+private func deviceVolumeChangedCallback(
+    _ inObjectID: AudioObjectID,
+    _ inNumberAddresses: UInt32,
+    _ inAddresses: UnsafePointer<AudioObjectPropertyAddress>,
+    _ inClientData: UnsafeMutableRawPointer?
+) -> OSStatus {
+    guard let clientData = inClientData else {
+        return noErr
+    }
+    
+    let manager = Unmanaged<AudioDeviceManager>.fromOpaque(clientData).takeUnretainedValue()
+    
+    DispatchQueue.main.async {
+        manager.handleVolumeChange()
     }
     
     return noErr

@@ -10,6 +10,8 @@ struct SoundSettingsView: View {
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
     @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
     @State private var mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()
+    @State private var autoVolumeCompensation = SettingsEngine.shared.isAutoVolumeCompensationEnabled()
+    @State private var soundpackNormalization = SettingsEngine.shared.isSoundpackNormalizationEnabled()
     @State private var refreshID = UUID()
     
     var body: some View {
@@ -59,6 +61,34 @@ struct SoundSettingsView: View {
                                 .onChange(of: selectedDeviceUID) { newValue in
                                     let uidToSave = newValue == "system-default" ? nil : newValue
                                     SettingsEngine.shared.setSelectedAudioDeviceUID(uidToSave)
+                                }
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.autoVolumeCompensation,
+                        subtitle: L10n.autoVolumeCompensationSubtitle,
+                        control: AnyView(
+                            Toggle("", isOn: $autoVolumeCompensation)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: autoVolumeCompensation) { newValue in
+                                    SettingsEngine.shared.setAutoVolumeCompensation(newValue)
+                                }
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.soundpackNormalization,
+                        subtitle: L10n.soundpackNormalizationSubtitle,
+                        control: AnyView(
+                            Toggle("", isOn: $soundpackNormalization)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: soundpackNormalization) { newValue in
+                                    SettingsEngine.shared.setSoundpackNormalization(newValue)
                                 }
                         )
                     )
@@ -206,6 +236,8 @@ struct SoundSettingsView: View {
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
+            autoVolumeCompensation = SettingsEngine.shared.isAutoVolumeCompensationEnabled()
+            soundpackNormalization = SettingsEngine.shared.isSoundpackNormalizationEnabled()
         }
         .onReceive(NotificationCenter.default.publisher(for: .mouseSoundDidChange)) { _ in
             mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()

@@ -15,6 +15,8 @@ final class SettingsManager {
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
+    static let defaultAutoVolumeCompensation: Bool = false
+    static let defaultSoundpackNormalization: Bool = true
     
     
     private init() {}
@@ -87,6 +89,18 @@ final class SettingsManager {
         set { UserDefaults.autoEnableOnHeadphone = newValue }
     }
     
+    /// Whether to automatically compensate volume inversely against macOS master volume changes.
+    var autoVolumeCompensation: Bool {
+        get { UserDefaults.autoVolumeCompensation }
+        set { UserDefaults.autoVolumeCompensation = newValue }
+    }
+    
+    /// Whether to automatically normalize soundpack loudness to a standard reference level.
+    var soundpackNormalization: Bool {
+        get { UserDefaults.soundpackNormalization }
+        set { UserDefaults.soundpackNormalization = newValue }
+    }
+    
     /// Whether keyboard cleaning mode is active. NOT PERSISTED
     var isCleaningMode: Bool {
         get { UtilityManager.shared.isCleaningMode }
@@ -107,6 +121,8 @@ private extension UserDefaults {
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
+        static let autoVolumeCompensation = "autoVolumeCompensation"
+        static let soundpackNormalization = "soundpackNormalization"
     }
     
     static var openAtLogin: Bool {
@@ -238,6 +254,30 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.autoEnableOnHeadphone)
+        }
+    }
+    
+    static var autoVolumeCompensation: Bool {
+        get {
+            if standard.object(forKey: Keys.autoVolumeCompensation) == nil {
+                return SettingsManager.defaultAutoVolumeCompensation
+            }
+            return standard.bool(forKey: Keys.autoVolumeCompensation)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.autoVolumeCompensation)
+        }
+    }
+    
+    static var soundpackNormalization: Bool {
+        get {
+            if standard.object(forKey: Keys.soundpackNormalization) == nil {
+                return SettingsManager.defaultSoundpackNormalization
+            }
+            return standard.bool(forKey: Keys.soundpackNormalization)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.soundpackNormalization)
         }
     }
 }
