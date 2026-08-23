@@ -554,7 +554,22 @@ class MenuBarController {
     }
     
     @objc private func openAccessibilitySettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility")!)
+        let promptFlag = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        let options = [promptFlag: true] as CFDictionary
+        _ = AXIsProcessTrustedWithOptions(options)
+        
+        if #available(macOS 10.15, *) {
+            _ = CGRequestListenEventAccess()
+        }
+        
+        if let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility"),
+           NSWorkspace.shared.open(url) {
+            return
+        }
+        
+        if let fallbackURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(fallbackURL)
+        }
     }
     
     @objc private func openPermissionsDocs() {
