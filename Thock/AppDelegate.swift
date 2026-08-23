@@ -15,7 +15,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
         
-        if AXIsProcessTrusted() {
+        let promptFlag = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        let options = [promptFlag: true] as CFDictionary
+        let isTrusted = AXIsProcessTrustedWithOptions(options)
+        
+        if #available(macOS 10.15, *) {
+            _ = CGRequestListenEventAccess()
+        }
+        
+        if isTrusted {
             continueAppInitialization()
         } else {
             menuBarController.setNeedsAuthorization(true)
