@@ -213,27 +213,42 @@ final class SoundManager {
         let deviceUID = getCurrentOutputDeviceUID()
         let baseVolume = SettingsEngine.shared.getVolume(for: deviceUID)
         
-        let targetVolume: Float
-        if SettingsEngine.shared.isAutoVolumeCompensationEnabled() {
-            let sysVol = AudioDeviceManager.shared.getDeviceVolume(getPreferredOutputDeviceID())
-            if sysVol <= 0.01 {
-                targetVolume = 0.0
-            } else {
-                let clampedSysVol = max(0.08, min(1.0, sysVol))
-                let compensationRatio = min(3.0, max(0.25, 0.5 / clampedSysVol))
-                targetVolume = min(1.0, baseVolume * compensationRatio)
-            }
-        } else {
-            targetVolume = baseVolume
-        }
-        
         volumeLock.lock()
-        volume = targetVolume
+        volume = baseVolume
         volumeLock.unlock()
         
         if postNotification {
             NotificationCenter.default.post(name: .volumeDidChange, object: nil)
         }
+    }
+    
+    /// Computes the dynamic effective playback volume, inversely compensating against macOS master volume changes if enabled.
+    private func computeEffectiveVolume() -> Float {
+        volumeLock.lock()
+        let base = volume
+        volumeLock.unlock()
+        
+        guard SettingsEngine.shared.isAutoVolumeCompensationEnabled() else {
+            return base
+        }
+        
+        let preferredDeviceID = getPreferredOutputDeviceID()
+        let sysVol = AudioDeviceManager.shared.getDeviceVolume(preferredDeviceID)
+        
+        // Muted or near zero
+        if sysVol <= 0.005 {
+            return 0.0
+        }
+        
+        // Physical loudness = bufferAmplitude * sysVol
+        // By setting bufferAmplitude = base * (0.5 / sysVol):
+        // Physical loudness = base * (0.5 / sysVol) * sysVol = base * 0.5 (constant across all system volume adjustments!)
+        let clampedSysVol = max(0.05, min(1.0, sysVol))
+        let compensationRatio = 0.5 / clampedSysVol
+        
+        // Support dynamic amplification without artificial 1.0 clipping
+        let clampedRatio = min(8.0, max(0.25, compensationRatio))
+        return base * clampedRatio
     }
     
     private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false) {
@@ -649,8 +664,7 @@ final class SoundManager {
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
-        // No lock here coz float reads are atomic
-        let currentVolume = volume
+        let currentVolume = computeEffectiveVolume()
         
         for sound in activeSounds {
             // Report playback started on first render

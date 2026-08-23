@@ -28,7 +28,7 @@ final class AudioDeviceManager {
     private var isMonitoring = false
     private var deviceListListenerAddress: AudioObjectPropertyAddress?
     private var defaultDeviceListenerAddress: AudioObjectPropertyAddress?
-    private var volumeListenerAddress: AudioObjectPropertyAddress?
+    private var volumeListenerAddresses: [AudioObjectPropertyAddress] = []
     private var monitoredVolumeDeviceID: AudioDeviceID?
     
     // Debouncing for device list changes
@@ -183,43 +183,63 @@ final class AudioDeviceManager {
         
         guard let targetDeviceID = deviceID ?? getSystemDefaultDeviceID() else { return }
         
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
-            mScope: kAudioDevicePropertyScopeOutput,
-            mElement: kAudioObjectPropertyElementMain
-        )
+        let candidateAddresses: [AudioObjectPropertyAddress] = [
+            AudioObjectPropertyAddress(
+                mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+                mScope: kAudioDevicePropertyScopeOutput,
+                mElement: kAudioObjectPropertyElementMain
+            ),
+            AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyVolumeScalar,
+                mScope: kAudioDevicePropertyScopeOutput,
+                mElement: kAudioObjectPropertyElementMain
+            ),
+            AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyVolumeScalar,
+                mScope: kAudioDevicePropertyScopeOutput,
+                mElement: 1
+            ),
+            AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyVolumeScalar,
+                mScope: kAudioDevicePropertyScopeOutput,
+                mElement: 2
+            )
+        ]
         
-        if !AudioObjectHasProperty(targetDeviceID, &address) {
-            address.mSelector = kAudioDevicePropertyVolumeScalar
-            if !AudioObjectHasProperty(targetDeviceID, &address) {
-                address.mElement = 1
+        var addedAddresses: [AudioObjectPropertyAddress] = []
+        
+        for var addr in candidateAddresses {
+            if AudioObjectHasProperty(targetDeviceID, &addr) {
+                let status = AudioObjectAddPropertyListener(
+                    targetDeviceID,
+                    &addr,
+                    deviceVolumeChangedCallback,
+                    Unmanaged.passUnretained(self).toOpaque()
+                )
+                if status == noErr {
+                    addedAddresses.append(addr)
+                }
             }
         }
         
-        let status = AudioObjectAddPropertyListener(
-            targetDeviceID,
-            &address,
-            deviceVolumeChangedCallback,
-            Unmanaged.passUnretained(self).toOpaque()
-        )
-        
-        if status == noErr {
-            volumeListenerAddress = address
+        if !addedAddresses.isEmpty {
+            volumeListenerAddresses = addedAddresses
             monitoredVolumeDeviceID = targetDeviceID
-            Logger.audio.debug("Volume listener added for device ID \(targetDeviceID)")
+            Logger.audio.debug("Added \(addedAddresses.count) volume listeners for device ID \(targetDeviceID)")
         }
     }
     
     private func removeVolumeListener() {
-        guard let deviceID = monitoredVolumeDeviceID, let address = volumeListenerAddress else { return }
-        var mutableAddress = address
-        AudioObjectRemovePropertyListener(
-            deviceID,
-            &mutableAddress,
-            deviceVolumeChangedCallback,
-            Unmanaged.passUnretained(self).toOpaque()
-        )
-        volumeListenerAddress = nil
+        guard let deviceID = monitoredVolumeDeviceID else { return }
+        for var addr in volumeListenerAddresses {
+            AudioObjectRemovePropertyListener(
+                deviceID,
+                &addr,
+                deviceVolumeChangedCallback,
+                Unmanaged.passUnretained(self).toOpaque()
+            )
+        }
+        volumeListenerAddresses.removeAll()
         monitoredVolumeDeviceID = nil
     }
     
