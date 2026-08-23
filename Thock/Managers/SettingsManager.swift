@@ -219,10 +219,20 @@ private extension UserDefaults {
     
     static var perDeviceVolumes: [String: Float] {
         get {
-            if standard.object(forKey: Keys.perDeviceVolumes) == nil {
+            guard let dict = standard.dictionary(forKey: Keys.perDeviceVolumes) else {
                 return SettingsManager.defaultPerDeviceVolumes
             }
-            return standard.dictionary(forKey: Keys.perDeviceVolumes) as? [String: Float] ?? SettingsManager.defaultPerDeviceVolumes
+            var result: [String: Float] = [:]
+            for (key, value) in dict {
+                if let num = value as? NSNumber {
+                    result[key] = num.floatValue
+                } else if let floatVal = value as? Float {
+                    result[key] = floatVal
+                } else if let doubleVal = value as? Double {
+                    result[key] = Float(doubleVal)
+                }
+            }
+            return result
         }
         set {
             standard.set(newValue, forKey: Keys.perDeviceVolumes)
