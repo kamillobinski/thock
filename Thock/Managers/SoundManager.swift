@@ -753,7 +753,14 @@ final class SoundManager {
         AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
     }
     
+    /// Mouse nominal gain scaling to balance microswitch clicks with keyboard typing sounds.
+    private static let mouseNominalGain: Float = 0.68
+    
     // MARK: - Public API
+    
+    func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil) {
+        play(sound: name, pitchVariation: pitchVariation, pan: nil, latencyId: latencyId)
+    }
     
     func play(sound name: String, pitchVariation: Float = 0.0, pan: Float? = nil, latencyId: UUID? = nil) {
         queueStateLock.lock()
@@ -925,13 +932,14 @@ final class SoundManager {
             gains = SpatialPositionHelper.StereoGains(left: 1.0, right: 1.0)
         }
         
+        let mouseGain = Self.mouseNominalGain
         let activeSound = ActiveSound(
             pcmData: sound.data,
             frameCount: sound.frameCount,
             latencyId: nil,
             pitchOffset: pitchOffset,
-            panGainLeft: gains.left,
-            panGainRight: gains.right
+            panGainLeft: gains.left * mouseGain,
+            panGainRight: gains.right * mouseGain
         )
         
         activeSoundsLock.lock()
