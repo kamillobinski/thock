@@ -222,37 +222,23 @@ final class SoundManager {
         }
     }
     
+    /// Master nominal gain scaling to calibrate typing sounds to a natural, comfortable acoustic baseline.
+    private static let masterNominalGain: Float = 0.22
+    
     /// Computes the dynamic effective playback volume, inversely compensating against macOS master volume changes if enabled.
     private func computeEffectiveVolume() -> Float {
         volumeLock.lock()
         let base = volume
         volumeLock.unlock()
         
+        let calibratedBase = base * Self.masterNominalGain
+        
         guard SettingsEngine.shared.isAutoVolumeCompensationEnabled() else {
-            return base
+            return calibratedBase
         }
         
-        let preferredDeviceID = getPreferredOutputDeviceID()
-        let sysVol = AudioDeviceManager.shared.getDeviceVolume(preferredDeviceID)
-        
-        // Muted or near zero
-        if sysVol <= 0.005 {
-            return 0.0
-        }
-        
-        // Nominal reference level at 80% macOS system slider (-12.7 dB standard listening baseline)
-        let refScalar: Float = 0.80
-        let refDB = AudioDeviceManager.shared.getDeviceDecibels(for: refScalar, deviceID: preferredDeviceID)
-        let currentDB = AudioDeviceManager.shared.getDeviceDecibels(for: sysVol, deviceID: preferredDeviceID)
-        
-        // Perceptual equal-loudness compensation (k = 0.75): balances acoustic power with auditory masking
-        let deltaDB = currentDB - refDB
-        let compensationDB = -0.75 * deltaDB
-        let compensationRatio = pow(10.0, compensationDB / 20.0)
-        
-        // Bound multiplier between 0.1x (at 100% sysVol) and 60.0x (at 5% sysVol)
-        let clampedRatio = min(60.0, max(0.1, compensationRatio))
-        return base * clampedRatio
+        let compensationMultiplier = AudioDeviceManager.shared.cachedCompensationMultiplier
+        return calibratedBase * compensationMultiplier
     }
     
     private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false) {
@@ -986,8 +972,8 @@ final class SoundManager {
         // Skip normalization for pure silence or extreme noise floor
         guard rms > 0.005 else { return }
         
-        // Target reference RMS (-18 dBFS ~ 0.12)
-        let targetRMS: Float = 0.12
+        // Target reference RMS (-24 dBFS ~ 0.063 for natural dynamic range)
+        let targetRMS: Float = 0.063
         var scale = targetRMS / rms
         
         // Clamp scaling factor to avoid extreme distortion or complete silence

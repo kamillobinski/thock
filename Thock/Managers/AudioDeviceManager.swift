@@ -90,6 +90,7 @@ final class AudioDeviceManager {
         setupDeviceListListener()
         setupDefaultDeviceListener()
         updateVolumeListener()
+        recalculateCompensationMultiplier()
         isMonitoring = true
         Logger.audio.info("Started monitoring audio device changes")
     }
@@ -274,8 +275,42 @@ final class AudioDeviceManager {
         monitoredVolumeDeviceID = nil
     }
     
+    private var _cachedCompensationMultiplier: Float = 1.0
+    
+    /// Cached volume compensation multiplier for zero-latency lock-free audio buffer rendering.
+    var cachedCompensationMultiplier: Float {
+        return _cachedCompensationMultiplier
+    }
+    
+    /// Recalculates and caches the compensation multiplier.
+    func recalculateCompensationMultiplier() {
+        guard let targetDeviceID = getSystemDefaultDeviceID() else {
+            _cachedCompensationMultiplier = 1.0
+            return
+        }
+        
+        let sysVol = getDeviceVolume(targetDeviceID)
+        if sysVol <= 0.005 {
+            _cachedCompensationMultiplier = 0.0
+            return
+        }
+        
+        // Nominal reference level at 80% macOS system slider (-12.7 dB standard listening baseline)
+        let refScalar: Float = 0.80
+        let refDB = getDeviceDecibels(for: refScalar, deviceID: targetDeviceID)
+        let currentDB = getDeviceDecibels(for: sysVol, deviceID: targetDeviceID)
+        
+        // Perceptual equal-loudness compensation (k = 0.75): balances acoustic power with auditory masking
+        let deltaDB = currentDB - refDB
+        let compensationDB = -0.75 * deltaDB
+        let compensationRatio = pow(10.0, compensationDB / 20.0)
+        
+        _cachedCompensationMultiplier = min(60.0, max(0.1, compensationRatio))
+    }
+    
     fileprivate func handleVolumeChange() {
         Logger.audio.debug("System output volume changed")
+        recalculateCompensationMultiplier()
         NotificationCenter.default.post(
             name: .systemVolumeDidChange,
             object: nil
@@ -509,6 +544,7 @@ final class AudioDeviceManager {
     fileprivate func handleDefaultDeviceChange() {
         Logger.audio.info("System default audio device changed")
         updateVolumeListener()
+        recalculateCompensationMultiplier()
         NotificationCenter.default.post(
             name: .systemDefaultAudioDeviceDidChange,
             object: nil
@@ -519,6 +555,7 @@ final class AudioDeviceManager {
         Logger.audio.info("Audio device list changed, re-enumerating devices")
         enumerateAndCacheDevices()
         updateVolumeListener()
+        recalculateCompensationMultiplier()
         NotificationCenter.default.post(
             name: .audioDeviceListDidChange,
             object: nil
