@@ -404,6 +404,105 @@ struct L10n {
         }
     }
     
+    // MARK: - Spatial Audio Section
+    static var spatialAudio: String {
+        switch lang {
+        case .english: return "Spatial audio"
+        case .spanish: return "Audio espacial"
+        case .french: return "Audio spatial"
+        case .chinese: return "空间声场"
+        case .japanese: return "空間オーディオ"
+        case .german: return "Raumklang"
+        case .vietnamese: return "Âm thanh không gian"
+        case .italian: return "Audio spaziale"
+        case .portuguese: return "Áudio espacial"
+        }
+    }
+    
+    static var spatialAudioSubtitle: String {
+        switch lang {
+        case .english: return "Simulate realistic key and mouse positions in stereo audio"
+        case .spanish: return "Simular posiciones reales de teclas y ratón en audio estéreo"
+        case .french: return "Simuler les positions réelles des touches et de la souris en stéréo"
+        case .chinese: return "根据按键与鼠标物理位置模拟立体声声场"
+        case .japanese: return "キーとマウスの物理位置に応じたステレオ定位を再現"
+        case .german: return "Realistische Tasten- und Mauspositionen im Stereobild simulieren"
+        case .vietnamese: return "Mô phỏng vị trí phím và chuột thực tế trong âm thanh stereo"
+        case .italian: return "Simula la posizione reale di tasti e mouse in stereo"
+        case .portuguese: return "Simula as posições reais de teclas e mouse em áudio estéreo"
+        }
+    }
+    
+    static var stereoSpread: String {
+        switch lang {
+        case .english: return "Stereo spread"
+        case .spanish: return "Amplitud estéreo"
+        case .french: return "Largeur stéréo"
+        case .chinese: return "声场广度"
+        case .japanese: return "ステレオの広がり"
+        case .german: return "Stereobreite"
+        case .vietnamese: return "Độ rộng stereo"
+        case .italian: return "Ampiezza stereo"
+        case .portuguese: return "Largura estéreo"
+        }
+    }
+    
+    static var mousePlacement: String {
+        switch lang {
+        case .english: return "Mouse placement"
+        case .spanish: return "Ubicación del ratón"
+        case .french: return "Position de la souris"
+        case .chinese: return "鼠标方位"
+        case .japanese: return "マウスの位置"
+        case .german: return "Mausplatzierung"
+        case .vietnamese: return "Vị trí chuột"
+        case .italian: return "Posizione mouse"
+        case .portuguese: return "Posição do mouse"
+        }
+    }
+    
+    static var mouseRight: String {
+        switch lang {
+        case .english: return "Right side"
+        case .spanish: return "Lado derecho"
+        case .french: return "Côté droit"
+        case .chinese: return "右侧"
+        case .japanese: return "右側"
+        case .german: return "Rechte Seite"
+        case .vietnamese: return "Bên phải"
+        case .italian: return "Lato destro"
+        case .portuguese: return "Lado direito"
+        }
+    }
+    
+    static var mouseLeft: String {
+        switch lang {
+        case .english: return "Left side"
+        case .spanish: return "Lado izquierdo"
+        case .french: return "Côté gauche"
+        case .chinese: return "左侧"
+        case .japanese: return "左側"
+        case .german: return "Linke Seite"
+        case .vietnamese: return "Bên trái"
+        case .italian: return "Lato sinistro"
+        case .portuguese: return "Lado esquerdo"
+        }
+    }
+    
+    static var mouseCenter: String {
+        switch lang {
+        case .english: return "Center"
+        case .spanish: return "Centro"
+        case .french: return "Centre"
+        case .chinese: return "居中"
+        case .japanese: return "中央"
+        case .german: return "Mitte"
+        case .vietnamese: return "Ở giữa"
+        case .italian: return "Centro"
+        case .portuguese: return "Centro"
+        }
+    }
+    
     static var soundpacks: String {
         switch lang {
         case .english: return "Soundpacks"

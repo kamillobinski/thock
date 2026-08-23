@@ -10,6 +10,9 @@ struct SoundSettingsView: View {
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
     @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
     @State private var mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()
+    @State private var spatialAudioEnabled = SettingsEngine.shared.isSpatialAudioEnabled()
+    @State private var spatialSpreadIntensity = Double(SettingsEngine.shared.getSpatialSpreadIntensity())
+    @State private var mouseSpatialPosition = SettingsEngine.shared.getMouseSpatialPosition()
     @State private var refreshID = UUID()
     
     var body: some View {
@@ -77,6 +80,63 @@ struct SoundSettingsView: View {
                         ),
                         isLast: true
                     )
+                }
+                
+                SettingsSectionView(title: L10n.spatialAudio) {
+                    SettingsRowView(
+                        title: L10n.spatialAudio,
+                        subtitle: L10n.spatialAudioSubtitle,
+                        control: AnyView(
+                            Toggle("", isOn: $spatialAudioEnabled)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: spatialAudioEnabled) { newValue in
+                                    SettingsEngine.shared.setSpatialAudioEnabled(newValue)
+                                }
+                        ),
+                        isLast: !spatialAudioEnabled
+                    )
+                    
+                    if spatialAudioEnabled {
+                        SettingsRowView(
+                            title: L10n.stereoSpread,
+                            subtitle: nil,
+                            control: AnyView(
+                                HStack(spacing: 8) {
+                                    Text("\(Int(spatialSpreadIntensity * 100))%")
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundColor(.secondary)
+                                        .frame(width: 36, alignment: .trailing)
+                                    
+                                    Slider(value: $spatialSpreadIntensity, in: 0...1, step: 0.05)
+                                        .frame(width: 196)
+                                        .onChange(of: spatialSpreadIntensity) { newValue in
+                                            SettingsEngine.shared.setSpatialSpreadIntensity(Float(newValue))
+                                        }
+                                }
+                            )
+                        )
+                        
+                        SettingsRowView(
+                            title: L10n.mousePlacement,
+                            subtitle: nil,
+                            control: AnyView(
+                                Picker("", selection: $mouseSpatialPosition) {
+                                    Text(L10n.mouseLeft).tag(Float(-1.0))
+                                    Text(L10n.mouseCenter).tag(Float(0.0))
+                                    Text(L10n.mouseRight).tag(Float(1.0))
+                                }
+                                .pickerStyle(.segmented)
+                                .controlSize(.small)
+                                .frame(width: 200)
+                                .onChange(of: mouseSpatialPosition) { newValue in
+                                    SettingsEngine.shared.setMouseSpatialPosition(newValue)
+                                }
+                            ),
+                            isLast: true
+                        )
+                    }
                 }
                 
                 SettingsSectionView(title: L10n.filters) {
@@ -206,6 +266,9 @@ struct SoundSettingsView: View {
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
+            spatialAudioEnabled = SettingsEngine.shared.isSpatialAudioEnabled()
+            spatialSpreadIntensity = Double(SettingsEngine.shared.getSpatialSpreadIntensity())
+            mouseSpatialPosition = SettingsEngine.shared.getMouseSpatialPosition()
         }
         .onReceive(NotificationCenter.default.publisher(for: .mouseSoundDidChange)) { _ in
             mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()

@@ -43,16 +43,18 @@ final class SoundEngine {
         // Play random sound from the list
         if let soundFileName = keySoundList.randomElement() {
             recordLatencyCheckpoint(latencyId, point: .soundSelected)
-            play(sound: soundFileName, latencyId: latencyId)
+            let pan = SpatialPositionHelper.panForKeyCode(keyCode)
+            play(sound: soundFileName, pan: pan, latencyId: latencyId)
         }
     }
     
     /// Plays a specific sound by name
     /// - Parameters:
     ///   - name: The sound file name
+    ///   - pan: Optional horizontal pan position (-1.0 to 1.0)
     ///   - latencyId: Optional UUID for latency measurement tracking
-    func play(sound name: String, latencyId: UUID? = nil) {
+    func play(sound name: String, pan: Float? = nil, latencyId: UUID? = nil) {
         let pitchVariation = SettingsEngine.shared.getPitchVariation()
-        SoundManager.shared.play(sound: name, pitchVariation: pitchVariation, latencyId: latencyId)
+        SoundManager.shared.play(sound: name, pitchVariation: pitchVariation, pan: pan, latencyId: latencyId)
     }
 }

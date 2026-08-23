@@ -15,6 +15,9 @@ final class SettingsManager {
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
+    static let defaultSpatialAudioEnabled: Bool = true
+    static let defaultSpatialSpreadIntensity: Float = 0.7
+    static let defaultMouseSpatialPosition: Float = 1.0
     
     
     private init() {}
@@ -87,6 +90,24 @@ final class SettingsManager {
         set { UserDefaults.autoEnableOnHeadphone = newValue }
     }
     
+    /// Whether spatial audio / stereo panning is enabled.
+    var spatialAudioEnabled: Bool {
+        get { UserDefaults.spatialAudioEnabled }
+        set { UserDefaults.spatialAudioEnabled = newValue }
+    }
+    
+    /// Spatial spread intensity from 0.0 (mono) to 1.0 (full spread).
+    var spatialSpreadIntensity: Float {
+        get { UserDefaults.spatialSpreadIntensity }
+        set { UserDefaults.spatialSpreadIntensity = newValue }
+    }
+    
+    /// Horizontal position for mouse sounds (-1.0 left to 1.0 right).
+    var mouseSpatialPosition: Float {
+        get { UserDefaults.mouseSpatialPosition }
+        set { UserDefaults.mouseSpatialPosition = newValue }
+    }
+    
     /// Whether keyboard cleaning mode is active. NOT PERSISTED
     var isCleaningMode: Bool {
         get { UtilityManager.shared.isCleaningMode }
@@ -107,6 +128,9 @@ private extension UserDefaults {
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
+        static let spatialAudioEnabled = "spatialAudioEnabled"
+        static let spatialSpreadIntensity = "spatialSpreadIntensity"
+        static let mouseSpatialPosition = "mouseSpatialPosition"
     }
     
     static var openAtLogin: Bool {
@@ -195,10 +219,20 @@ private extension UserDefaults {
     
     static var perDeviceVolumes: [String: Float] {
         get {
-            if standard.object(forKey: Keys.perDeviceVolumes) == nil {
+            guard let dict = standard.dictionary(forKey: Keys.perDeviceVolumes) else {
                 return SettingsManager.defaultPerDeviceVolumes
             }
-            return standard.dictionary(forKey: Keys.perDeviceVolumes) as? [String: Float] ?? SettingsManager.defaultPerDeviceVolumes
+            var result: [String: Float] = [:]
+            for (key, value) in dict {
+                if let num = value as? NSNumber {
+                    result[key] = num.floatValue
+                } else if let floatVal = value as? Float {
+                    result[key] = floatVal
+                } else if let doubleVal = value as? Double {
+                    result[key] = Float(doubleVal)
+                }
+            }
+            return result
         }
         set {
             standard.set(newValue, forKey: Keys.perDeviceVolumes)
@@ -238,6 +272,42 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.autoEnableOnHeadphone)
+        }
+    }
+    
+    static var spatialAudioEnabled: Bool {
+        get {
+            if standard.object(forKey: Keys.spatialAudioEnabled) == nil {
+                return SettingsManager.defaultSpatialAudioEnabled
+            }
+            return standard.bool(forKey: Keys.spatialAudioEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.spatialAudioEnabled)
+        }
+    }
+    
+    static var spatialSpreadIntensity: Float {
+        get {
+            if standard.object(forKey: Keys.spatialSpreadIntensity) == nil {
+                return SettingsManager.defaultSpatialSpreadIntensity
+            }
+            return standard.float(forKey: Keys.spatialSpreadIntensity)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.spatialSpreadIntensity)
+        }
+    }
+    
+    static var mouseSpatialPosition: Float {
+        get {
+            if standard.object(forKey: Keys.mouseSpatialPosition) == nil {
+                return SettingsManager.defaultMouseSpatialPosition
+            }
+            return standard.float(forKey: Keys.mouseSpatialPosition)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.mouseSpatialPosition)
         }
     }
 }

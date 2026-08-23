@@ -208,6 +208,35 @@ final class SettingsEngine {
             AppEngine.shared.setEnabled(headphoneConnected)
         }
     }
+    
+    // MARK: - Spatial Audio
+    
+    func isSpatialAudioEnabled() -> Bool {
+        return SettingsManager.shared.spatialAudioEnabled
+    }
+    
+    func setSpatialAudioEnabled(_ enabled: Bool) {
+        SettingsManager.shared.spatialAudioEnabled = enabled
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    func getSpatialSpreadIntensity() -> Float {
+        return SettingsManager.shared.spatialSpreadIntensity
+    }
+    
+    func setSpatialSpreadIntensity(_ intensity: Float) {
+        SettingsManager.shared.spatialSpreadIntensity = intensity
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    func getMouseSpatialPosition() -> Float {
+        return SettingsManager.shared.mouseSpatialPosition
+    }
+    
+    func setMouseSpatialPosition(_ position: Float) {
+        SettingsManager.shared.mouseSpatialPosition = position
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
 }
 
 // MARK: - Notifications

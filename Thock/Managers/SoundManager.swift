@@ -60,12 +60,16 @@ final class SoundManager {
         let latencyId: UUID?
         var hasReportedPlayback: Bool = false
         let pitchOffset: Float
+        let panGainLeft: Float
+        let panGainRight: Float
         
-        init(pcmData: [Float], frameCount: Int, latencyId: UUID?, pitchOffset: Float) {
+        init(pcmData: [Float], frameCount: Int, latencyId: UUID?, pitchOffset: Float, panGainLeft: Float = 1.0, panGainRight: Float = 1.0) {
             self.pcmData = pcmData
             self.frameCount = frameCount
             self.latencyId = latencyId
             self.pitchOffset = pitchOffset
+            self.panGainLeft = panGainLeft
+            self.panGainRight = panGainRight
         }
         
         var isFinished: Bool {
@@ -632,6 +636,9 @@ final class SoundManager {
                 completeLatencyMeasurement(sound.latencyId)
             }
             
+            let soundVolLeft = currentVolume * sound.panGainLeft
+            let soundVolRight = currentVolume * sound.panGainRight
+            
             // EARLY EXIT FOR PITCH
             if sound.pitchOffset == 0.0 {
                 let remainingFrames = sound.frameCount - sound.currentFrame
@@ -642,21 +649,32 @@ final class SoundManager {
                     let sampleCount = framesToCopy * Int(channelCount)
                     
                     sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
-                        var volumeScalar = currentVolume
-                        vDSP_vsma(
-                            pcmBuffer.baseAddress!.advanced(by: startSample), 1,
-                            &volumeScalar,
-                            outputBuffer, 1,
-                            outputBuffer, 1,
-                            vDSP_Length(sampleCount)
-                        )
+                        if soundVolLeft == soundVolRight {
+                            var volumeScalar = soundVolLeft
+                            vDSP_vsma(
+                                pcmBuffer.baseAddress!.advanced(by: startSample), 1,
+                                &volumeScalar,
+                                outputBuffer, 1,
+                                outputBuffer, 1,
+                                vDSP_Length(sampleCount)
+                            )
+                        } else {
+                            var volL = soundVolLeft
+                            var volR = soundVolRight
+                            let sampleCountPerChannel = vDSP_Length(framesToCopy)
+                            let src = pcmBuffer.baseAddress!.advanced(by: startSample)
+                            // Left channel (stride 2)
+                            vDSP_vsma(src, 2, &volL, outputBuffer, 2, outputBuffer, 2, sampleCountPerChannel)
+                            // Right channel (stride 2)
+                            vDSP_vsma(src.advanced(by: 1), 2, &volR, outputBuffer.advanced(by: 1), 2, outputBuffer.advanced(by: 1), 2, sampleCountPerChannel)
+                        }
                     }
                     
                     sound.currentFrame += framesToCopy
                 }
             } else {
                 // Pitch variation enabled RESAMPLING TIME
-                renderWithPitch(sound: sound, outputBuffer: outputBuffer, frameCount: frameCount, volume: currentVolume)
+                renderWithPitch(sound: sound, outputBuffer: outputBuffer, frameCount: frameCount, volLeft: soundVolLeft, volRight: soundVolRight)
             }
         }
         
@@ -678,7 +696,7 @@ final class SoundManager {
     // MARK: - Pitch Shifting
     
     /// Renders audio with pitch shifting via linear interpolation resampling
-    private func renderWithPitch(sound: ActiveSound, outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int, volume: Float) {
+    private func renderWithPitch(sound: ActiveSound, outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int, volLeft: Float, volRight: Float) {
         // Semitones to playback rate conv
         let playbackRate = pow(2.0, sound.pitchOffset / 12.0)
         
@@ -716,8 +734,8 @@ final class SoundManager {
                 
                 // Mix into output buffer with volume
                 let outputIndex = outputFrame * Int(channelCount)
-                outputBuffer[outputIndex] += leftInterpolated * volume
-                outputBuffer[outputIndex + 1] += rightInterpolated * volume
+                outputBuffer[outputIndex] += leftInterpolated * volLeft
+                outputBuffer[outputIndex + 1] += rightInterpolated * volRight
             }
         }
         
@@ -735,9 +753,16 @@ final class SoundManager {
         AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
     }
     
+    /// Mouse nominal gain scaling to balance microswitch clicks with keyboard typing sounds.
+    private static let mouseNominalGain: Float = 0.68
+    
     // MARK: - Public API
     
     func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil) {
+        play(sound: name, pitchVariation: pitchVariation, pan: nil, latencyId: latencyId)
+    }
+    
+    func play(sound name: String, pitchVariation: Float = 0.0, pan: Float? = nil, latencyId: UUID? = nil) {
         queueStateLock.lock()
         let ready = isReady
         queueStateLock.unlock()
@@ -779,11 +804,22 @@ final class SoundManager {
             pitchOffset = 0.0
         }
         
+        // Calculate spatial gains
+        let gains: SpatialPositionHelper.StereoGains
+        if SettingsEngine.shared.isSpatialAudioEnabled(), let pan = pan {
+            let spread = SettingsEngine.shared.getSpatialSpreadIntensity()
+            gains = SpatialPositionHelper.calculateGains(pan: pan, spread: spread)
+        } else {
+            gains = SpatialPositionHelper.StereoGains(left: 1.0, right: 1.0)
+        }
+        
         let activeSound = ActiveSound(
             pcmData: pcmSound.data,
             frameCount: pcmSound.frameCount,
             latencyId: latencyId,
-            pitchOffset: pitchOffset
+            pitchOffset: pitchOffset,
+            panGainLeft: gains.left,
+            panGainRight: gains.right
         )
         
         activeSoundsLock.lock()
@@ -846,7 +882,7 @@ final class SoundManager {
     }
     
     /// Plays a sound for the specified mouse button event.
-    func playMouseSound(for event: MouseButtonEvent) {
+    func playMouseSound(for event: MouseButtonEvent, pan: Float? = nil) {
         guard let sounds = mouseSoundLibrary[event], let sound = sounds.randomElement() else {
             Logger.audio.warning("Mouse sound not found for event: \(event)")
             return
@@ -886,11 +922,24 @@ final class SoundManager {
             pitchOffset = 0.0
         }
         
+        // Calculate spatial gains
+        let gains: SpatialPositionHelper.StereoGains
+        if SettingsEngine.shared.isSpatialAudioEnabled() {
+            let mousePan = pan ?? SettingsEngine.shared.getMouseSpatialPosition()
+            let spread = SettingsEngine.shared.getSpatialSpreadIntensity()
+            gains = SpatialPositionHelper.calculateGains(pan: mousePan, spread: spread)
+        } else {
+            gains = SpatialPositionHelper.StereoGains(left: 1.0, right: 1.0)
+        }
+        
+        let mouseGain = Self.mouseNominalGain
         let activeSound = ActiveSound(
             pcmData: sound.data,
             frameCount: sound.frameCount,
             latencyId: nil,
-            pitchOffset: pitchOffset
+            pitchOffset: pitchOffset,
+            panGainLeft: gains.left * mouseGain,
+            panGainRight: gains.right * mouseGain
         )
         
         activeSoundsLock.lock()
