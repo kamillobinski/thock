@@ -240,16 +240,18 @@ final class SoundManager {
             return 0.0
         }
         
-        // Target reference level at 50% macOS system slider
-        let refScalar: Float = 0.5
-        let refAmp = AudioDeviceManager.shared.getHardwareAmplitude(for: refScalar, deviceID: preferredDeviceID)
-        let currentAmp = AudioDeviceManager.shared.getHardwareAmplitude(for: sysVol, deviceID: preferredDeviceID)
+        // Nominal reference level at 80% macOS system slider (-12.7 dB standard listening baseline)
+        let refScalar: Float = 0.80
+        let refDB = AudioDeviceManager.shared.getDeviceDecibels(for: refScalar, deviceID: preferredDeviceID)
+        let currentDB = AudioDeviceManager.shared.getDeviceDecibels(for: sysVol, deviceID: preferredDeviceID)
         
-        // Exact hardware acoustic inverse compensation ratio
-        let compensationRatio = refAmp / max(0.0005, currentAmp)
+        // Perceptual equal-loudness compensation (k = 0.75): balances acoustic power with auditory masking
+        let deltaDB = currentDB - refDB
+        let compensationDB = -0.75 * deltaDB
+        let compensationRatio = pow(10.0, compensationDB / 20.0)
         
-        // Allow dynamic amplification up to 35.0x and down to 0.02x to guarantee 100% constant physical loudness
-        let clampedRatio = min(35.0, max(0.02, compensationRatio))
+        // Bound multiplier between 0.1x (at 100% sysVol) and 60.0x (at 5% sysVol)
+        let clampedRatio = min(60.0, max(0.1, compensationRatio))
         return base * clampedRatio
     }
     
