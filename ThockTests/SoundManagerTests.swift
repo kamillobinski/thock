@@ -151,8 +151,8 @@ struct SoundManagerTests {
         SettingsEngine.shared.setSpatialSpreadIntensity(0.5)
         #expect(abs(SettingsEngine.shared.getSpatialSpreadIntensity() - 0.5) < 0.01)
         
-        SettingsEngine.shared.setMouseSpatialPosition(0.8)
-        #expect(abs(SettingsEngine.shared.getMouseSpatialPosition() - 0.8) < 0.01)
+        SettingsEngine.shared.setMouseSpatialPosition(1.0)
+        #expect(abs(SettingsEngine.shared.getMouseSpatialPosition() - 1.0) < 0.01)
     }
     
     // MARK: - Thread Safety Tests

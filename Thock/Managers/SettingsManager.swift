@@ -17,7 +17,7 @@ final class SettingsManager {
     static let defaultAutoEnableOnHeadphone: Bool = false
     static let defaultSpatialAudioEnabled: Bool = true
     static let defaultSpatialSpreadIntensity: Float = 0.7
-    static let defaultMouseSpatialPosition: Float = 0.8
+    static let defaultMouseSpatialPosition: Float = 1.0
     
     
     private init() {}

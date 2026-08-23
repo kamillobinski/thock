@@ -123,9 +123,9 @@ struct SoundSettingsView: View {
                             subtitle: nil,
                             control: AnyView(
                                 Picker("", selection: $mouseSpatialPosition) {
-                                    Text(L10n.mouseLeft).tag(Float(-0.85))
+                                    Text(L10n.mouseLeft).tag(Float(-1.0))
                                     Text(L10n.mouseCenter).tag(Float(0.0))
-                                    Text(L10n.mouseRight).tag(Float(0.85))
+                                    Text(L10n.mouseRight).tag(Float(1.0))
                                 }
                                 .pickerStyle(.segmented)
                                 .controlSize(.small)

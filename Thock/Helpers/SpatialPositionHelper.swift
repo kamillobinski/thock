@@ -138,7 +138,7 @@ struct SpatialPositionHelper {
         return keyPositionMap[keyCode] ?? 0.0
     }
     
-    /// Calculates left and right channel gains using the constant-power panning law.
+    /// Calculates left and right channel gains using the constant-power panning law with enhanced channel isolation.
     /// - Parameters:
     ///   - pan: Horizontal position from -1.0 (full left) to +1.0 (full right).
     ///   - spread: Spatial spread intensity from 0.0 (mono/centered) to 1.0 (full width).
@@ -156,8 +156,20 @@ struct SpatialPositionHelper {
         
         // Equal power panning with center normalized to 1.0 (multiplied by sqrt(2))
         let sqrt2 = Float(1.41421356)
-        let leftGain = cos(angle) * sqrt2
-        let rightGain = sin(angle) * sqrt2
+        var leftGain = cos(angle) * sqrt2
+        var rightGain = sin(angle) * sqrt2
+        
+        // Enhance lateral channel separation for side positions (especially mouse and outer keys)
+        if abs(effectivePan) > 0.4 {
+            let isolation = (abs(effectivePan) - 0.4) / 0.6 // 0.0 to 1.0
+            if effectivePan > 0 {
+                // Panned right: aggressively attenuate left bleed
+                leftGain *= max(0.0, 1.0 - isolation * 0.95)
+            } else {
+                // Panned left: aggressively attenuate right bleed
+                rightGain *= max(0.0, 1.0 - isolation * 0.95)
+            }
+        }
         
         return StereoGains(left: leftGain, right: rightGain)
     }
