@@ -177,6 +177,37 @@ final class AudioDeviceManager {
         return 1.0
     }
     
+    /// Converts a volume scalar (0.0 - 1.0) to hardware decibels using CoreAudio hardware device curve.
+    func getDeviceDecibels(for scalar: Float, deviceID: AudioDeviceID? = nil) -> Float {
+        guard let targetDeviceID = deviceID ?? getSystemDefaultDeviceID() else {
+            return -60.0 * (1.0 - max(0.0, min(1.0, scalar)))
+        }
+        
+        var val = Float32(scalar)
+        var size = UInt32(MemoryLayout<Float32>.size)
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyVolumeScalarToDecibels,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        if AudioObjectHasProperty(targetDeviceID, &address) {
+            let status = AudioObjectGetPropertyData(targetDeviceID, &address, 0, nil, &size, &val)
+            if status == noErr {
+                return val
+            }
+        }
+        
+        // Fallback: standard macOS dB transfer curve (-60dB at 0.0 to 0dB at 1.0)
+        return -60.0 * (1.0 - max(0.0, min(1.0, scalar)))
+    }
+    
+    /// Returns the true physical hardware acoustic amplitude (0.0 - 1.0) for a given volume scalar.
+    func getHardwareAmplitude(for scalar: Float, deviceID: AudioDeviceID? = nil) -> Float {
+        let db = getDeviceDecibels(for: scalar, deviceID: deviceID)
+        return pow(10.0, db / 20.0)
+    }
+    
     /// Sets up or updates the volume listener for the current output device.
     func updateVolumeListener(for deviceID: AudioDeviceID? = nil) {
         removeVolumeListener()

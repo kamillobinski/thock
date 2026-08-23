@@ -240,14 +240,16 @@ final class SoundManager {
             return 0.0
         }
         
-        // Physical loudness = bufferAmplitude * sysVol
-        // By setting bufferAmplitude = base * (0.5 / sysVol):
-        // Physical loudness = base * (0.5 / sysVol) * sysVol = base * 0.5 (constant across all system volume adjustments!)
-        let clampedSysVol = max(0.05, min(1.0, sysVol))
-        let compensationRatio = 0.5 / clampedSysVol
+        // Target reference level at 50% macOS system slider
+        let refScalar: Float = 0.5
+        let refAmp = AudioDeviceManager.shared.getHardwareAmplitude(for: refScalar, deviceID: preferredDeviceID)
+        let currentAmp = AudioDeviceManager.shared.getHardwareAmplitude(for: sysVol, deviceID: preferredDeviceID)
         
-        // Support dynamic amplification without artificial 1.0 clipping
-        let clampedRatio = min(8.0, max(0.25, compensationRatio))
+        // Exact hardware acoustic inverse compensation ratio
+        let compensationRatio = refAmp / max(0.0005, currentAmp)
+        
+        // Allow dynamic amplification up to 35.0x and down to 0.02x to guarantee 100% constant physical loudness
+        let clampedRatio = min(35.0, max(0.02, compensationRatio))
         return base * clampedRatio
     }
     
