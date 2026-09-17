@@ -46,7 +46,7 @@ struct GeneralSettingsView: View {
                         title: L10n.launchAtLogin,
                         subtitle: L10n.launchAtLoginSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $openAtLogin)
+                            Toggle(L10n.launchAtLoginSubtitle, isOn: $openAtLogin)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -66,6 +66,7 @@ struct GeneralSettingsView: View {
                                 }
                             }
                             .pickerStyle(.menu)
+                            .accessibilityLabel(L10n.language)
                             .controlSize(.small)
                         ),
                         isLast: true

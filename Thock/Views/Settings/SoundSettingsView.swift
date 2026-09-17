@@ -26,6 +26,7 @@ struct SoundSettingsView: View {
                                     .foregroundColor(.secondary)
                                 
                                 Slider(value: $volume, in: 0...1, step: 0.125)
+                                    .accessibilityLabel(L10n.volume)
                                     .frame(width: 240)
                                     .onChange(of: volume) { newValue in
                                         SettingsEngine.shared.setVolume(Float(newValue))
@@ -54,6 +55,7 @@ struct SoundSettingsView: View {
                                 }
                             }
                                 .pickerStyle(.menu)
+                            .accessibilityLabel(L10n.playThrough)
                                 .controlSize(.small)
                                 .frame(width: 200, alignment: .trailing)
                                 .onChange(of: selectedDeviceUID) { newValue in
@@ -67,7 +69,7 @@ struct SoundSettingsView: View {
                         title: L10n.mouseClickSound,
                         subtitle: nil,
                         control: AnyView(
-                            Toggle("", isOn: $mouseSoundEnabled)
+                            Toggle(L10n.mouseClickSound, isOn: $mouseSoundEnabled)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -84,7 +86,7 @@ struct SoundSettingsView: View {
                         title: L10n.disableModifierKeys,
                         subtitle: L10n.disableModifierKeysSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $disableModifierKeys)
+                            Toggle(L10n.disableModifierKeysSubtitle, isOn: $disableModifierKeys)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -98,7 +100,7 @@ struct SoundSettingsView: View {
                         title: L10n.ignoreRapidKeys,
                         subtitle: L10n.ignoreRapidKeysSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $ignoreRapidKeyEvents)
+                            Toggle(L10n.ignoreRapidKeysSubtitle, isOn: $ignoreRapidKeyEvents)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -112,7 +114,7 @@ struct SoundSettingsView: View {
                         title: L10n.autoMute,
                         subtitle: L10n.autoMuteSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $autoMuteOnMusicPlayback)
+                            Toggle(L10n.autoMuteSubtitle, isOn: $autoMuteOnMusicPlayback)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -126,7 +128,7 @@ struct SoundSettingsView: View {
                         title: L10n.autoEnableOnHeadphone,
                         subtitle: L10n.autoEnableOnHeadphoneSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: Binding(
+                            Toggle(L10n.autoEnableOnHeadphoneSubtitle, isOn: Binding(
                                 get: { SettingsEngine.shared.isAutoEnableOnHeadphoneEnabled() },
                                 set: { SettingsEngine.shared.setAutoEnableOnHeadphone($0) }
                             ))
@@ -143,7 +145,7 @@ struct SoundSettingsView: View {
                         title: L10n.audioLatency,
                         subtitle: L10n.audioLatencySubtitle,
                         control: AnyView(
-                            Picker("", selection: $audioBufferSize) {
+                            Picker(L10n.audioLatencySubtitle, selection: $audioBufferSize) {
                                 Text(L10n.ultraLow).tag(UInt32(64))
                                 Text(L10n.low).tag(UInt32(128))
                                 Text(L10n.normal).tag(UInt32(256))
@@ -163,7 +165,7 @@ struct SoundSettingsView: View {
                         title: L10n.reduceCPU,
                         subtitle: L10n.reduceCPUSubtitle,
                         control: AnyView(
-                            Picker("", selection: $idleTimeoutSeconds) {
+                            Picker(L10n.reduceCPUSubtitle, selection: $idleTimeoutSeconds) {
                                 Text(L10n.seconds5).tag(5.0)
                                 Text(L10n.seconds10).tag(10.0)
                                 Text(L10n.seconds30).tag(30.0)
