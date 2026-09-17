@@ -247,6 +247,7 @@ private struct SoundpackRegistryRowView: View {
             }
             .buttonStyle(.plain)
             .help("Remove soundpack")
+            .accessibilityLabel("Remove soundpack \(entry.metadata.name)")
         } else {
             Button(action: onInstall) {
                 Image(systemName: "arrow.down.circle")
@@ -255,6 +256,7 @@ private struct SoundpackRegistryRowView: View {
             }
             .buttonStyle(.plain)
             .help("Install soundpack")
+            .accessibilityLabel("Install soundpack \(entry.metadata.name)")
         }
     }
 }
@@ -285,6 +287,7 @@ private struct SoundpackCustomRowView: View {
                 }
                     .buttonStyle(.plain)
                     .help("Remove soundpack")
+                    .accessibilityLabel("Remove soundpack \(soundpack.name)")
             ),
             isLast: isLast
         )
