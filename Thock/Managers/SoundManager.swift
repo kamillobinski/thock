@@ -15,6 +15,9 @@ final class SoundManager {
     private(set) var isReady = false
     
     // MARK: - Audio Queue State
+    // Serialize queue lifetime operations. Render callbacks must not take this lock:
+    // synchronous Stop/Dispose waits for callbacks before buffers/formats are replaced.
+    private let audioLifecycleLock = NSRecursiveLock()
     private var audioQueue: AudioQueueRef?
     private let numberOfBuffers = 3
     private var audioBuffers: [AudioQueueBufferRef] = []
@@ -30,7 +33,19 @@ final class SoundManager {
     private let channelCount: UInt32 = 2
     private let bitsPerChannel: UInt32 = 32
     private var framesPerBuffer: UInt32
-    private var currentBufferSize: UInt32 = SettingsManager.shared.audioBufferSize
+    private var storedBufferSize: UInt32 = SettingsManager.shared.audioBufferSize
+    private var currentBufferSize: UInt32 {
+        get {
+            audioLifecycleLock.lock()
+            defer { audioLifecycleLock.unlock() }
+            return storedBufferSize
+        }
+        set {
+            audioLifecycleLock.lock()
+            defer { audioLifecycleLock.unlock() }
+            storedBufferSize = newValue
+        }
+    }
     
     private var audioFormat = AudioStreamBasicDescription()
     
@@ -75,7 +90,7 @@ final class SoundManager {
     
     // MARK: - Initialization
     private init() {
-        framesPerBuffer = currentBufferSize
+        framesPerBuffer = storedBufferSize
         detectHardwareSampleRate()
         setupAudioFormat()
         configureLowLatencyAudio()
@@ -209,6 +224,9 @@ final class SoundManager {
     }
     
     private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false) {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+
         detectHardwareSampleRate()
         
         // Cancel idle timer
@@ -301,6 +319,9 @@ final class SoundManager {
     }
     
     private func stopQueueIfIdle() {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+
         activeSoundsLock.lock()
         let isEmpty = activeSounds.isEmpty
         activeSoundsLock.unlock()
@@ -340,6 +361,9 @@ final class SoundManager {
     }
     
     private func restartQueue() {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+
         queueStateLock.lock()
         let isRunning = isQueueRunning
         let queue = audioQueue
@@ -358,7 +382,9 @@ final class SoundManager {
             return
         }
         
+        activeSoundsLock.lock()
         idleCallbackCount = 0
+        activeSoundsLock.unlock()
         // Re-prime all buffers
         Logger.audio.debug("Re-priming \(self.audioBuffers.count) buffers before restart")
         for buffer in audioBuffers {
@@ -469,17 +495,13 @@ final class SoundManager {
     
     // MARK: - Audio Queue Creation
     
-    /// Creates audio queue, ensuring it's always on the main thread's runloop
+    /// Uses AudioQueue's internal callback thread, independently of the UI run loop.
     private func createAudioQueue() {
-        if !Thread.isMainThread {
-            DispatchQueue.main.sync {
-                createAudioQueueInternal()
-            }
-            return
-        }
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
         createAudioQueueInternal()
     }
-    
+
     /// Internal audio queue creation
     private func createAudioQueueInternal() {
         let selfPointer = Unmanaged.passUnretained(self).toOpaque()
@@ -488,8 +510,8 @@ final class SoundManager {
             &audioFormat,
             audioQueueCallback,
             selfPointer,
-            CFRunLoopGetMain(),
-            CFRunLoopMode.commonModes.rawValue,
+            nil, // Let AudioQueue deliver render callbacks on its internal thread.
+            nil,
             0,
             &audioQueue
         )
@@ -621,8 +643,9 @@ final class SoundManager {
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
-        // No lock here coz float reads are atomic
+        volumeLock.lock()
         let currentVolume = volume
+        volumeLock.unlock()
         
         for sound in activeSounds {
             // Report playback started on first render
@@ -662,12 +685,13 @@ final class SoundManager {
         
         let initialCount = activeSounds.count
         activeSounds.removeAll(where: { $0.isFinished })
-        let finishedCount = initialCount - activeSounds.count
+        let remainingCount = activeSounds.count
+        let finishedCount = initialCount - remainingCount
         
         activeSoundsLock.unlock()
         
         if finishedCount > 0 {
-            Logger.audio.debug("Removed \(finishedCount) finished sounds, \(self.activeSounds.count) still active")
+            Logger.audio.debug("Removed \(finishedCount) finished sounds, \(remainingCount) still active")
         }
         
         // Set buffer size and enqueue
