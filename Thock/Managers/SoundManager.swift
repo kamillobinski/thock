@@ -670,9 +670,30 @@ final class SoundManager {
             Logger.audio.debug("Removed \(finishedCount) finished sounds, \(self.activeSounds.count) still active")
         }
         
+        // Summed voices can exceed nominal full scale. Compress peaks before enqueueing.
+        applySoftLimiter(to: outputBuffer, sampleCount: frameCount * Int(channelCount))
+
         // Set buffer size and enqueue
         buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
         AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+    }
+
+    /// Soft-clips summed samples above 0.7; lower amplitudes pass through unchanged.
+    /// The curve is continuous and monotonic, approaching full scale asymptotically
+    /// (floating-point rounding can reach 1.0). Like any waveshaper it adds harmonics.
+    private func applySoftLimiter(to buffer: UnsafeMutablePointer<Float>, sampleCount: Int) {
+        let threshold: Float = 0.7
+        let headroom = 1.0 - threshold
+
+        for index in 0..<sampleCount {
+            let sample = buffer[index]
+            let magnitude = abs(sample)
+            guard magnitude > threshold else { continue }
+
+            let excess = magnitude - threshold
+            let limited = threshold + headroom * (excess / (excess + headroom))
+            buffer[index] = sample < 0 ? -limited : limited
+        }
     }
     
     // MARK: - Pitch Shifting
