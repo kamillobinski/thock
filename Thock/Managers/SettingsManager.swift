@@ -15,6 +15,7 @@ final class SettingsManager {
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
+    static let defaultAppFilterBundleIDs: [String] = []
     
     
     private init() {}
@@ -92,6 +93,18 @@ final class SettingsManager {
         get { UtilityManager.shared.isCleaningMode }
         set { UtilityManager.shared.isCleaningMode = newValue }
     }
+
+    /// How the chosen app list filters sound playback.
+    var appFilterMode: AppFilterMode {
+        get { UserDefaults.appFilterMode }
+        set { UserDefaults.appFilterMode = newValue }
+    }
+
+    /// Bundle identifiers of the apps in the filter list.
+    var appFilterBundleIDs: [String] {
+        get { UserDefaults.appFilterBundleIDs }
+        set { UserDefaults.appFilterBundleIDs = newValue }
+    }
 }
 
 private extension UserDefaults {
@@ -107,6 +120,8 @@ private extension UserDefaults {
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
+        static let appFilterMode = "appFilterMode"
+        static let appFilterBundleIDs = "appFilterBundleIDs"
     }
     
     static var openAtLogin: Bool {
@@ -238,6 +253,31 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.autoEnableOnHeadphone)
+        }
+    }
+
+    static var appFilterMode: AppFilterMode {
+        get {
+            guard let raw = standard.string(forKey: Keys.appFilterMode),
+                  let mode = AppFilterMode(rawValue: raw) else {
+                return .off
+            }
+            return mode
+        }
+        set {
+            standard.set(newValue.rawValue, forKey: Keys.appFilterMode)
+        }
+    }
+
+    static var appFilterBundleIDs: [String] {
+        get {
+            if standard.object(forKey: Keys.appFilterBundleIDs) == nil {
+                return SettingsManager.defaultAppFilterBundleIDs
+            }
+            return standard.stringArray(forKey: Keys.appFilterBundleIDs) ?? SettingsManager.defaultAppFilterBundleIDs
+        }
+        set {
+            standard.set(newValue, forKey: Keys.appFilterBundleIDs)
         }
     }
 }

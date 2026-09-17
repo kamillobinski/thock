@@ -1177,4 +1177,146 @@ struct L10n {
         case .portuguese: return "Abrir documentação"
         }
     }
+
+    // MARK: - App Filter
+
+    static var apps: String {
+        switch lang {
+        case .english: return "Apps"
+        case .spanish: return "Apps"
+        case .french: return "Apps"
+        case .chinese: return "应用"
+        case .japanese: return "アプリ"
+        case .german: return "Apps"
+        case .vietnamese: return "Ứng dụng"
+        case .italian: return "App"
+        case .portuguese: return "Apps"
+        }
+    }
+
+    static var appFilter: String {
+        switch lang {
+        case .english: return "App Filter"
+        case .spanish: return "Filtro de apps"
+        case .french: return "Filtre d'applications"
+        case .chinese: return "应用过滤"
+        case .japanese: return "アプリフィルター"
+        case .german: return "App-Filter"
+        case .vietnamese: return "Bộ lọc ứng dụng"
+        case .italian: return "Filtro app"
+        case .portuguese: return "Filtro de apps"
+        }
+    }
+
+    static var appFilterDescription: String {
+        switch lang {
+        case .english: return "Choose which apps Thock plays sounds in"
+        case .spanish: return "Elige en qué apps suena Thock"
+        case .french: return "Choisissez les applications dans lesquelles Thock joue des sons"
+        case .chinese: return "选择 Thock 在哪些应用中播放声音"
+        case .japanese: return "Thock が音を鳴らすアプリを選択"
+        case .german: return "Wähle, in welchen Apps Thock Töne abspielt"
+        case .vietnamese: return "Chọn ứng dụng mà Thock phát âm thanh"
+        case .italian: return "Scegli in quali app Thock riproduce i suoni"
+        case .portuguese: return "Escolha em quais apps o Thock reproduz sons"
+        }
+    }
+
+    static var appFilterOff: String {
+        switch lang {
+        case .english: return "Off"
+        case .spanish: return "Desactivado"
+        case .french: return "Désactivé"
+        case .chinese: return "关闭"
+        case .japanese: return "オフ"
+        case .german: return "Aus"
+        case .vietnamese: return "Tắt"
+        case .italian: return "Disattivato"
+        case .portuguese: return "Desativado"
+        }
+    }
+
+    static var appFilterWhitelist: String {
+        switch lang {
+        case .english: return "Only chosen apps"
+        case .spanish: return "Solo las apps elegidas"
+        case .french: return "Uniquement les apps choisies"
+        case .chinese: return "仅限选中的应用"
+        case .japanese: return "選択したアプリのみ"
+        case .german: return "Nur ausgewählte Apps"
+        case .vietnamese: return "Chỉ những ứng dụng đã chọn"
+        case .italian: return "Solo le app scelte"
+        case .portuguese: return "Apenas as apps escolhidas"
+        }
+    }
+
+    static var appFilterBlacklist: String {
+        switch lang {
+        case .english: return "All except chosen apps"
+        case .spanish: return "Todas excepto las elegidas"
+        case .french: return "Toutes sauf les apps choisies"
+        case .chinese: return "除选中的应用外全部"
+        case .japanese: return "選択したアプリ以外すべて"
+        case .german: return "Alle außer ausgewählte Apps"
+        case .vietnamese: return "Tất cả trừ những ứng dụng đã chọn"
+        case .italian: return "Tutte tranne le app scelte"
+        case .portuguese: return "Todas exceto as apps escolhidas"
+        }
+    }
+
+    static var appFilterChosenApps: String {
+        switch lang {
+        case .english: return "Chosen Apps"
+        case .spanish: return "Apps elegidas"
+        case .french: return "Applications choisies"
+        case .chinese: return "选中的应用"
+        case .japanese: return "選択したアプリ"
+        case .german: return "Ausgewählte Apps"
+        case .vietnamese: return "Ứng dụng đã chọn"
+        case .italian: return "App scelte"
+        case .portuguese: return "Apps escolhidas"
+        }
+    }
+
+    static var appFilterEmpty: String {
+        switch lang {
+        case .english: return "No apps chosen — sounds play in all apps"
+        case .spanish: return "Sin apps elegidas: Thock suena en todas"
+        case .french: return "Aucune application choisie : les sons sont actifs partout"
+        case .chinese: return "尚未选择应用，所有应用中均会播放声音"
+        case .japanese: return "アプリ未選択：すべてのアプリで音が鳴ります"
+        case .german: return "Keine Apps ausgewählt – Töne sind in allen Apps aktiv"
+        case .vietnamese: return "Chưa chọn ứng dụng: phát âm thanh trong tất cả ứng dụng"
+        case .italian: return "Nessuna app scelta: i suoni sono attivi in tutte le app"
+        case .portuguese: return "Nenhuma app escolhida: os sons estão ativos em todas as apps"
+        }
+    }
+
+    static var appFilterAdd: String {
+        switch lang {
+        case .english: return "Add App…"
+        case .spanish: return "Añadir app…"
+        case .french: return "Ajouter une app…"
+        case .chinese: return "添加应用…"
+        case .japanese: return "アプリを追加…"
+        case .german: return "App hinzufügen…"
+        case .vietnamese: return "Thêm ứng dụng…"
+        case .italian: return "Aggiungi app…"
+        case .portuguese: return "Adicionar app…"
+        }
+    }
+
+    static var appFilterRemove: String {
+        switch lang {
+        case .english: return "Remove"
+        case .spanish: return "Quitar"
+        case .french: return "Retirer"
+        case .chinese: return "移除"
+        case .japanese: return "削除"
+        case .german: return "Entfernen"
+        case .vietnamese: return "Xóa"
+        case .italian: return "Rimuovi"
+        case .portuguese: return "Remover"
+        }
+    }
 }

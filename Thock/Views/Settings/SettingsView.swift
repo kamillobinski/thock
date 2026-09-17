@@ -4,6 +4,7 @@ import KeyboardShortcuts
 enum SettingsTab: String, CaseIterable {
     case general
     case sound
+    case apps
     case soundpacks
     case shortcuts
     case utilities
@@ -12,6 +13,7 @@ enum SettingsTab: String, CaseIterable {
         switch self {
         case .general: return L10n.general
         case .sound: return L10n.sound
+        case .apps: return L10n.apps
         case .soundpacks: return L10n.soundpacks
         case .shortcuts: return L10n.shortcuts
         case .utilities: return L10n.utilities
@@ -22,6 +24,7 @@ enum SettingsTab: String, CaseIterable {
         switch self {
         case .general: return "gearshape.fill"
         case .sound: return "speaker.wave.2.fill"
+        case .apps: return "app"
         case .soundpacks: return "music.note.list"
         case .shortcuts: return "command"
         case .utilities: return "wrench.and.screwdriver.fill"
@@ -60,6 +63,8 @@ struct SettingsView: View {
                 GeneralSettingsView()
             case .sound:
                 SoundSettingsView()
+            case .apps:
+                AppFilterSettingsView()
             case .soundpacks:
                 SoundpacksSettingsView()
             case .shortcuts:

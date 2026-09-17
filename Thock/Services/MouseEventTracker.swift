@@ -85,6 +85,11 @@ class MouseEventTracker {
                     return Unmanaged.passUnretained(event)
                 }
                 
+                // Respect the per-app filter
+                if !AppFilterService.shared.isCurrentAppAllowed {
+                    return Unmanaged.passUnretained(event)
+                }
+
                 // Map CGEventType to MouseButtonEvent and play sound
                 let mouseEvent: MouseButtonEvent?
                 switch type {
