@@ -4,6 +4,8 @@ final class PipeListenerService {
     static let shared = PipeListenerService()
     
     private let pipePath: String
+
+    private static let tokenRegex = try! NSRegularExpression(pattern: #"(".*?"|\S+)"#)
     
     private init() {
         let supportDir = FileManager.default
@@ -72,14 +74,13 @@ final class PipeListenerService {
         }
     }
     
-    private func handle(command: String) {
-        let pattern = #"(".*?"|\S+)"#
-        let regex = try! NSRegularExpression(pattern: pattern)
+    /// Splits a pipe command into its arguments, honouring double-quoted segments
+    /// so that values containing spaces survive as a single token.
+    static func tokenize(_ command: String) -> [String] {
         let nsrange = NSRange(command.startIndex..., in: command)
         
-        let matches = regex.matches(in: command, range: nsrange)
-        let components = matches.compactMap {
-            Range($0.range, in: command).map { range in
+        return tokenRegex.matches(in: command, range: nsrange).compactMap { match in
+            Range(match.range, in: command).map { range in
                 var token = String(command[range])
                 if token.hasPrefix("\"") && token.hasSuffix("\"") {
                     token = String(token.dropFirst().dropLast())
@@ -87,6 +88,10 @@ final class PipeListenerService {
                 return token
             }
         }
+    }
+
+    private func handle(command: String) {
+        let components = Self.tokenize(command)
         
         guard let commandName = components.first else {
             print("[COMMAND] Empty command")
