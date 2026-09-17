@@ -70,6 +70,11 @@ class KeyboardEventTracker {
                     return Unmanaged.passUnretained(event)
                 }
                 
+                // Respect the per-app filter
+                if !AppFilterService.shared.isCurrentAppAllowed {
+                    return Unmanaged.passUnretained(event)
+                }
+
                 let soundAction: (keyCode: Int64, isKeyDown: Bool)?
                 switch type {
                 case .keyDown where !tracker.pressedKeys.contains(keyCode):

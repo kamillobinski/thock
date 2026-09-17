@@ -208,6 +208,39 @@ final class SettingsEngine {
             AppEngine.shared.setEnabled(headphoneConnected)
         }
     }
+
+    // MARK: - App Filter
+
+    func getAppFilterMode() -> AppFilterMode {
+        return SettingsManager.shared.appFilterMode
+    }
+
+    func setAppFilterMode(_ mode: AppFilterMode) {
+        SettingsManager.shared.appFilterMode = mode
+        NotificationCenter.default.post(name: .appFilterDidChange, object: nil)
+    }
+
+    func getAppFilterBundleIDs() -> [String] {
+        return SettingsManager.shared.appFilterBundleIDs
+    }
+
+    func addAppFilterBundleID(_ bundleID: String) {
+        var bundleIDs = SettingsManager.shared.appFilterBundleIDs
+        guard !bundleIDs.contains(bundleID) else { return }
+
+        bundleIDs.append(bundleID)
+        SettingsManager.shared.appFilterBundleIDs = bundleIDs
+        NotificationCenter.default.post(name: .appFilterDidChange, object: nil)
+    }
+
+    func removeAppFilterBundleID(_ bundleID: String) {
+        var bundleIDs = SettingsManager.shared.appFilterBundleIDs
+        guard let index = bundleIDs.firstIndex(of: bundleID) else { return }
+
+        bundleIDs.remove(at: index)
+        SettingsManager.shared.appFilterBundleIDs = bundleIDs
+        NotificationCenter.default.post(name: .appFilterDidChange, object: nil)
+    }
 }
 
 // MARK: - Notifications
@@ -219,4 +252,5 @@ extension Notification.Name {
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
     static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
     static let cleaningModeDidChange = Notification.Name("cleaningModeDidChange")
+    static let appFilterDidChange = Notification.Name("appFilterDidChange")
 }
