@@ -1,0 +1,47 @@
+name: Thock CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.2'
+
+      - name: Build
+        run: |
+          xcodebuild -scheme Thock -configuration Debug \
+            -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
+            build
+
+      # The test targets are configured with the maintainer's development team, which
+      # is not available on a runner, so sign ad-hoc the same way the release workflow
+      # does. Unit tests only: the UI tests drive a menu bar app and are not worth the
+      # flakiness on every push.
+      - name: Run unit tests
+        run: |
+          xcodebuild -scheme Thock -configuration Debug \
+            -destination 'platform=macOS' \
+            -only-testing:ThockTests \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
+            test
