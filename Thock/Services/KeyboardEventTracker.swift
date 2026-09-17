@@ -1,10 +1,21 @@
+//
+//  KeyboardEventTracker.swift
+//  Thock
+//
+//  Created by Kamil Łobiński on 13/03/2025.
+//
+
 import Cocoa
+import OSLog
 import KeyboardShortcuts
 
 class KeyboardEventTracker {
     private var pressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
+    private var runLoopSource: CFRunLoopSource?
+    private var trackedRunLoop: CFRunLoop?
     private var lastEventTime: Double = 0
+    private var tapReEnableCount = 0
     
     deinit {
         stopTracking()
@@ -21,7 +32,10 @@ class KeyboardEventTracker {
         (1 << CGEventType.flagsChanged.rawValue) |
         CGEventMask(1 << 14) // NSSystemDefined
         
-        let observer = Unmanaged.passRetained(self).toOpaque()
+        // Pass an unretained pointer: the tap never outlives the tracker because
+        // AppDelegate owns it and calls stopTracking() before releasing it. Retaining
+        // here would keep the tracker alive forever, since nothing ever released it.
+        let observer = Unmanaged.passUnretained(self).toOpaque()
         lastEventTime = currentTime()
         
         eventMonitor = CGEvent.tapCreate(
@@ -30,11 +44,15 @@ class KeyboardEventTracker {
             options: .defaultTap,
             eventsOfInterest: eventMask,
             callback: { _, type, event, userInfo in
-                let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo!).takeUnretainedValue()
+                guard let userInfo = userInfo else { return Unmanaged.passUnretained(event) }
+                let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo).takeUnretainedValue()
                 
-                if type.rawValue == 0xFFFFFFFE || type.rawValue == 0xFFFFFFFF {
-                    DispatchQueue.main.async { tracker.stopTracking() }
-                    return nil
+                // The system disables a tap whose callback took too long to return, or
+                // when input monitoring is toggled off. Re-enable it in place: tearing
+                // the tap down here left keyboard sounds dead until the app relaunched.
+                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    tracker.reenableTap()
+                    return Unmanaged.passUnretained(event)
                 }
                 
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
@@ -108,23 +126,45 @@ class KeyboardEventTracker {
             userInfo: observer
         )
         if let eventMonitor = eventMonitor {
-            let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+            let runLoop = CFRunLoopGetCurrent()
+            let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
+            CFRunLoopAddSource(runLoop, source, .commonModes)
+            runLoopSource = source
+            trackedRunLoop = runLoop
             CGEvent.tapEnable(tap: eventMonitor, enable: true)
         } else {
-            print("Failed to create event tap.")
+            Logger.keyboard.error("Failed to create event tap")
         }
     }
     
-    /// Stops tracking key events and removes the event tap.
+    /// Stops tracking key events and releases the event tap and its run loop source.
     func stopTracking() {
         if let eventMonitor = eventMonitor {
             CFMachPortInvalidate(eventMonitor)
             self.eventMonitor = nil
         }
+
+        // The source was added to whichever run loop started tracking, so it has to be
+        // removed from that same one. Leaving it registered accumulated a source on the
+        // run loop every time tracking was restarted.
+        if let source = runLoopSource, let runLoop = trackedRunLoop {
+            CFRunLoopRemoveSource(runLoop, source, .commonModes)
+        }
+        pressedKeys.removeAll()
+        runLoopSource = nil
+        trackedRunLoop = nil
     }
     
     // MARK: Private methods
+
+    /// Re-enables the tap after the system disabled it.
+    private func reenableTap() {
+        guard let eventMonitor = eventMonitor else { return }
+        pressedKeys.removeAll() // Key-up events may have been missed while disabled.
+        CGEvent.tapEnable(tap: eventMonitor, enable: true)
+        tapReEnableCount += 1
+        Logger.keyboard.warning("Event tap was disabled by the system and re-enabled (re-enable #\(self.tapReEnableCount))")
+    }
     
     private func currentTime() -> Double {
         Double(DispatchTime.now().uptimeNanoseconds) / 1_000_000
