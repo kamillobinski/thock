@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 final class PipeListenerService {
     static let shared = PipeListenerService()
@@ -20,7 +21,7 @@ final class PipeListenerService {
     
     func cleanUp() {
         try? FileManager.default.removeItem(atPath: pipePath)
-        print("[PIPE] Pipe cleaned up")
+        Logger.cli.debug("Pipe cleaned up")
     }
     
     private func recreatePipeIfNeeded() {
@@ -28,7 +29,7 @@ final class PipeListenerService {
         if stat(pipePath, &statInfo) == 0 {
             // File exists – check if it's actually a pipe
             if (statInfo.st_mode & S_IFMT) != S_IFIFO {
-                print("[PIPE] Existing file is not a pipe. Removing.")
+                Logger.cli.warning("Existing file is not a pipe, removing it")
                 try? FileManager.default.removeItem(atPath: pipePath)
             }
         }
@@ -37,22 +38,22 @@ final class PipeListenerService {
             let result = pipePath.withCString { mkfifo($0, 0o600) }
             if result != 0 {
                 let err = String(cString: strerror(errno))
-                print("[PIPE] Failed to create pipe: \(err)")
+                Logger.cli.error("Failed to create pipe: \(err, privacy: .public)")
             } else {
-                print("[PIPE] Pipe created at \(pipePath)")
+                Logger.cli.debug("Pipe created at \(self.pipePath, privacy: .public)")
             }
         }
     }
     
     private func startListening() {
         DispatchQueue.global(qos: .background).async { [pipePath] in
-            print("[PIPE] Listener started at \(pipePath)")
+            Logger.cli.debug("Listener started at \(pipePath, privacy: .public)")
             
             while true {
                 let fd = open(pipePath, O_RDONLY)
                 if fd == -1 {
                     let err = String(cString: strerror(errno))
-                    print("[PIPE] Failed to open pipe: \(err)")
+                    Logger.cli.error("Failed to open pipe: \(err, privacy: .public)")
                     sleep(1)
                     continue
                 }
@@ -63,7 +64,7 @@ final class PipeListenerService {
                 
                 if !data.isEmpty,
                    let command = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-                    print("[COMMAND] Received: \(command)")
+                    Logger.cli.debug("Received: \(command, privacy: .public)")
                     self.handle(command: command)
                 }
                 
@@ -89,7 +90,7 @@ final class PipeListenerService {
         }
         
         guard let commandName = components.first else {
-            print("[COMMAND] Empty command")
+            Logger.cli.debug("Empty command")
             return
         }
         
@@ -99,13 +100,13 @@ final class PipeListenerService {
         case "set-enabled":
             handleSetEnabledCommand(components: components)
         default:
-            print("[COMMAND] Unknown command '\(commandName)'")
+            Logger.cli.warning("Unknown command '\(commandName, privacy: .public)'")
         }
     }
     
     private func handleSetSoundpackCommand(components: [String]) {
         guard components.count >= 2 else {
-            print("[COMMAND] Invalid set-soundpack format. Usage: set-soundpack <id>")
+            Logger.cli.warning("Invalid set-soundpack format, expected: set-soundpack <id>")
             return
         }
         
@@ -113,12 +114,12 @@ final class PipeListenerService {
         
         DispatchQueue.main.async {
             guard let uuid = UUID(uuidString: idString) else {
-                print("[COMMAND] Invalid UUID '\(idString)'")
+                Logger.cli.warning("Invalid UUID '\(idString, privacy: .public)'")
                 return
             }
             
             guard let soundpack = SoundpackDatabase().getSoundpack(by: uuid) else {
-                print("[COMMAND] Soundpack '\(idString)' not found")
+                Logger.cli.warning("Soundpack '\(idString, privacy: .public)' not found")
                 return
             }
             
@@ -127,13 +128,13 @@ final class PipeListenerService {
             } else {
                 SoundpackEngine.shared.applyKeyboard(soundpack: soundpack)
             }
-            print("[COMMAND] Soundpack '\(soundpack.name)' applied successfully")
+            Logger.cli.info("Soundpack '\(soundpack.name, privacy: .public)' applied successfully")
         }
     }
     
     private func handleSetEnabledCommand(components: [String]) {
         guard components.count == 2 else {
-            print("[COMMAND] Invalid set-enabled format. Usage: set-enabled true|false")
+            Logger.cli.warning("Invalid set-enabled format, expected: set-enabled true|false")
             return
         }
         
@@ -146,14 +147,14 @@ final class PipeListenerService {
         case "false", "0", "no", "off":
             enabled = false
         default:
-            print("[COMMAND] Invalid value for set-enabled: '\(arg)'")
+            Logger.cli.warning("Invalid value for set-enabled: '\(arg, privacy: .public)'")
             return
         }
         
         DispatchQueue.main.async {
             AppEngine.shared.setEnabled(enabled)
             SettingsEngine.shared.refreshMenu()
-            print("[COMMAND] Thock is now \(enabled ? "enabled" : "disabled")")
+            Logger.cli.info("Thock is now \(enabled ? "enabled" : "disabled", privacy: .public)")
         }
     }
 }

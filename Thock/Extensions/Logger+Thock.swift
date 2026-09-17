@@ -28,4 +28,7 @@ extension Logger {
     
     /// UI-related logging (views, user interactions)
     static let ui = Logger(subsystem: subsystem, category: "ui")
+
+    /// Commands arriving over the thock.pipe used by thock-cli and the Raycast extension
+    static let cli = Logger(subsystem: subsystem, category: "cli")
 }

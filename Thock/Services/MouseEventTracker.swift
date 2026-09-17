@@ -1,4 +1,5 @@
 import Cocoa
+import OSLog
 
 /// Represents a mouse button event type for sound playback.
 enum MouseButtonEvent: Hashable, CustomStringConvertible {
@@ -114,7 +115,7 @@ class MouseEventTracker {
             CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
             CGEvent.tapEnable(tap: eventMonitor, enable: true)
         } else {
-            print("Failed to create mouse event tap.")
+            Logger.lifecycle.error("Failed to create mouse event tap")
         }
     }
     

@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 private let manifestURL = "https://raw.githubusercontent.com/kamillobinski/thock-soundpacks/refs/heads/main/manifest.json"
 
@@ -75,7 +76,7 @@ final class SoundpackRegistryService: ObservableObject {
             
             NotificationCenter.default.post(name: .soundpackLibraryDidChange, object: nil)
         } catch {
-            print("Failed to install soundpack \(entry.metadata.name): \(error)")
+            Logger.engine.error("Failed to install soundpack \(entry.metadata.name, privacy: .public): \(error, privacy: .public)")
         }
         
         downloadingIds.remove(entry.id)
