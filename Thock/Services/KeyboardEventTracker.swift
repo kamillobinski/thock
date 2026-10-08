@@ -33,6 +33,7 @@ class KeyboardEventTracker {
                 let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 
                 if type.rawValue == 0xFFFFFFFE {
+                    tracker.pressedKeys.removeAll()
                     if let monitor = tracker.eventMonitor {
                         CGEvent.tapEnable(tap: monitor, enable: true)
                     }
