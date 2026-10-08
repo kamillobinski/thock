@@ -32,8 +32,13 @@ class KeyboardEventTracker {
             callback: { _, type, event, userInfo in
                 let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo!).takeUnretainedValue()
                 
-                if type.rawValue == 0xFFFFFFFE || type.rawValue == 0xFFFFFFFF {
-                    DispatchQueue.main.async { tracker.stopTracking() }
+                if type.rawValue == 0xFFFFFFFE {
+                    tracker.pressedKeys.removeAll()
+                    if let monitor = tracker.eventMonitor {
+                        CGEvent.tapEnable(tap: monitor, enable: true)
+                    }
+                    return nil
+                } else if type.rawValue == 0xFFFFFFFF {
                     return nil
                 }
                 
