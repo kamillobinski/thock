@@ -30,6 +30,36 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         PipeListenerService.shared.cleanUp()
     }
     
+    // MARK: - URL Scheme (thock://enable, thock://disable, thock://toggle)
+    // Used by the Apple Shortcuts (AppIntents) actions and the `thock://` URL scheme.
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            handleControlURL(url)
+        }
+    }
+
+    private func handleControlURL(_ url: URL) {
+        guard url.scheme?.lowercased() == "thock" else { return }
+        // thock://toggle -> host is "toggle". Also accept thock:toggle style URLs.
+        let rawAction = (url.host ?? url.path)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .lowercased()
+
+        DispatchQueue.main.async {
+            switch rawAction {
+            case "enable", "on", "start":
+                AppEngine.shared.setEnabled(true)
+            case "disable", "off", "stop", "mute":
+                AppEngine.shared.setEnabled(false)
+            case "toggle":
+                AppEngine.shared.toggleIsEnabled()
+            default:
+                print("[URL] Unknown thock:// action '\(rawAction)'")
+            }
+        }
+    }
+
     // MARK: - MenuBarControllerDelegate
     
     func quitApp() {
