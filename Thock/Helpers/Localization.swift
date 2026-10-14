@@ -754,6 +754,62 @@ struct L10n {
         }
     }
     
+    static var spatialAudio: String {
+        switch lang {
+        case .english: return "Spatial audio"
+        case .spanish: return "Audio espacial"
+        case .french: return "Audio spatial"
+        case .chinese: return "空间音频"
+        case .japanese: return "空間オーディオ"
+        case .german: return "3D-Audio"
+        case .vietnamese: return "Âm thanh không gian"
+        case .italian: return "Audio spaziale"
+        case .portuguese: return "Áudio espacial"
+        }
+    }
+    
+    static var spatialAudioSubtitle: String {
+        switch lang {
+        case .english: return "Position sounds by key and cursor location. Best with headphones"
+        case .spanish: return "Ubica los sonidos según la tecla y la posición del cursor. Mejor con auriculares"
+        case .french: return "Positionne les sons selon la touche et l'emplacement du curseur. Idéal avec un casque"
+        case .chinese: return "根据按键和光标位置定位声音。建议使用耳机"
+        case .japanese: return "キーとカーソルの位置に応じてサウンドを定位。ヘッドフォン推奨"
+        case .german: return "Positioniert Töne nach Taste und Zeigerposition. Am besten mit Kopfhörern"
+        case .vietnamese: return "Định vị âm thanh theo vị trí phím và con trỏ. Tốt nhất khi dùng tai nghe"
+        case .italian: return "Posiziona i suoni in base al tasto e alla posizione del cursore. Ideale con le cuffie"
+        case .portuguese: return "Posiciona os sons pela tecla e pela posição do cursor. Melhor com fones de ouvido"
+        }
+    }
+    
+    static var spatialWidth: String {
+        switch lang {
+        case .english: return "Spatial width"
+        case .spanish: return "Amplitud espacial"
+        case .french: return "Largeur spatiale"
+        case .chinese: return "空间宽度"
+        case .japanese: return "空間の広さ"
+        case .german: return "Räumliche Breite"
+        case .vietnamese: return "Độ rộng không gian"
+        case .italian: return "Ampiezza spaziale"
+        case .portuguese: return "Largura espacial"
+        }
+    }
+    
+    static var spatialWidthSubtitle: String {
+        switch lang {
+        case .english: return "How far left and right sounds spread"
+        case .spanish: return "Cuánto se extienden los sonidos a izquierda y derecha"
+        case .french: return "Étendue des sons de gauche à droite"
+        case .chinese: return "声音向左右两侧扩展的程度"
+        case .japanese: return "サウンドが左右に広がる範囲"
+        case .german: return "Wie weit sich Töne nach links und rechts verteilen"
+        case .vietnamese: return "Mức độ âm thanh trải rộng sang trái và phải"
+        case .italian: return "Quanto si estendono i suoni a sinistra e a destra"
+        case .portuguese: return "O quanto os sons se espalham para a esquerda e a direita"
+        }
+    }
+    
     static var autoEnableOnHeadphone: String {
         switch lang {
         case .english: return "Auto-enable on headphone"

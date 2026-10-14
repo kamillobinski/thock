@@ -69,6 +69,73 @@ final class HeadphoneDetector {
         Logger.audio.info("HeadphoneDetector: Stopped monitoring")
     }
     
+    /// Classifies the device audio is actually routed to, used by spatial audio.
+    func outputKind(for deviceID: AudioDeviceID) -> OutputKind {
+        guard deviceID != 0, let transportType = getTransportType(for: deviceID) else { return .speakers }
+
+        let builtInHeadphones = transportType == kAudioDeviceTransportTypeBuiltIn && OutputKind.isBuiltInHeadphones(
+            jackConnected: isJackConnected(deviceID: deviceID),
+            dataSource: getOutputDataSource(for: deviceID),
+            name: getDeviceName(for: deviceID) ?? ""
+        )
+        return OutputKind.classify(
+            transportType: transportType,
+            terminalType: getOutputTerminalType(for: deviceID),
+            builtInHeadphones: builtInHeadphones
+        )
+    }
+
+    /// Terminal type of the device's first output stream, 0 (unknown) when unavailable.
+    private func getOutputTerminalType(for deviceID: AudioDeviceID) -> UInt32 {
+        var streamsAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreams,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var streamID: AudioStreamID = 0
+        var dataSize = UInt32(MemoryLayout<AudioStreamID>.size)
+        guard AudioObjectGetPropertyData(deviceID, &streamsAddress, 0, nil, &dataSize, &streamID) == noErr,
+              dataSize >= UInt32(MemoryLayout<AudioStreamID>.size) else { return 0 }
+
+        var terminalAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioStreamPropertyTerminalType,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var terminalType: UInt32 = 0
+        dataSize = UInt32(MemoryLayout<UInt32>.size)
+        let status = AudioObjectGetPropertyData(streamID, &terminalAddress, 0, nil, &dataSize, &terminalType)
+        return status == noErr ? terminalType : 0
+    }
+
+    /// Current output data source, e.g. 'ispk' internal speakers or 'hdpn' headphones.
+    private func getOutputDataSource(for deviceID: AudioDeviceID) -> UInt32? {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyDataSource,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        guard AudioObjectHasProperty(deviceID, &propertyAddress) else { return nil }
+
+        var dataSource: UInt32 = 0
+        var dataSize = UInt32(MemoryLayout<UInt32>.size)
+        let status = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, nil, &dataSize, &dataSource)
+        return status == noErr ? dataSource : nil
+    }
+
+    private func getDeviceName(for deviceID: AudioDeviceID) -> String? {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioObjectPropertyName,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var name: Unmanaged<CFString>?
+        var dataSize = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
+        let status = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, nil, &dataSize, &name)
+        guard status == noErr, let name else { return nil }
+        return name.takeRetainedValue() as String
+    }
+    
     /// Checks if any headphone (Bluetooth or wired) is currently connected.
     func isHeadphoneConnected() -> Bool {
         return isBluetoothHeadphoneConnected() || isWiredHeadphoneConnected()
@@ -227,6 +294,7 @@ final class HeadphoneDetector {
     
     fileprivate func handleJackConnectionChange() {
         DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .headphoneJackDidChange, object: nil)
             self.checkAndUpdateState()
         }
     }
@@ -298,4 +366,8 @@ private func jackConnectionChangedCallback(
     detector.handleJackConnectionChange()
     
     return noErr
+}
+
+extension Notification.Name {
+    static let headphoneJackDidChange = Notification.Name("headphoneJackDidChange")
 }

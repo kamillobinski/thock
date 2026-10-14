@@ -115,6 +115,8 @@ Features a custom audio engine built on native macOS AudioQueue APIs, achieving 
 
 Whether you are a high-speed programmer or a creative writer, Thock ensures every keystroke is met with organic, realtime sound that keeps pace with your fastest workflow.
 
+Spatial audio positions sounds by key and cursor location. Headphones use Apple’s spatial renderer, while speakers use a gentle stereo pan. The Spatial width slider controls how far left and right sounds spread.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
