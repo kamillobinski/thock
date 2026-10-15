@@ -12,6 +12,8 @@ final class SettingsManager {
     static let defaultAudioBufferSize: UInt32 = 256
     static let defaultSelectedAudioDeviceUID: String? = nil
     static let defaultPerDeviceVolumes: [String: Float] = [:]
+    static let defaultKeyboardVolume: Float = 1.0
+    static let defaultMouseVolume: Float = 1.0
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
@@ -68,6 +70,18 @@ final class SettingsManager {
         get { UserDefaults.perDeviceVolumes }
         set { UserDefaults.perDeviceVolumes = newValue }
     }
+
+    /// Keyboard level relative to the master volume, shared across output devices.
+    var keyboardVolume: Float {
+        get { UserDefaults.keyboardVolume }
+        set { UserDefaults.keyboardVolume = newValue }
+    }
+
+    /// Mouse level relative to the master volume, shared across output devices.
+    var mouseVolume: Float {
+        get { UserDefaults.mouseVolume }
+        set { UserDefaults.mouseVolume = newValue }
+    }
     
     /// Pitch variation range in semitones for random pitch shifts.
     var pitchVariation: Float {
@@ -104,6 +118,8 @@ private extension UserDefaults {
         static let audioBufferSize = "audioBufferSize"
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let perDeviceVolumes = "perDeviceVolume"
+        static let keyboardVolume = "keyboardVolume"
+        static let mouseVolume = "mouseVolume"
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
@@ -205,6 +221,30 @@ private extension UserDefaults {
         }
     }
     
+    static var keyboardVolume: Float {
+        get {
+            guard standard.object(forKey: Keys.keyboardVolume) != nil else {
+                return SettingsManager.defaultKeyboardVolume
+            }
+            return VolumeLevels.clamped(standard.float(forKey: Keys.keyboardVolume))
+        }
+        set {
+            standard.set(VolumeLevels.clamped(newValue), forKey: Keys.keyboardVolume)
+        }
+    }
+
+    static var mouseVolume: Float {
+        get {
+            guard standard.object(forKey: Keys.mouseVolume) != nil else {
+                return SettingsManager.defaultMouseVolume
+            }
+            return VolumeLevels.clamped(standard.float(forKey: Keys.mouseVolume))
+        }
+        set {
+            standard.set(VolumeLevels.clamped(newValue), forKey: Keys.mouseVolume)
+        }
+    }
+
     static var pitchVariation: Float {
         get {
             if standard.object(forKey: Keys.pitchVariation) == nil {
