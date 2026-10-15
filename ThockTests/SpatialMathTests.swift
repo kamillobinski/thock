@@ -5,14 +5,22 @@ import CoreAudio
 
 struct SpatialMathTests {
     @Test func classifyOutputKinds() {
-        let unknown = kAudioStreamTerminalTypeUnknown
-        #expect(OutputKind.classify(transportType: kAudioDeviceTransportTypeBluetooth, terminalType: unknown, builtInHeadphones: false) == .headphones)
-        #expect(OutputKind.classify(transportType: kAudioDeviceTransportTypeBluetoothLE, terminalType: unknown, builtInHeadphones: false) == .headphones)
-        #expect(OutputKind.classify(transportType: kAudioDeviceTransportTypeBuiltIn, terminalType: unknown, builtInHeadphones: true) == .headphones)
-        #expect(OutputKind.classify(transportType: kAudioDeviceTransportTypeBuiltIn, terminalType: 0x0301, builtInHeadphones: false) == .speakers)
-        #expect(OutputKind.classify(transportType: kAudioDeviceTransportTypeHDMI, terminalType: unknown, builtInHeadphones: false) == .speakers)
-        #expect(OutputKind.classify(transportType: kAudioDeviceTransportTypeDisplayPort, terminalType: unknown, builtInHeadphones: false) == .speakers)
-        #expect(OutputKind.classify(transportType: kAudioDeviceTransportTypeAirPlay, terminalType: unknown, builtInHeadphones: false) == .speakers)
+        let cases: [(UInt32, UInt32, Bool, OutputKind)] = [
+            (kAudioDeviceTransportTypeBuiltIn, 0, true, .headphones),
+            (kAudioDeviceTransportTypeBuiltIn, 0, false, .speakers),
+            (kAudioDeviceTransportTypeBluetooth, 0, false, .speakers),
+            (kAudioDeviceTransportTypeBluetoothLE, 0, false, .speakers),
+            (kAudioDeviceTransportTypeBluetooth, kAudioStreamTerminalTypeHeadphones, false, .headphones),
+            (kAudioDeviceTransportTypeUSB, 0x0302, false, .headphones),
+            (kAudioDeviceTransportTypeUSB, 0x0402, false, .headphones),
+            (kAudioDeviceTransportTypeUSB, 0x0301, false, .speakers),
+            (kAudioDeviceTransportTypeUSB, kAudioStreamTerminalTypeLine, false, .speakers),
+            (kAudioDeviceTransportTypeUSB, 0, false, .speakers),
+        ]
+        for (transport, terminal, jackConnected, expected) in cases {
+            #expect(OutputKind.classify(transportType: transport, terminalType: terminal,
+                                        builtInHeadphones: jackConnected) == expected)
+        }
     }
 
     @Test func desktopSpansAllDisplays() {

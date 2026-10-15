@@ -85,27 +85,80 @@ final class HeadphoneDetector {
         )
     }
 
-    /// Terminal type of the device's first output stream, 0 (unknown) when unavailable.
+    /// Terminal type of the streams carrying the preferred stereo pair. Unknown or mixed
+    /// terminals fall back to the speaker pan rather than spatializing unrelated outputs.
     private func getOutputTerminalType(for deviceID: AudioDeviceID) -> UInt32 {
-        var streamsAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioDevicePropertyStreams,
-            mScope: kAudioDevicePropertyScopeOutput,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var streamID: AudioStreamID = 0
-        var dataSize = UInt32(MemoryLayout<AudioStreamID>.size)
-        guard AudioObjectGetPropertyData(deviceID, &streamsAddress, 0, nil, &dataSize, &streamID) == noErr,
-              dataSize >= UInt32(MemoryLayout<AudioStreamID>.size) else { return 0 }
+        func property(_ objectID: AudioObjectID, _ selector: AudioObjectPropertySelector,
+                      scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal) -> Data? {
+            Self.readProperty(objectID, AudioObjectPropertyAddress(
+                mSelector: selector, mScope: scope, mElement: kAudioObjectPropertyElementMain
+            ))
+        }
 
-        var terminalAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioStreamPropertyTerminalType,
-            mScope: kAudioObjectPropertyScopeGlobal,
+        func value<T>(_ objectID: AudioObjectID, _ selector: AudioObjectPropertySelector, as type: T.Type) -> T? {
+            guard let data = property(objectID, selector), data.count == MemoryLayout<T>.size else { return nil }
+            return data.withUnsafeBytes { $0.loadUnaligned(as: type) }
+        }
+
+        let streamIDs = outputStreamIDs(for: deviceID)
+        let streams = streamIDs.compactMap { streamID -> (first: UInt32, count: UInt32, terminal: UInt32)? in
+            guard let first = value(streamID, kAudioStreamPropertyStartingChannel, as: UInt32.self),
+                  let format = value(streamID, kAudioStreamPropertyVirtualFormat, as: AudioStreamBasicDescription.self),
+                  first > 0, format.mChannelsPerFrame > 0 else { return nil }
+            let terminal = value(streamID, kAudioStreamPropertyTerminalType, as: UInt32.self) ?? 0
+            return (first, format.mChannelsPerFrame, terminal)
+        }
+
+        let preferredChannels: [UInt32]
+        if let data = property(deviceID, kAudioDevicePropertyPreferredChannelsForStereo, scope: kAudioDevicePropertyScopeOutput),
+           data.count == 2 * MemoryLayout<UInt32>.size {
+            preferredChannels = data.withUnsafeBytes {
+                [$0.loadUnaligned(as: UInt32.self),
+                 $0.loadUnaligned(fromByteOffset: MemoryLayout<UInt32>.size, as: UInt32.self)]
+            }
+        } else {
+            // Core Audio's usual stereo pair, or the sole channel on a mono device.
+            let isMono = streams.count == 1 && streams[0].first == 1 && streams[0].count == 1
+            preferredChannels = isMono ? [1, 1] : [1, 2]
+        }
+
+        var terminals: [UInt32] = []
+        for channel in preferredChannels {
+            guard let stream = streams.first(where: {
+                channel >= $0.first && UInt64(channel) < UInt64($0.first) + UInt64($0.count)
+            }) else { return 0 }
+            terminals.append(stream.terminal)
+        }
+        // Left and right may be separate mono streams using different headphone terminal codes.
+        if terminals.allSatisfy(OutputKind.isHeadphoneTerminal) { return kAudioStreamTerminalTypeHeadphones }
+        return terminals[0] == terminals[1] ? terminals[0] : kAudioStreamTerminalTypeUnknown
+    }
+
+    func outputStreamIDs(for deviceID: AudioDeviceID) -> [AudioStreamID] {
+        guard let data = Self.readProperty(deviceID, AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreams, mScope: kAudioDevicePropertyScopeOutput,
             mElement: kAudioObjectPropertyElementMain
-        )
-        var terminalType: UInt32 = 0
-        dataSize = UInt32(MemoryLayout<UInt32>.size)
-        let status = AudioObjectGetPropertyData(streamID, &terminalAddress, 0, nil, &dataSize, &terminalType)
-        return status == noErr ? terminalType : 0
+        )), !data.isEmpty, data.count.isMultiple(of: MemoryLayout<AudioStreamID>.size) else { return [] }
+        return data.withUnsafeBytes { bytes in
+            stride(from: 0, to: bytes.count, by: MemoryLayout<AudioStreamID>.size).map {
+                bytes.loadUnaligned(fromByteOffset: $0, as: AudioStreamID.self)
+            }
+        }
+    }
+
+    /// Reads the complete property, including variable-length arrays of output streams.
+    private static func readProperty(_ objectID: AudioObjectID, _ address: AudioObjectPropertyAddress) -> Data? {
+        var address = address
+        var size: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(objectID, &address, 0, nil, &size) == noErr,
+              size > 0 else { return nil }
+        var data = Data(count: Int(size))
+        let status = data.withUnsafeMutableBytes {
+            AudioObjectGetPropertyData(objectID, &address, 0, nil, &size, $0.baseAddress!)
+        }
+        guard status == noErr, size <= data.count else { return nil }
+        data.count = Int(size)
+        return data
     }
 
     /// Current output data source, e.g. 'ispk' internal speakers or 'hdpn' headphones.

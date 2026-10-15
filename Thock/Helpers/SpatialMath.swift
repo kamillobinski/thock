@@ -14,13 +14,10 @@ enum OutputKind: Equatable {
     case headphones
     case speakers
 
-    /// Bluetooth is assumed to be headphones. Built-in uses the jack. Everything else (USB, Thunderbolt,
-    /// displays…) is only headphones when its output stream's terminal type says so, since USB DACs,
-    /// interfaces and monitors usually drive speakers.
+    /// Built-in uses the jack. Other transports, including Bluetooth, only get headphone rendering
+    /// when the routed output streams identify headphones. Unknown terminals use the speaker pan.
     static func classify(transportType: UInt32, terminalType: UInt32, builtInHeadphones: Bool) -> OutputKind {
         switch transportType {
-        case kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE:
-            return .headphones
         case kAudioDeviceTransportTypeBuiltIn:
             return builtInHeadphones ? .headphones : .speakers
         default:
