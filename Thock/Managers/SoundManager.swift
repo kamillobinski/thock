@@ -44,7 +44,7 @@ final class SoundManager {
     private var idleCallbackCount: Int = 0
     
     // MARK: - Volume Control
-    private var volume: Float = 0.5
+    private var volumeLevels = VolumeLevels(master: 0.5)
     private let volumeLock = NSLock()
     
     // MARK: - Models
@@ -60,12 +60,14 @@ final class SoundManager {
         let latencyId: UUID?
         var hasReportedPlayback: Bool = false
         let pitchOffset: Float
+        let source: VolumeLevels.Source
         
-        init(pcmData: [Float], frameCount: Int, latencyId: UUID?, pitchOffset: Float) {
+        init(pcmData: [Float], frameCount: Int, latencyId: UUID?, pitchOffset: Float, source: VolumeLevels.Source) {
             self.pcmData = pcmData
             self.frameCount = frameCount
             self.latencyId = latencyId
             self.pitchOffset = pitchOffset
+            self.source = source
         }
         
         var isFinished: Bool {
@@ -197,10 +199,14 @@ final class SoundManager {
     
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
-        let newVolume = SettingsEngine.shared.getVolume(for: deviceUID)
+        let newLevels = VolumeLevels(
+            master: SettingsEngine.shared.getVolume(for: deviceUID),
+            keyboard: SettingsEngine.shared.getKeyboardVolume(),
+            mouse: SettingsEngine.shared.getMouseVolume()
+        )
         
         volumeLock.lock()
-        volume = newVolume
+        volumeLevels = newLevels
         volumeLock.unlock()
         
         if postNotification {
@@ -621,10 +627,12 @@ final class SoundManager {
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
-        // No lock here coz float reads are atomic
-        let currentVolume = volume
+        volumeLock.lock()
+        let currentLevels = volumeLevels
+        volumeLock.unlock()
         
         for sound in activeSounds {
+            let currentVolume = currentLevels.gain(for: sound.source)
             // Report playback started on first render
             if ENABLE_LATENCY_MEASUREMENT && !sound.hasReportedPlayback {
                 sound.hasReportedPlayback = true
@@ -783,7 +791,8 @@ final class SoundManager {
             pcmData: pcmSound.data,
             frameCount: pcmSound.frameCount,
             latencyId: latencyId,
-            pitchOffset: pitchOffset
+            pitchOffset: pitchOffset,
+            source: .keyboard
         )
         
         activeSoundsLock.lock()
@@ -890,7 +899,8 @@ final class SoundManager {
             pcmData: sound.data,
             frameCount: sound.frameCount,
             latencyId: nil,
-            pitchOffset: pitchOffset
+            pitchOffset: pitchOffset,
+            source: .mouse
         )
         
         activeSoundsLock.lock()

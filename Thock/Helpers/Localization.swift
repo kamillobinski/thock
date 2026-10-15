@@ -278,6 +278,20 @@ struct L10n {
         }
     }
     
+    static var master: String {
+        switch lang {
+        case .english: return "Master"
+        case .spanish: return "General"
+        case .french: return "Principal"
+        case .chinese: return "主音量"
+        case .japanese: return "マスター"
+        case .german: return "Gesamt"
+        case .vietnamese: return "Tổng"
+        case .italian: return "Generale"
+        case .portuguese: return "Geral"
+        }
+    }
+
     static var playThrough: String {
         switch lang {
         case .english: return "Play sound effects through"

@@ -146,6 +146,8 @@ final class SettingsEngine {
     }
     
     // MARK: - Volume
+
+    // The existing per-device volume is the master level used by the menu and CLI.
     
     func getVolume(for deviceUID: String) -> Float {
         let perDeviceVolumes = SettingsManager.shared.perDeviceVolumes
@@ -168,6 +170,24 @@ final class SettingsEngine {
     func setVolume(_ volume: Float) {
         let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
         setVolume(volume, for: deviceUID)
+    }
+
+    func getKeyboardVolume() -> Float {
+        return SettingsManager.shared.keyboardVolume
+    }
+
+    func setKeyboardVolume(_ volume: Float) {
+        SettingsManager.shared.keyboardVolume = volume
+        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
+    }
+
+    func getMouseVolume() -> Float {
+        return SettingsManager.shared.mouseVolume
+    }
+
+    func setMouseVolume(_ volume: Float) {
+        SettingsManager.shared.mouseVolume = volume
+        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
     }
     
     // MARK: - Pitch Variation
