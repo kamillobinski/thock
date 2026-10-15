@@ -963,10 +963,14 @@ final class SoundManager {
             return
         }
         
-        let position = location.map {
+        activeSoundsLock.lock()
+        let enabled = spatialEnabled
+        activeSoundsLock.unlock()
+
+        let position = enabled ? location.map {
             SpatialMath.mousePosition(location: $0, displayBounds: SpatialMath.desktopBounds(activeDisplayBounds()),
                                      width: SettingsEngine.shared.getSpatialWidth())
-        }
+        } : nil
         enqueue(sound, pitchVariation: SettingsEngine.shared.getPitchVariation(), latencyId: nil, position: position)
     }
 
