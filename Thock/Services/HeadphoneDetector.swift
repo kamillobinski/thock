@@ -405,6 +405,77 @@ final class HeadphoneDetector {
     }
 }
 
+/// Watches the routed device's classification inputs. Updated and called back on the main queue.
+final class OutputKindMonitor {
+    private let streamIDs: (AudioDeviceID) -> [AudioStreamID]
+    private let addListener: (AudioObjectID, AudioObjectPropertyAddress, @escaping AudioObjectPropertyListenerBlock) -> OSStatus
+    private let removeListener: (AudioObjectID, AudioObjectPropertyAddress, @escaping AudioObjectPropertyListenerBlock) -> Void
+    private let onChange: () -> Void
+    private var deviceID: AudioDeviceID?
+    private var generation: UInt64 = 0
+    private var registrations: [(object: AudioObjectID, address: AudioObjectPropertyAddress, callback: AudioObjectPropertyListenerBlock)] = []
+
+    init(streamIDs: @escaping (AudioDeviceID) -> [AudioStreamID] = { HeadphoneDetector.shared.outputStreamIDs(for: $0) },
+         addListener: @escaping (AudioObjectID, AudioObjectPropertyAddress, @escaping AudioObjectPropertyListenerBlock) -> OSStatus = { object, address, callback in
+             var address = address
+             return AudioObjectAddPropertyListenerBlock(object, &address, .main, callback)
+         },
+         removeListener: @escaping (AudioObjectID, AudioObjectPropertyAddress, @escaping AudioObjectPropertyListenerBlock) -> Void = { object, address, callback in
+             var address = address
+             AudioObjectRemovePropertyListenerBlock(object, &address, .main, callback)
+         }, onChange: @escaping () -> Void) {
+        self.streamIDs = streamIDs
+        self.addListener = addListener
+        self.removeListener = removeListener
+        self.onChange = onChange
+    }
+
+    deinit { removeListeners() }
+
+    func update(deviceID: AudioDeviceID?) {
+        guard self.deviceID != deviceID else { return }
+        self.deviceID = deviceID
+        rebuildListeners()
+    }
+
+    private func rebuildListeners() {
+        removeListeners()
+        guard let deviceID else { return }
+        let expectedGeneration = generation
+        let callback: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
+            guard let self, self.generation == expectedGeneration else { return }
+            // A stream list or format change may replace the objects carrying the stereo pair.
+            self.rebuildListeners()
+            self.onChange()
+        }
+
+        func listen(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector, _ scope: AudioObjectPropertyScope) {
+            let address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope, mElement: kAudioObjectPropertyElementMain)
+            if addListener(object, address, callback) == noErr {
+                registrations.append((object, address, callback))
+            }
+        }
+        for selector in [kAudioDevicePropertyPreferredChannelsForStereo, kAudioDevicePropertyDataSource,
+                         kAudioDevicePropertyJackIsConnected, kAudioDevicePropertyStreams] {
+            listen(deviceID, selector, kAudioDevicePropertyScopeOutput)
+        }
+        for stream in streamIDs(deviceID) {
+            for selector in [kAudioStreamPropertyTerminalType, kAudioStreamPropertyStartingChannel,
+                             kAudioStreamPropertyVirtualFormat] {
+                listen(stream, selector, kAudioObjectPropertyScopeGlobal)
+            }
+        }
+    }
+
+    private func removeListeners() {
+        generation &+= 1
+        for registration in registrations {
+            removeListener(registration.object, registration.address, registration.callback)
+        }
+        registrations.removeAll()
+    }
+}
+
 // MARK: - Jack Connection Callback
 
 private func jackConnectionChangedCallback(

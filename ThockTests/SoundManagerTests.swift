@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import CoreAudio
 @testable import Thock
 
 @Suite(.serialized)
@@ -142,5 +143,104 @@ struct SoundManagerTests {
             }
         }
         #expect(manager.isReady == true)
+    }
+}
+
+@Suite(.serialized)
+struct OutputKindMonitorTests {
+    @Test func routedDeviceAndStreamChangesRefreshClassification() throws {
+        let properties = OutputKindProperties()
+        properties.streams = [10: [101]]
+        var refreshes = 0
+        let monitor = properties.monitor { refreshes += 1 }
+        monitor.update(deviceID: 10)
+
+        for selector in [kAudioDevicePropertyPreferredChannelsForStereo, kAudioDevicePropertyDataSource,
+                         kAudioDevicePropertyJackIsConnected, kAudioDevicePropertyStreams] {
+            let before = refreshes
+            try properties.send(object: 10, selector: selector)
+            #expect(refreshes == before + 1)
+        }
+        for selector in [kAudioStreamPropertyTerminalType, kAudioStreamPropertyStartingChannel,
+                         kAudioStreamPropertyVirtualFormat] {
+            let before = refreshes
+            try properties.send(object: 101, selector: selector)
+            #expect(refreshes == before + 1)
+        }
+    }
+
+    @Test func streamReplacementObservesNewStreamsAndIgnoresOldCallbacks() throws {
+        let properties = OutputKindProperties()
+        properties.streams = [10: [101]]
+        var refreshes = 0
+        let monitor = properties.monitor { refreshes += 1 }
+        monitor.update(deviceID: 10)
+        let oldCallback = try properties.callback(object: 101, selector: kAudioStreamPropertyTerminalType)
+
+        properties.streams[10] = [102]
+        try properties.send(object: 10, selector: kAudioDevicePropertyStreams)
+        let afterReplacement = refreshes
+        properties.invoke(oldCallback)
+        #expect(refreshes == afterReplacement)
+        try properties.send(object: 102, selector: kAudioStreamPropertyTerminalType)
+        #expect(refreshes == afterReplacement + 1)
+        #expect(!properties.registrations.values.contains { $0.object == 101 })
+    }
+
+    @Test func routeChangeAndStopIgnoreAlreadyQueuedCallbacks() throws {
+        let properties = OutputKindProperties()
+        properties.streams = [10: [101], 20: [201]]
+        var refreshes = 0
+        let monitor = properties.monitor { refreshes += 1 }
+        monitor.update(deviceID: 10)
+        let oldCallback = try properties.callback(object: 10, selector: kAudioDevicePropertyDataSource)
+        monitor.update(deviceID: 20)
+        properties.invoke(oldCallback)
+        #expect(refreshes == 0)
+        #expect(!properties.registrations.values.contains { $0.object == 10 || $0.object == 101 })
+
+        let currentCallback = try properties.callback(object: 20, selector: kAudioDevicePropertyDataSource)
+        monitor.update(deviceID: nil)
+        properties.invoke(currentCallback)
+        #expect(refreshes == 0)
+        #expect(properties.registrations.isEmpty)
+    }
+}
+
+private final class OutputKindProperties {
+    struct Registration {
+        let object: AudioObjectID
+        let address: AudioObjectPropertyAddress
+        let callback: AudioObjectPropertyListenerBlock
+    }
+    var streams: [AudioDeviceID: [AudioStreamID]] = [:]
+    var registrations: [String: Registration] = [:]
+
+    func monitor(onChange: @escaping () -> Void) -> OutputKindMonitor {
+        OutputKindMonitor(streamIDs: { [self] in streams[$0] ?? [] },
+                          addListener: { [self] object, address, callback in
+                              registrations[key(object, address)] = Registration(object: object, address: address, callback: callback)
+                              return noErr
+                          },
+                          removeListener: { [self] object, address, _ in
+                              registrations.removeValue(forKey: key(object, address))
+                          }, onChange: onChange)
+    }
+
+    func callback(object: AudioObjectID, selector: AudioObjectPropertySelector) throws -> AudioObjectPropertyListenerBlock {
+        try #require(registrations.values.first { $0.object == object && $0.address.mSelector == selector }?.callback)
+    }
+
+    func send(object: AudioObjectID, selector: AudioObjectPropertySelector) throws {
+        invoke(try callback(object: object, selector: selector))
+    }
+
+    func invoke(_ callback: AudioObjectPropertyListenerBlock) {
+        var address = AudioObjectPropertyAddress()
+        withUnsafePointer(to: &address) { callback(1, $0) }
+    }
+
+    private func key(_ object: AudioObjectID, _ address: AudioObjectPropertyAddress) -> String {
+        "\(object)-\(address.mSelector)-\(address.mScope)-\(address.mElement)"
     }
 }

@@ -44,6 +44,9 @@ final class SoundManager {
     private var spatialRenderer: SpatialRenderer?
     private var outputKind: OutputKind = .speakers
     private var spatialEnabled = SettingsEngine.shared.isSpatialAudioEnabled()
+    private lazy var outputKindMonitor = OutputKindMonitor { [weak self] in
+        self?.refreshOutputKind()
+    }
     
     // MARK: - Idle State Tracking
     private var idleCallbackCount: Int = 0
@@ -305,7 +308,9 @@ final class SoundManager {
     
     /// Resolves whether the routed device gets HRTF or the speaker pan
     private func refreshOutputKind() {
-        let kind = getPreferredOutputDeviceID().map { HeadphoneDetector.shared.outputKind(for: $0) } ?? .speakers
+        let deviceID = getPreferredOutputDeviceID()
+        outputKindMonitor.update(deviceID: deviceID)
+        let kind = deviceID.map { HeadphoneDetector.shared.outputKind(for: $0) } ?? .speakers
         
         activeSoundsLock.lock()
         outputKind = kind
@@ -328,6 +333,7 @@ final class SoundManager {
     }
     
     private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false) {
+        outputKindMonitor.update(deviceID: nil)
         detectHardwareSampleRate()
         
         // Cancel idle timer
@@ -383,6 +389,7 @@ final class SoundManager {
     }
     
     deinit {
+        outputKindMonitor.update(deviceID: nil)
         NotificationCenter.default.removeObserver(self)
         idleTimeoutTimer?.cancel()
         if let queue = audioQueue {
