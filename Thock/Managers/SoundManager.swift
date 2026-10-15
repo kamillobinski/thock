@@ -52,7 +52,7 @@ final class SoundManager {
     private var idleCallbackCount: Int = 0
     
     // MARK: - Volume Control
-    private var volume: Float = 0.5
+    private var volumeLevels = VolumeLevels(master: 0.5)
     private let volumeLock = NSLock()
     
     // MARK: - Models
@@ -91,14 +91,16 @@ final class SoundManager {
         /// Spatial mixer input bus and its mono source when rendered through HRTF
         let bus: Int?
         let mono: [Float]?
+        let source: VolumeLevels.Source
 
-        init(sound: PCMSound, rate: Double, latencyId: UUID?, gains: (left: Float, right: Float), bus: Int?, mono: [Float]?) {
+        init(sound: PCMSound, rate: Double, latencyId: UUID?, gains: (left: Float, right: Float), bus: Int?, mono: [Float]?, source: VolumeLevels.Source) {
             self.sound = sound
             self.rate = rate
             self.latencyId = latencyId
             self.gains = gains
             self.bus = bus
             self.mono = mono
+            self.source = source
         }
 
         var isFinished: Bool {
@@ -321,10 +323,14 @@ final class SoundManager {
     
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
-        let newVolume = SettingsEngine.shared.getVolume(for: deviceUID)
+        let newLevels = VolumeLevels(
+            master: SettingsEngine.shared.getVolume(for: deviceUID),
+            keyboard: SettingsEngine.shared.getKeyboardVolume(),
+            mouse: SettingsEngine.shared.getMouseVolume()
+        )
         
         volumeLock.lock()
-        volume = newVolume
+        volumeLevels = newLevels
         volumeLock.unlock()
         
         if postNotification {
@@ -752,12 +758,14 @@ final class SoundManager {
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
-        // No lock here coz float reads are atomic
-        let currentVolume = volume
+        volumeLock.lock()
+        let currentLevels = volumeLevels
+        volumeLock.unlock()
         
         renderer?.beginBlock(frames: frameCount)
         
         for sound in activeSounds {
+            let currentVolume = currentLevels.gain(for: sound.source)
             // Report playback started on first render
             if ENABLE_LATENCY_MEASUREMENT && !sound.hasReportedPlayback {
                 sound.hasReportedPlayback = true
@@ -766,13 +774,14 @@ final class SoundManager {
             }
             
             if let bus = sound.bus, let mono = sound.mono, let renderer {
-                // Mono into the spatial mixer bus, volume is applied to the mixer output
+                // Apply the source level before spatial mixing; master scales the shared output
+                let sourceGain = currentLevels.sourceGain(for: sound.source)
                 _ = mono.withUnsafeBufferPointer { pcm in
                     Resampler.mix(
                         source: pcm, channels: 1, frameCount: sound.sound.frameCount,
                         position: &sound.sourcePosition, rate: sound.rate,
                         into: renderer.busInput(bus), outChannels: 1, outFrames: frameCount,
-                        gains: (1, 1)
+                        gains: (sourceGain, sourceGain)
                     )
                 }
                 if sound.isFinished {
@@ -790,7 +799,7 @@ final class SoundManager {
             }
         }
         
-        renderer?.render(frames: frameCount, into: outputBuffer, gain: currentVolume * SpatialRenderer.calibrationGain)
+        renderer?.render(frames: frameCount, into: outputBuffer, gain: currentLevels.master * SpatialRenderer.calibrationGain)
         
         let initialCount = activeSounds.count
         activeSounds.removeAll(where: { $0.isFinished })
@@ -851,11 +860,11 @@ final class SoundManager {
             recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
         }
         
-        enqueue(pcmSound, pitchVariation: pitchVariation, latencyId: latencyId, position: position)
+        enqueue(pcmSound, pitchVariation: pitchVariation, latencyId: latencyId, position: position, source: .keyboard)
     }
 
     /// Creates a voice with a random pitch offset in [-variation, +variation] and starts it on the next callback
-    private func enqueue(_ pcmSound: PCMSound, pitchVariation: Float, latencyId: UUID?, position: SoundPosition?) {
+    private func enqueue(_ pcmSound: PCMSound, pitchVariation: Float, latencyId: UUID?, position: SoundPosition?, source: VolumeLevels.Source) {
         let pitchOffset: Float = pitchVariation > 0.0 ? Float.random(in: -pitchVariation...pitchVariation) : 0.0
         // Semitones to playback rate
         let rate = pitchOffset == 0.0 ? 1.0 : Double(pow(2.0, pitchOffset / 12.0))
@@ -873,7 +882,7 @@ final class SoundManager {
             mono == nil ? nil : renderer?.acquireBus(position: $0)
         }
         activeSounds.append(ActiveSound(sound: pcmSound, rate: rate, latencyId: latencyId,
-                                        gains: route.gains, bus: route.bus, mono: route.bus == nil ? nil : mono))
+                                        gains: route.gains, bus: route.bus, mono: route.bus == nil ? nil : mono, source: source))
         activeSoundsLock.unlock()
     }
     
@@ -971,7 +980,7 @@ final class SoundManager {
             SpatialMath.mousePosition(location: $0, displayBounds: SpatialMath.desktopBounds(activeDisplayBounds()),
                                      width: SettingsEngine.shared.getSpatialWidth())
         } : nil
-        enqueue(sound, pitchVariation: SettingsEngine.shared.getPitchVariation(), latencyId: nil, position: position)
+        enqueue(sound, pitchVariation: SettingsEngine.shared.getPitchVariation(), latencyId: nil, position: position, source: .mouse)
     }
 
     private func activeDisplayBounds() -> [CGRect] {
