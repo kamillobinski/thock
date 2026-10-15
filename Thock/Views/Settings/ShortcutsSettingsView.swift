@@ -12,7 +12,8 @@ struct ShortcutsSettingsView: View {
                         title: L10n.toggleThock,
                         subtitle: L10n.toggleThockSubtitle,
                         control: AnyView(
-                            KeyboardShortcuts.Recorder("", name: .toggleThock)
+                            KeyboardShortcuts.Recorder(L10n.toggleThock, name: .toggleThock)
+                                .labelsHidden()
                         )
                     )
                     
@@ -20,7 +21,8 @@ struct ShortcutsSettingsView: View {
                         title: L10n.toggleCleaningMode,
                         subtitle: L10n.toggleCleaningModeSubtitle,
                         control: AnyView(
-                            KeyboardShortcuts.Recorder("", name: .toggleCleaningMode)
+                            KeyboardShortcuts.Recorder(L10n.toggleCleaningMode, name: .toggleCleaningMode)
+                                .labelsHidden()
                         ),
                         isLast: true
                     )

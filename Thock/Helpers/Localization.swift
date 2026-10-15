@@ -418,6 +418,90 @@ struct L10n {
         }
     }
     
+    static var refreshKeyboardSoundpacks: String {
+        switch lang {
+        case .english: return "Refresh keyboard soundpacks"
+        case .spanish: return "Actualizar paquetes de sonido del teclado"
+        case .french: return "Actualiser les packs de sons du clavier"
+        case .chinese: return "刷新键盘音效包"
+        case .japanese: return "キーボードのサウンドパックを更新"
+        case .german: return "Tastatur-Soundpakete aktualisieren"
+        case .vietnamese: return "Làm mới gói âm thanh bàn phím"
+        case .italian: return "Aggiorna i pacchetti audio della tastiera"
+        case .portuguese: return "Atualizar pacotes de som do teclado"
+        }
+    }
+
+    static var refreshMouseSoundpacks: String {
+        switch lang {
+        case .english: return "Refresh mouse soundpacks"
+        case .spanish: return "Actualizar paquetes de sonido del ratón"
+        case .french: return "Actualiser les packs de sons de la souris"
+        case .chinese: return "刷新鼠标音效包"
+        case .japanese: return "マウスのサウンドパックを更新"
+        case .german: return "Maus-Soundpakete aktualisieren"
+        case .vietnamese: return "Làm mới gói âm thanh chuột"
+        case .italian: return "Aggiorna i pacchetti audio del mouse"
+        case .portuguese: return "Atualizar pacotes de som do mouse"
+        }
+    }
+
+    static var retryLoadingKeyboardSoundpacks: String {
+        switch lang {
+        case .english: return "Retry loading keyboard soundpacks"
+        case .spanish: return "Reintentar la carga de paquetes de sonido del teclado"
+        case .french: return "Réessayer de charger les packs de sons du clavier"
+        case .chinese: return "重新加载键盘音效包"
+        case .japanese: return "キーボードのサウンドパックの読み込みを再試行"
+        case .german: return "Tastatur-Soundpakete erneut laden"
+        case .vietnamese: return "Thử tải lại gói âm thanh bàn phím"
+        case .italian: return "Riprova a caricare i pacchetti audio della tastiera"
+        case .portuguese: return "Tentar carregar os pacotes de som do teclado novamente"
+        }
+    }
+
+    static var retryLoadingMouseSoundpacks: String {
+        switch lang {
+        case .english: return "Retry loading mouse soundpacks"
+        case .spanish: return "Reintentar la carga de paquetes de sonido del ratón"
+        case .french: return "Réessayer de charger les packs de sons de la souris"
+        case .chinese: return "重新加载鼠标音效包"
+        case .japanese: return "マウスのサウンドパックの読み込みを再試行"
+        case .german: return "Maus-Soundpakete erneut laden"
+        case .vietnamese: return "Thử tải lại gói âm thanh chuột"
+        case .italian: return "Riprova a caricare i pacchetti audio del mouse"
+        case .portuguese: return "Tentar carregar os pacotes de som do mouse novamente"
+        }
+    }
+
+    static func removeSoundpack(_ name: String) -> String {
+        switch lang {
+        case .english: return "Remove \(name)"
+        case .spanish: return "Eliminar \(name)"
+        case .french: return "Supprimer \(name)"
+        case .chinese: return "移除\(name)"
+        case .japanese: return "\(name)を削除"
+        case .german: return "\(name) entfernen"
+        case .vietnamese: return "Xóa \(name)"
+        case .italian: return "Rimuovi \(name)"
+        case .portuguese: return "Remover \(name)"
+        }
+    }
+
+    static func installSoundpack(_ name: String) -> String {
+        switch lang {
+        case .english: return "Install \(name)"
+        case .spanish: return "Instalar \(name)"
+        case .french: return "Installer \(name)"
+        case .chinese: return "安装\(name)"
+        case .japanese: return "\(name)をインストール"
+        case .german: return "\(name) installieren"
+        case .vietnamese: return "Cài đặt \(name)"
+        case .italian: return "Installa \(name)"
+        case .portuguese: return "Instalar \(name)"
+        }
+    }
+
     static var explore: String {
         switch lang {
         case .english: return "Explore"
