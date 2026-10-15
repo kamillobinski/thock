@@ -27,8 +27,9 @@ final class SoundEngine {
     /// - Parameters:
     ///   - keyCode: The keyboard key code
     ///   - isKeyDown: true for key press, false for key release
+    ///   - layout: Physical layout captured from the originating keyboard event
     ///   - latencyId: Optional UUID for latency measurement tracking
-    func play(for keyCode: Int64, isKeyDown: Bool, latencyId: UUID? = nil) {
+    func play(for keyCode: Int64, isKeyDown: Bool, layout: KeyLayout.Physical = .ansi, latencyId: UUID? = nil) {
         // Don't play if app is disabled
         guard AppEngine.shared.isEnabled() else { return }
         
@@ -43,7 +44,7 @@ final class SoundEngine {
         // Play random sound from the list
         if let soundFileName = keySoundList.randomElement() {
             recordLatencyCheckpoint(latencyId, point: .soundSelected)
-            play(sound: soundFileName, latencyId: latencyId, position: KeyLayout.position(for: keyCode, width: SettingsEngine.shared.getSpatialWidth()))
+            play(sound: soundFileName, latencyId: latencyId, position: KeyLayout.position(for: keyCode, width: SettingsEngine.shared.getSpatialWidth(), layout: layout))
         }
     }
     

@@ -1,4 +1,5 @@
 import Carbon.HIToolbox
+import Foundation
 
 /// Physical key positions on a Mac keyboard, used to place key sounds in space.
 /// Keycodes are physical, so this is independent of the active input layout.
@@ -6,9 +7,12 @@ enum KeyLayout {
     enum Physical {
         case ansi, iso, jis
 
-        /// Physical layout of the keyboard last typed on
-        static var current: Physical {
-            switch Int(KBGetLayoutType(Int16(LMGetKbdType()))) {
+        /// Resolve the event's keyboard type on the main event-tap thread before playback is
+        /// dispatched. KBGetLayoutType is not thread safe; never consult global keyboard state.
+        static func fromKeyboardType(_ keyboardType: Int64) -> Physical {
+            precondition(Thread.isMainThread, "Capture the physical keyboard layout on the main thread")
+            guard keyboardType >= 0, let type = Int16(exactly: keyboardType) else { return .ansi }
+            switch Int(KBGetLayoutType(type)) {
             case kKeyboardISO: return .iso
             case kKeyboardJIS: return .jis
             default: return .ansi
@@ -72,7 +76,7 @@ enum KeyLayout {
     ]
 
     static func position(for keyCode: Int64, width spread: Float = SpatialMath.defaultWidth,
-                         layout: Physical = .current) -> SoundPosition {
+                         layout: Physical = .ansi) -> SoundPosition {
         let key = (layout == .iso ? isoKeys[keyCode] : nil) ?? keys[keyCode] ?? unknown
         let x = min(max(key.x, 0), width)
         return SoundPosition(

@@ -98,8 +98,11 @@ class KeyboardEventTracker {
                 }
                 
                 if let action = soundAction {
+                    // The tap runs on the main run loop. Capture this event's keyboard before
+                    // another device can type and before leaving Carbon's supported thread.
+                    let layout = KeyLayout.Physical.fromKeyboardType(event.getIntegerValueField(.keyboardEventKeyboardType))
                     DispatchQueue.global(qos: .userInteractive).async {
-                        SoundEngine.shared.play(for: action.keyCode, isKeyDown: action.isKeyDown, latencyId: latencyId)
+                        SoundEngine.shared.play(for: action.keyCode, isKeyDown: action.isKeyDown, layout: layout, latencyId: latencyId)
                     }
                 }
                 
