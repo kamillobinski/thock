@@ -36,6 +36,42 @@ struct SpatialRendererTests {
         #expect(abs(10 * log10(c.left / c.right)) < 1.5)
     }
 
+    @Test func exhaustedPoolReusesDrainedBusWithoutStaleAudio() throws {
+        let blockFrames = 32
+        let renderer = try #require(SpatialRenderer.make(sampleRate: 48_000, maxFrames: blockFrames))
+        var buses: [Int] = []
+        for _ in 0..<SpatialRenderer.busCount {
+            buses.append(try #require(renderer.acquireBus(position: .center)))
+        }
+        #expect(Set(buses).count == SpatialRenderer.busCount)
+        #expect(renderer.acquireBus(position: .center) == nil)
+
+        let releasedBus = try #require(buses.first)
+        var out = [Float](repeating: 0, count: blockFrames * 2)
+        renderer.beginBlock(frames: blockFrames)
+        renderer.busInput(releasedBus)[blockFrames - 1] = 1
+        renderer.releaseBus(releasedBus)
+        out.withUnsafeMutableBufferPointer { renderer.render(frames: blockFrames, into: $0.baseAddress!, gain: 1) }
+        #expect(renderer.acquireBus(position: .center) == nil, "A bus with a pending tail is still reserved")
+
+        var tailEnergy: Float = 0
+        for _ in 0..<((renderer.tailFrames + blockFrames - 1) / blockFrames) {
+            renderer.beginBlock(frames: blockFrames)
+            for i in out.indices { out[i] = 0 }
+            out.withUnsafeMutableBufferPointer { renderer.render(frames: blockFrames, into: $0.baseAddress!, gain: 1) }
+            for sample in out { tailEnergy += sample * sample }
+        }
+        #expect(tailEnergy > 0.000001, "The released voice must finish rendering its tail")
+
+        let reusedBus = try #require(renderer.acquireBus(position: SoundPosition(azimuth: 60, elevation: -15)))
+        #expect(reusedBus == releasedBus)
+        renderer.beginBlock(frames: blockFrames)
+        for i in out.indices { out[i] = 0 }
+        out.withUnsafeMutableBufferPointer { renderer.render(frames: blockFrames, into: $0.baseAddress!, gain: 1) }
+        #expect(out.allSatisfy { abs($0) < 0.000001 }, "Reusing a drained bus must not replay its previous input")
+        #expect(renderer.acquireBus(position: .center) == nil)
+    }
+
     @Test func calibrationMatchesDryLevel() throws {
         let renderer = try #require(SpatialRenderer.make(sampleRate: 48_000, maxFrames: 1024))
         let bus = try #require(renderer.acquireBus(position: SoundPosition(azimuth: 0, elevation: -15)))
