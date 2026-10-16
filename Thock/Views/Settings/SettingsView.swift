@@ -50,6 +50,7 @@ struct SettingsView: View {
                 NavigationLink(value: tab) {
                     SidebarRowView(tab: tab, isSelected: selectedTab == tab)
                 }
+                .accessibilityLabel(Text(tab.localizedName))
             }
             .listStyle(.sidebar)
             .frame(width: 215)

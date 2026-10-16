@@ -46,7 +46,7 @@ struct GeneralSettingsView: View {
                         title: L10n.launchAtLogin,
                         subtitle: L10n.launchAtLoginSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $openAtLogin)
+                            Toggle(L10n.launchAtLogin, isOn: $openAtLogin)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -60,13 +60,14 @@ struct GeneralSettingsView: View {
                         title: L10n.language,
                         subtitle: L10n.languageSubtitle,
                         control: AnyView(
-                            Picker("", selection: $localization.current) {
+                            Picker(L10n.language, selection: $localization.current) {
                                 ForEach(AppLanguage.allCases, id: \.self) { lang in
                                     Text(lang.displayName).tag(lang)
                                 }
                             }
                             .pickerStyle(.menu)
                             .controlSize(.small)
+                            .labelsHidden()
                         ),
                         isLast: true
                     )
