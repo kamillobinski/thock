@@ -15,6 +15,8 @@ final class SettingsManager {
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
+    static let defaultSpatialAudioEnabled: Bool = false
+    static let defaultSpatialWidth: Float = SpatialMath.defaultWidth
     
     
     private init() {}
@@ -81,6 +83,18 @@ final class SettingsManager {
         set { UserDefaults.mouseSoundEnabled = newValue }
     }
     
+    /// Whether to position sounds by key and cursor location.
+    var spatialAudioEnabled: Bool {
+        get { UserDefaults.spatialAudioEnabled }
+        set { UserDefaults.spatialAudioEnabled = newValue }
+    }
+    
+    /// Azimuth in degrees of the keyboard and screen edges when spatial audio is on.
+    var spatialWidth: Float {
+        get { UserDefaults.spatialWidth }
+        set { UserDefaults.spatialWidth = newValue }
+    }
+    
     /// Whether to auto-enable Thock when headphones are connected.
     var autoEnableOnHeadphone: Bool {
         get { UserDefaults.autoEnableOnHeadphone }
@@ -107,6 +121,8 @@ private extension UserDefaults {
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
+        static let spatialAudioEnabled = "spatialAudioEnabled"
+        static let spatialWidth = "spatialWidth"
     }
     
     static var openAtLogin: Bool {
@@ -238,6 +254,30 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.autoEnableOnHeadphone)
+        }
+    }
+    
+    static var spatialAudioEnabled: Bool {
+        get {
+            if standard.object(forKey: Keys.spatialAudioEnabled) == nil {
+                return SettingsManager.defaultSpatialAudioEnabled
+            }
+            return standard.bool(forKey: Keys.spatialAudioEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.spatialAudioEnabled)
+        }
+    }
+    
+    static var spatialWidth: Float {
+        get {
+            if standard.object(forKey: Keys.spatialWidth) == nil {
+                return SettingsManager.defaultSpatialWidth
+            }
+            return SpatialMath.clampWidth(standard.float(forKey: Keys.spatialWidth))
+        }
+        set {
+            standard.set(SpatialMath.clampWidth(newValue), forKey: Keys.spatialWidth)
         }
     }
 }

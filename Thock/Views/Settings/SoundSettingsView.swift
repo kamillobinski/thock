@@ -10,6 +10,8 @@ struct SoundSettingsView: View {
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
     @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
     @State private var mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()
+    @State private var spatialAudioEnabled = SettingsEngine.shared.isSpatialAudioEnabled()
+    @State private var spatialWidth = Double(SettingsEngine.shared.getSpatialWidth())
     @State private var refreshID = UUID()
     
     var body: some View {
@@ -74,9 +76,53 @@ struct SoundSettingsView: View {
                                 .onChange(of: mouseSoundEnabled) { newValue in
                                     SettingsEngine.shared.setMouseSoundEnabled(newValue)
                                 }
-                        ),
-                        isLast: true
+                        )
                     )
+                    
+                    SettingsRowView(
+                        title: L10n.spatialAudio,
+                        subtitle: L10n.spatialAudioSubtitle,
+                        control: AnyView(
+                            Toggle("", isOn: $spatialAudioEnabled.animation(.easeInOut(duration: 0.2)))
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: spatialAudioEnabled) { newValue in
+                                    SettingsEngine.shared.setSpatialAudioEnabled(newValue)
+                                }
+                        ),
+                        isLast: !spatialAudioEnabled
+                    )
+                    
+                    if spatialAudioEnabled {
+                        SettingsRowView(
+                            title: L10n.spatialWidth,
+                            subtitle: L10n.spatialWidthSubtitle,
+                            control: AnyView(
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.right.and.line.vertical.and.arrow.left")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                    
+                                    Slider(
+                                        value: $spatialWidth,
+                                        in: Double(SpatialMath.widthRange.lowerBound)...Double(SpatialMath.widthRange.upperBound),
+                                        step: 5
+                                    )
+                                        .frame(width: 140)
+                                        .onChange(of: spatialWidth) { newValue in
+                                            SettingsEngine.shared.setSpatialWidth(Float(newValue))
+                                        }
+                                    
+                                    Image(systemName: "arrow.left.and.right")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                }
+                            ),
+                            isLast: true
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                 }
                 
                 SettingsSectionView(title: L10n.filters) {

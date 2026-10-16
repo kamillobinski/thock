@@ -192,6 +192,26 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .mouseSoundDidChange, object: nil)
     }
     
+    // MARK: - Spatial Audio
+    
+    func isSpatialAudioEnabled() -> Bool {
+        return SettingsManager.shared.spatialAudioEnabled
+    }
+    
+    func setSpatialAudioEnabled(_ enabled: Bool) {
+        SettingsManager.shared.spatialAudioEnabled = enabled
+        NotificationCenter.default.post(name: .spatialAudioDidChange, object: nil)
+    }
+    
+    func getSpatialWidth() -> Float {
+        return SettingsManager.shared.spatialWidth
+    }
+    
+    /// Read on every sound, so no notification is needed.
+    func setSpatialWidth(_ width: Float) {
+        SettingsManager.shared.spatialWidth = width
+    }
+    
     // MARK: - Headphone Auto-Enable
     
     func isAutoEnableOnHeadphoneEnabled() -> Bool {
@@ -218,5 +238,6 @@ extension Notification.Name {
     static let volumeDidChange = Notification.Name("volumeDidChange")
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
     static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
+    static let spatialAudioDidChange = Notification.Name("spatialAudioDidChange")
     static let cleaningModeDidChange = Notification.Name("cleaningModeDidChange")
 }
