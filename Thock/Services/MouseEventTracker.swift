@@ -1,4 +1,5 @@
 import Cocoa
+import OSLog
 
 /// Represents a mouse button event type for sound playback.
 enum MouseButtonEvent: Hashable, CustomStringConvertible {
@@ -20,7 +21,10 @@ enum MouseButtonEvent: Hashable, CustomStringConvertible {
 /// Tracks mouse button events and plays sounds.
 class MouseEventTracker {
     private var eventMonitor: CFMachPort?
+    private var runLoopSource: CFRunLoopSource?
+    private var trackedRunLoop: CFRunLoop?
     private var settingsObserver: NSObjectProtocol?
+    private var tapReEnableCount = 0
     
     init() {
         // Observe mouse sound setting changes to start/stop tracking dynamically
@@ -65,14 +69,25 @@ class MouseEventTracker {
         (1 << CGEventType.rightMouseDown.rawValue) |
         (1 << CGEventType.rightMouseUp.rawValue)
         
+        // Pass an unretained pointer: AppDelegate owns this tracker and calls
+        // stopTracking() before releasing it, so the tap never outlives the object.
+        let observer = Unmanaged.passUnretained(self).toOpaque()
+
         eventMonitor = CGEvent.tapCreate(
             tap: .cghidEventTap,
             place: .tailAppendEventTap,
             options: .listenOnly,
             eventsOfInterest: eventMask,
-            callback: { _, type, event, _ in
-                if type.rawValue == 0xFFFFFFFE || type.rawValue == 0xFFFFFFFF {
-                    return nil
+            callback: { _, type, event, userInfo in
+                guard let userInfo = userInfo else { return Unmanaged.passUnretained(event) }
+                let tracker = Unmanaged<MouseEventTracker>.fromOpaque(userInfo).takeUnretainedValue()
+
+                // Re-enable rather than ignore: a tap disabled by the system stayed
+                // disabled for the rest of the process lifetime, so mouse clicks went
+                // silent until the app was relaunched.
+                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    tracker.reenableTap()
+                    return Unmanaged.passUnretained(event)
                 }
                 
                 // Don't play if app is disabled
@@ -108,24 +123,45 @@ class MouseEventTracker {
                 
                 return Unmanaged.passUnretained(event)
             },
-            userInfo: nil
+            userInfo: observer
         )
         
         if let eventMonitor = eventMonitor {
-            let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+            let runLoop = CFRunLoopGetCurrent()
+            let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
+            CFRunLoopAddSource(runLoop, source, .commonModes)
+            runLoopSource = source
+            trackedRunLoop = runLoop
             CGEvent.tapEnable(tap: eventMonitor, enable: true)
         } else {
-            print("Failed to create mouse event tap.")
+            Logger.lifecycle.error("Failed to create mouse event tap")
         }
     }
     
-    /// Stops tracking mouse button events.
+    /// Stops tracking mouse button events and releases the tap and its run loop source.
     func stopTracking() {
         if let eventMonitor = eventMonitor {
             CGEvent.tapEnable(tap: eventMonitor, enable: false)
             CFMachPortInvalidate(eventMonitor)
             self.eventMonitor = nil
         }
+
+        // Remove the source from the run loop it was registered on. Leaving it behind
+        // accumulated a source every time tracking was restarted.
+        if let source = runLoopSource, let runLoop = trackedRunLoop {
+            CFRunLoopRemoveSource(runLoop, source, .commonModes)
+        }
+        runLoopSource = nil
+        trackedRunLoop = nil
+    }
+
+    // MARK: Private methods
+
+    /// Re-enables the tap after the system disabled it.
+    private func reenableTap() {
+        guard let eventMonitor = eventMonitor else { return }
+        CGEvent.tapEnable(tap: eventMonitor, enable: true)
+        tapReEnableCount += 1
+        Logger.lifecycle.warning("Mouse event tap was disabled by the system and re-enabled (re-enable #\(self.tapReEnableCount))")
     }
 }
