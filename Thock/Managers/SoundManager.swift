@@ -8,6 +8,9 @@ import Accelerate
 final class SoundManager {
     static let shared = SoundManager()
     
+    /// Serial queue for playback requests from the event taps, play() is not safe to run concurrently
+    static let playbackQueue = DispatchQueue(label: "com.thock.playback", qos: .userInteractive)
+    
     // MARK: - Constants
     private static let defaultDeviceUID = "default"
     
@@ -47,9 +50,6 @@ final class SoundManager {
     private lazy var outputKindMonitor = OutputKindMonitor { [weak self] in
         self?.refreshOutputKind()
     }
-    
-    // MARK: - Idle State Tracking
-    private var idleCallbackCount: Int = 0
     
     // MARK: - Volume Control
     private var volumeLevels = VolumeLevels(master: 0.5)
@@ -491,7 +491,6 @@ final class SoundManager {
             return
         }
         
-        idleCallbackCount = 0
         // Re-prime all buffers
         Logger.audio.debug("Re-priming \(self.audioBuffers.count) buffers before restart")
         for buffer in audioBuffers {
@@ -739,21 +738,15 @@ final class SoundManager {
         let renderer = spatialRenderer.flatMap { $0.maxFrames >= frameCount ? $0 : nil }
         
         if activeSounds.isEmpty && (renderer?.isIdle ?? true) {
-            // No active sounds or spatial tails, output silence and return early
-            let shouldClear = idleCallbackCount < numberOfBuffers
-            idleCallbackCount += 1
+            // No active sounds or spatial tails, output silence and return early.
+            // Always clear, a buffer re-enqueued with stale samples would loop them until the next sound
             activeSoundsLock.unlock()
-            
-            if shouldClear {
-                memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
-            }
+            memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
             
             buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
             AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
             return
         }
-        
-        idleCallbackCount = 0
         
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))

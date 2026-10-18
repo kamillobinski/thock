@@ -103,7 +103,7 @@ class MouseEventTracker {
                 if let mouseEvent = mouseEvent {
                     // Read before the hop, the event is only valid inside the tap callback
                     let location = event.location
-                    DispatchQueue.global(qos: .userInteractive).async { SoundManager.shared.playMouseSound(for: mouseEvent, location: location) }
+                    SoundManager.playbackQueue.async { SoundManager.shared.playMouseSound(for: mouseEvent, location: location) }
                 }
                 
                 return Unmanaged.passUnretained(event)
