@@ -278,6 +278,22 @@ struct L10n {
         }
     }
     
+    static var master: String {
+        // Use language codes so this key also supports the separate Russian localization PR.
+        switch lang.rawValue {
+        case "es": return "General"
+        case "fr": return "Principal"
+        case "zh": return "主音量"
+        case "ja": return "マスター"
+        case "de": return "Gesamt"
+        case "vi": return "Tổng"
+        case "it": return "Generale"
+        case "pt": return "Geral"
+        case "ru": return "Общая"
+        default: return "Master"
+        }
+    }
+
     static var playThrough: String {
         switch lang {
         case .english: return "Play sound effects through"
