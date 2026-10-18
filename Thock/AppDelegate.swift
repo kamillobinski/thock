@@ -15,7 +15,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
         
-        if AXIsProcessTrusted() {
+        let trusted = checkAccessibilityPermissions(prompt: true)
+        if trusted {
             continueAppInitialization()
         } else {
             menuBarController.setNeedsAuthorization(true)
@@ -102,6 +103,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
                 self.continueAppInitialization()
             }
         }
+    }
+    
+    @discardableResult
+    private func checkAccessibilityPermissions(prompt: Bool = false) -> Bool {
+        if prompt {
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            return AXIsProcessTrustedWithOptions(options)
+        }
+        return AXIsProcessTrusted()
     }
     
     // MARK: - Initialization
