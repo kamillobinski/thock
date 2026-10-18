@@ -456,6 +456,7 @@ struct L10n {
         case .vietnamese: return "Làm mới gói âm thanh bàn phím"
         case .italian: return "Aggiorna i pacchetti audio della tastiera"
         case .portuguese: return "Atualizar pacotes de som do teclado"
+        case .russian: return "Обновить звуковые пакеты клавиатуры"
         }
     }
 
@@ -470,6 +471,7 @@ struct L10n {
         case .vietnamese: return "Làm mới gói âm thanh chuột"
         case .italian: return "Aggiorna i pacchetti audio del mouse"
         case .portuguese: return "Atualizar pacotes de som do mouse"
+        case .russian: return "Обновить звуковые пакеты мыши"
         }
     }
 
@@ -484,6 +486,7 @@ struct L10n {
         case .vietnamese: return "Thử tải lại gói âm thanh bàn phím"
         case .italian: return "Riprova a caricare i pacchetti audio della tastiera"
         case .portuguese: return "Tentar carregar os pacotes de som do teclado novamente"
+        case .russian: return "Повторить загрузку звуковых пакетов клавиатуры"
         }
     }
 
@@ -498,6 +501,7 @@ struct L10n {
         case .vietnamese: return "Thử tải lại gói âm thanh chuột"
         case .italian: return "Riprova a caricare i pacchetti audio del mouse"
         case .portuguese: return "Tentar carregar os pacotes de som do mouse novamente"
+        case .russian: return "Повторить загрузку звуковых пакетов мыши"
         }
     }
 
@@ -512,6 +516,7 @@ struct L10n {
         case .vietnamese: return "Xóa \(name)"
         case .italian: return "Rimuovi \(name)"
         case .portuguese: return "Remover \(name)"
+        case .russian: return "Удалить \(name)"
         }
     }
 
@@ -526,6 +531,7 @@ struct L10n {
         case .vietnamese: return "Cài đặt \(name)"
         case .italian: return "Installa \(name)"
         case .portuguese: return "Instalar \(name)"
+        case .russian: return "Установить \(name)"
         }
     }
 
@@ -900,6 +906,7 @@ struct L10n {
         case .vietnamese: return "Âm thanh không gian"
         case .italian: return "Audio spaziale"
         case .portuguese: return "Áudio espacial"
+        case .russian: return "Пространственное аудио"
         }
     }
     
@@ -914,6 +921,7 @@ struct L10n {
         case .vietnamese: return "Định vị âm thanh theo vị trí phím và con trỏ. Tốt nhất khi dùng tai nghe"
         case .italian: return "Posiziona i suoni in base al tasto e alla posizione del cursore. Ideale con le cuffie"
         case .portuguese: return "Posiciona os sons pela tecla e pela posição do cursor. Melhor com fones de ouvido"
+        case .russian: return "Расположение звуков соответствует положению клавиш и курсора. Лучше использовать наушники"
         }
     }
     
@@ -928,6 +936,7 @@ struct L10n {
         case .vietnamese: return "Độ rộng không gian"
         case .italian: return "Ampiezza spaziale"
         case .portuguese: return "Largura espacial"
+        case .russian: return "Ширина звуковой сцены"
         }
     }
     
@@ -942,6 +951,7 @@ struct L10n {
         case .vietnamese: return "Mức độ âm thanh trải rộng sang trái và phải"
         case .italian: return "Quanto si estendono i suoni a sinistra e a destra"
         case .portuguese: return "O quanto os sons se espalham para a esquerda e a direita"
+        case .russian: return "Насколько далеко звуки распространяются влево и вправо"
         }
     }
     
