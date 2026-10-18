@@ -3,7 +3,14 @@ name: Thock Release
 on:
   push:
     tags:
-      - '*'
+      - '[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -14,10 +21,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate tag format
+        run: |
+          set -euo pipefail
+          if ! [[ "$GITHUB_REF_NAME" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Expected a plain version tag, e.g. 1.23.0." >&2
+            exit 1
+          fi
+
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
+
+      - name: Validate Release version
+        run: |
+          set -euo pipefail
+          xcodebuild -scheme Thock -configuration Release -showBuildSettings -json > "$RUNNER_TEMP/settings.json"
+          VERSION=$(python3 -c 'import json,sys; print(next(x["buildSettings"]["MARKETING_VERSION"] for x in json.load(open(sys.argv[1])) if x["target"] == "Thock"))' "$RUNNER_TEMP/settings.json")
+          if [ "$GITHUB_REF_NAME" != "$VERSION" ]; then
+            echo "Tag does not match the app Release MARKETING_VERSION ($VERSION)." >&2
+            exit 1
+          fi
 
       - name: Build Archive
         run: |
@@ -28,6 +53,7 @@ jobs:
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
           cp -R build/Thock.xcarchive/Products/Applications/Thock.app build/Thock.app
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' build/Thock.app/Contents/Info.plist)" = "$GITHUB_REF_NAME"
 
       - name: Add CLI
         run: cp cli/thock-cli build/thock-cli
@@ -70,10 +96,10 @@ jobs:
       - name: Zip with version
         run: |
           cd build
-          ZIP_NAME="Thock-${{ github.ref_name }}.zip"
+          ZIP_NAME="Thock-$GITHUB_REF_NAME.zip"
           zip -r "$ZIP_NAME" Thock.app thock-cli
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
-          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "VERSION=$GITHUB_REF_NAME" >> $GITHUB_ENV
 
       - name: Get SHA256
         id: sha
@@ -81,28 +107,62 @@ jobs:
           HASH=$(shasum -a 256 "build/$ZIP_NAME" | awk '{ print $1 }')
           echo "sha=$HASH" >> $GITHUB_OUTPUT
 
+      # release notes are optional: a missing changelog used to fail the whole
+      # release after the artifacts had already been built.
+      - name: Resolve release notes
+        id: notes
+        run: |
+          NOTES_FILE="docs/releases/$GITHUB_REF_NAME.md"
+          if [ -f "$NOTES_FILE" ]; then
+            echo "path=$NOTES_FILE" >> $GITHUB_OUTPUT
+            echo "Using changelog at $NOTES_FILE."
+          else
+            FALLBACK="$RUNNER_TEMP/release-notes.md"
+            printf 'Release %s\n' "$GITHUB_REF_NAME" > "$FALLBACK"
+            echo "path=$FALLBACK" >> $GITHUB_OUTPUT
+            echo "No changelog at $NOTES_FILE, falling back to a placeholder." >&2
+          fi
+
       - name: Upload release artifact
         uses: softprops/action-gh-release@v1
         with:
           files: build/${{ env.ZIP_NAME }}
-          body_path: docs/releases/${{ github.ref_name }}.md
+          body_path: ${{ steps.notes.outputs.path }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Homebrew Cask
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
+          SHA256: ${{ steps.sha.outputs.sha }}
         run: |
-          git config --global user.email "release-bot@thock.dev"
-          git config --global user.name "Thock Release Bot"
+          set -euo pipefail
 
-          git clone https://${GH_TOKEN}@github.com/kamillobinski/homebrew-thock.git
+          BRANCH="bump-$VERSION"
+          REPO="kamillobinski/homebrew-thock"
+          gh auth setup-git
+          git clone "https://github.com/$REPO.git"
           cd homebrew-thock
-          git checkout -b bump-${{ env.VERSION }}
+          git config user.email "release-bot@thock.dev"
+          git config user.name "Thock Release Bot"
 
-          sed -i '' "s|version \".*\"|version \"${{ env.VERSION }}\"|" Casks/thock.rb
-          sed -i '' "s|sha256 \".*\"|sha256 \"${{ steps.sha.outputs.sha }}\"|" Casks/thock.rb
+          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+            git checkout -b "$BRANCH" "origin/$BRANCH"
+          else
+            git checkout -b "$BRANCH"
+          fi
 
+          sed -i '' "s|version \".*\"|version \"$VERSION\"|" Casks/thock.rb
+          sed -i '' "s|sha256 \".*\"|sha256 \"$SHA256\"|" Casks/thock.rb
           git add Casks/thock.rb
-          git commit -m "chore: bump cask to ${{ env.VERSION }}"
-          git push origin bump-${{ env.VERSION }}
-          gh pr create --title "chore: bump cask to ${{ env.VERSION }}" --body "Automated Thock cask version bump." --head bump-${{ env.VERSION }}
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: bump cask to $VERSION"
+            git push origin "$BRANCH"
+          fi
+
+          # A rerun can rebuild the zip with a different hash: update the branch even
+          # when a PR already exists, then avoid opening a duplicate.
+          EXISTING=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number --jq 'length')
+          if [ "$EXISTING" -eq 0 ] && ! git diff --quiet origin/HEAD -- Casks/thock.rb; then
+            gh pr create --repo "$REPO" --title "chore: bump cask to $VERSION" \
+              --body "Automated Thock cask version bump." --head "$BRANCH"
+          fi
