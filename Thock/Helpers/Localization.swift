@@ -12,6 +12,7 @@ enum AppLanguage: String, CaseIterable {
     case vietnamese = "vi"
     case italian = "it"
     case portuguese = "pt"
+    case russian = "ru"
     
     var displayName: String {
         switch self {
@@ -24,6 +25,7 @@ enum AppLanguage: String, CaseIterable {
         case .vietnamese: return "Tiếng Việt"
         case .italian: return "Italiano"
         case .portuguese: return "Português"
+        case .russian: return "Русский"
         }
     }
     
@@ -34,6 +36,7 @@ enum AppLanguage: String, CaseIterable {
         if preferred.hasPrefix("fr") { return .french }
         if preferred.hasPrefix("zh") { return .chinese }
         if preferred.hasPrefix("ja") { return .japanese }
+        if preferred.hasPrefix("ru") { return .russian }
         if preferred.hasPrefix("de") { return .german }
         if preferred.hasPrefix("vi") { return .vietnamese }
         if preferred.hasPrefix("it") { return .italian }
@@ -90,6 +93,7 @@ struct L10n {
         case .vietnamese: return "Cài đặt chung"
         case .italian: return "Generali"
         case .portuguese: return "Geral"
+        case .russian: return "Основные"
         }
     }
     
@@ -104,6 +108,7 @@ struct L10n {
         case .vietnamese: return "Âm thanh"
         case .italian: return "Suono"
         case .portuguese: return "Som"
+        case .russian: return "Звук"
         }
     }
     
@@ -118,6 +123,7 @@ struct L10n {
         case .vietnamese: return "Phím tắt"
         case .italian: return "Scorciatoie"
         case .portuguese: return "Atalhos"
+        case .russian: return "Сочетания клавиш"
         }
     }
     
@@ -133,6 +139,7 @@ struct L10n {
         case .vietnamese: return "Hệ thống"
         case .italian: return "Sistema"
         case .portuguese: return "Sistema"
+        case .russian: return "Система"
         }
     }
     
@@ -147,6 +154,7 @@ struct L10n {
         case .vietnamese: return "Khởi động Thock khi đăng nhập"
         case .italian: return "Apri Thock al login"
         case .portuguese: return "Abrir o Thock ao fazer login"
+        case .russian: return "Запускать Thock при входе"
         }
     }
     
@@ -161,6 +169,7 @@ struct L10n {
         case .vietnamese: return "Tự động khởi động Thock khi đăng nhập"
         case .italian: return "Apri automaticamente Thock all'avvio"
         case .portuguese: return "Abre o Thock automaticamente quando você faz login"
+        case .russian: return "Автоматически запускать Thock при входе в систему"
         }
     }
     
@@ -175,6 +184,7 @@ struct L10n {
         case .vietnamese: return "Ngôn ngữ"
         case .italian: return "Lingua"
         case .portuguese: return "Idioma"
+        case .russian: return "Язык"
         }
     }
     
@@ -189,6 +199,7 @@ struct L10n {
         case .vietnamese: return "Chọn ngôn ngữ bạn muốn sử dụng"
         case .italian: return "Scegli la tua lingua preferita"
         case .portuguese: return "Escolha o seu idioma preferido"
+        case .russian: return "Выберите предпочитаемый язык"
         }
     }
     
@@ -204,6 +215,7 @@ struct L10n {
         case .vietnamese: return "Khác"
         case .italian: return "Altro"
         case .portuguese: return "Mais"
+        case .russian: return "Дополнительно"
         }
     }
     
@@ -218,6 +230,7 @@ struct L10n {
         case .vietnamese: return "Giới thiệu phiên bản"
         case .italian: return "Riguardo questa versione"
         case .portuguese: return "Sobre esta versão"
+        case .russian: return "Об этой версии"
         }
     }
     
@@ -232,6 +245,7 @@ struct L10n {
         case .vietnamese: return "Đóng góp"
         case .italian: return "Contribuisci"
         case .portuguese: return "Contribuir"
+        case .russian: return "Внести вклад"
         }
     }
     
@@ -246,6 +260,7 @@ struct L10n {
         case .vietnamese: return "Báo cáo lỗi"
         case .italian: return "Segnala un bug"
         case .portuguese: return "Relatar um erro"
+        case .russian: return "Сообщить об ошибке"
         }
     }
     
@@ -261,6 +276,7 @@ struct L10n {
         case .vietnamese: return "Đầu ra"
         case .italian: return "Uscita"
         case .portuguese: return "Saída"
+        case .russian: return "Вывод"
         }
     }
     
@@ -275,6 +291,7 @@ struct L10n {
         case .vietnamese: return "Âm lượng"
         case .italian: return "Volume"
         case .portuguese: return "Volume"
+        case .russian: return "Громкость"
         }
     }
     
@@ -305,6 +322,7 @@ struct L10n {
         case .vietnamese: return "Phát âm thanh qua"
         case .italian: return "Riproduci effetti audio tramite"
         case .portuguese: return "Reproduzir efeitos sonoros em"
+        case .russian: return "Воспроизводить звуковые эффекты через"
         }
     }
     
@@ -319,6 +337,7 @@ struct L10n {
         case .vietnamese: return "Mặc định hệ thống"
         case .italian: return "Predefinito di sistema"
         case .portuguese: return "Padrão do sistema"
+        case .russian: return "По умолчанию"
         }
     }
     
@@ -333,6 +352,7 @@ struct L10n {
         case .vietnamese: return "Bộ lọc"
         case .italian: return "Filtri"
         case .portuguese: return "Filtros"
+        case .russian: return "Фильтры"
         }
     }
     
@@ -347,6 +367,7 @@ struct L10n {
         case .vietnamese: return "Tắt âm cho phím chức năng"
         case .italian: return "Disattiva i suoni per i tasti modificatori"
         case .portuguese: return "Desativar som das teclas modificadoras"
+        case .russian: return "Отключать звук для клавиш-модификаторов"
         }
     }
     
@@ -361,6 +382,7 @@ struct L10n {
         case .vietnamese: return "Tắt âm thanh khi nhấn các phím chức năng (Cmd, Shift, v.v.)"
         case .italian: return "Silenzia i suoni quando si premono i tasti modificatori (Cmd, Shift, ecc.)"
         case .portuguese: return "Silencia os sons ao pressionar teclas modificadoras (Cmd, Shift etc.)"
+        case .russian: return "Отключать звуки при нажатии клавиш-модификаторов (Cmd, Shift и т. д.)"
         }
     }
     
@@ -375,6 +397,7 @@ struct L10n {
         case .vietnamese: return "Bỏ qua các phím bấm quá nhanh"
         case .italian: return "Ignora pressioni rapide dei tasti"
         case .portuguese: return "Ignorar eventos rápidos de teclas"
+        case .russian: return "Игнорировать быстрые нажатия клавиш"
         }
     }
     
@@ -389,6 +412,7 @@ struct L10n {
         case .vietnamese: return "Lọc bỏ các sự kiện phím xảy ra quá nhanh"
         case .italian: return "Filtra i tasti premuti in successione troppo velocemente"
         case .portuguese: return "Ignora eventos de teclas que ocorrem em sequência rápida demais"
+        case .russian: return "Игнорировать нажатия клавиш, следующие слишком быстро друг за другом"
         }
     }
     
@@ -403,6 +427,7 @@ struct L10n {
         case .vietnamese: return "Tự động tắt tiếng khi có ứng dụng nhạc"
         case .italian: return "Silenzia automaticamente con app di musica"
         case .portuguese: return "Silenciar automaticamente com apps de música"
+        case .russian: return "Отключать звук при воспроизведении музыки"
         }
     }
     
@@ -417,6 +442,7 @@ struct L10n {
         case .vietnamese: return "Tự động tắt tiếng khi Music, Spotify hoặc VLC đang phát"
         case .italian: return "Silenzia automaticamente i suoni quando Musica, Spotify o VLC sono in riproduzione"
         case .portuguese: return "Silenciar automaticamente quando Music, Spotify ou VLC estiverem reproduzindo"
+        case .russian: return "Автоматически отключать звук при воспроизведении в Music, Spotify или VLC"
         }
     }
     
@@ -431,6 +457,7 @@ struct L10n {
         case .vietnamese: return "Gói âm thanh"
         case .italian: return "Pacchetti audio"
         case .portuguese: return "Pacotes de som"
+        case .russian: return "Звуковые наборы"
         }
     }
     
@@ -445,6 +472,7 @@ struct L10n {
         case .vietnamese: return "Làm mới gói âm thanh bàn phím"
         case .italian: return "Aggiorna i pacchetti audio della tastiera"
         case .portuguese: return "Atualizar pacotes de som do teclado"
+        case .russian: return "Обновить звуковые пакеты клавиатуры"
         }
     }
 
@@ -459,6 +487,7 @@ struct L10n {
         case .vietnamese: return "Làm mới gói âm thanh chuột"
         case .italian: return "Aggiorna i pacchetti audio del mouse"
         case .portuguese: return "Atualizar pacotes de som do mouse"
+        case .russian: return "Обновить звуковые пакеты мыши"
         }
     }
 
@@ -473,6 +502,7 @@ struct L10n {
         case .vietnamese: return "Thử tải lại gói âm thanh bàn phím"
         case .italian: return "Riprova a caricare i pacchetti audio della tastiera"
         case .portuguese: return "Tentar carregar os pacotes de som do teclado novamente"
+        case .russian: return "Повторить загрузку звуковых пакетов клавиатуры"
         }
     }
 
@@ -487,6 +517,7 @@ struct L10n {
         case .vietnamese: return "Thử tải lại gói âm thanh chuột"
         case .italian: return "Riprova a caricare i pacchetti audio del mouse"
         case .portuguese: return "Tentar carregar os pacotes de som do mouse novamente"
+        case .russian: return "Повторить загрузку звуковых пакетов мыши"
         }
     }
 
@@ -501,6 +532,7 @@ struct L10n {
         case .vietnamese: return "Xóa \(name)"
         case .italian: return "Rimuovi \(name)"
         case .portuguese: return "Remover \(name)"
+        case .russian: return "Удалить \(name)"
         }
     }
 
@@ -515,6 +547,7 @@ struct L10n {
         case .vietnamese: return "Cài đặt \(name)"
         case .italian: return "Installa \(name)"
         case .portuguese: return "Instalar \(name)"
+        case .russian: return "Установить \(name)"
         }
     }
 
@@ -529,6 +562,7 @@ struct L10n {
         case .vietnamese: return "Khám phá"
         case .italian: return "Esplora"
         case .portuguese: return "Explorar"
+        case .russian: return "Обзор"
         }
     }
     
@@ -543,6 +577,7 @@ struct L10n {
         case .vietnamese: return "Thư mục gói âm thanh"
         case .italian: return "Cartella pacchetti audio"
         case .portuguese: return "Pasta dos pacotes de som"
+        case .russian: return "Каталог звуковых наборов"
         }
     }
     
@@ -557,6 +592,7 @@ struct L10n {
         case .vietnamese: return "Hướng dẫn tạo gói âm thanh"
         case .italian: return "Guida alla creazione di pacchetti audio"
         case .portuguese: return "Guia de criação de pacotes de som"
+        case .russian: return "Руководство по созданию звуковых наборов"
         }
     }
     
@@ -571,6 +607,7 @@ struct L10n {
         case .vietnamese: return "Mở"
         case .italian: return "Apri"
         case .portuguese: return "Abrir"
+        case .russian: return "Открыть"
         }
     }
     
@@ -585,6 +622,7 @@ struct L10n {
         case .vietnamese: return "Hiệu năng"
         case .italian: return "Prestazioni"
         case .portuguese: return "Desempenho"
+        case .russian: return "Производительность"
         }
     }
     
@@ -599,6 +637,7 @@ struct L10n {
         case .vietnamese: return "Độ trễ âm thanh"
         case .italian: return "Latenza audio"
         case .portuguese: return "Latência de áudio"
+        case .russian: return "Задержка звука"
         }
     }
     
@@ -613,6 +652,7 @@ struct L10n {
         case .vietnamese: return "- Cực thấp: Phản hồi nhanh nhất, tốn nhiều CPU nhất\n- Thấp: Phản hồi nhanh, tốn nhiều CPU\n- Trung bình: Hiệu năng cân bằng (khuyên dùng)\n- Cao: Tốn ít CPU hơn, có độ trễ nhẹ\n- Rất cao: Tốn ít CPU nhất, độ trễ rõ rệt"
         case .italian: return "- Ultra Bassa: molto reattiva, altissimo utilizzo CPU\n- Bassa: molto reattiva, alto utilizzo CPU\n- Normale: prestazioni bilanciate (consigliato)\n- Alta: minor utilizzo CPU, leggero ritardo\n- Molto Alta: minimo utilizzo CPU, ritardo notevole"
         case .portuguese: return "- Ultra baixa: máxima resposta, maior uso de CPU\n- Baixa: bem responsiva, alto uso de CPU\n- Normal: desempenho equilibrado (recomendado)\n- Alta: menor uso de CPU, leve atraso\n- Muito alta: mínimo uso de CPU, atraso perceptível"
+        case .russian: return "— Ультранизкая: максимальная отзывчивость, максимальная нагрузка на ЦП\n— Низкая: очень высокая отзывчивость, высокая нагрузка на ЦП\n— Обычная: сбалансированная производительность (рекомендуется)\n— Высокая: меньшая нагрузка на ЦП, небольшая задержка\n— Очень высокая: минимальная нагрузка на ЦП, заметная задержка"
         }
     }
     
@@ -627,6 +667,7 @@ struct L10n {
         case .vietnamese: return "Cực thấp"
         case .italian: return "Ultra Bassa"
         case .portuguese: return "Ultra baixa"
+        case .russian: return "Ультранизкая"
         }
     }
     
@@ -641,6 +682,7 @@ struct L10n {
         case .vietnamese: return "Thấp"
         case .italian: return "Bassa"
         case .portuguese: return "Baixa"
+        case .russian: return "Низкая"
         }
     }
     
@@ -655,6 +697,7 @@ struct L10n {
         case .vietnamese: return "Trung bình"
         case .italian: return "Normale"
         case .portuguese: return "Normal"
+        case .russian: return "Обычная"
         }
     }
     
@@ -669,6 +712,7 @@ struct L10n {
         case .vietnamese: return "Cao"
         case .italian: return "Alta"
         case .portuguese: return "Alta"
+        case .russian: return "Высокая"
         }
     }
     
@@ -683,6 +727,7 @@ struct L10n {
         case .vietnamese: return "Rất cao"
         case .italian: return "Molto Alta"
         case .portuguese: return "Muito alta"
+        case .russian: return "Очень высокая"
         }
     }
     
@@ -697,6 +742,7 @@ struct L10n {
         case .vietnamese: return "Giảm mức sử dụng CPU khi không hoạt động"
         case .italian: return "Riduci CPU quando inattivo"
         case .portuguese: return "Reduzir o uso da CPU em inatividade"
+        case .russian: return "Снижать нагрузку на ЦП при бездействии"
         }
     }
     
@@ -711,6 +757,7 @@ struct L10n {
         case .vietnamese: return "Tắt âm thanh khi không dùng để giảm tải CPU.\nCó thể có chút độ trễ khi phát âm thanh trở lại.\nĐổi thành 'Không bao giờ' để giữ âm thanh hoạt động liên tục."
         case .italian: return "Ferma il motore audio in caso di inattività per ridurre l'uso della CPU.\nIl primo suono dopo l'inattività potrebbe avere un lieve ritardo.\nImposta su 'Mai' per mantenere il motore sempre attivo."
         case .portuguese: return "Interrompe o motor de áudio após inatividade para reduzir o uso da CPU.\nO primeiro som depois da pausa pode ter um pequeno atraso.\nDefina como \u{2018}Nunca\u{2019} para manter o motor sempre ativo."
+        case .russian: return "Останавливает аудиодвижок при бездействии для снижения нагрузки на ЦП.\nПервый звук после бездействия может воспроизводиться с небольшой задержкой.\nВыберите «Никогда», чтобы аудиодвижок работал постоянно."
         }
     }
     
@@ -725,6 +772,7 @@ struct L10n {
         case .vietnamese: return "5 giây"
         case .italian: return "5 secondi"
         case .portuguese: return "5 segundos"
+        case .russian: return "5 секунд"
         }
     }
     
@@ -739,6 +787,7 @@ struct L10n {
         case .vietnamese: return "10 giây"
         case .italian: return "10 secondi"
         case .portuguese: return "10 segundos"
+        case .russian: return "10 секунд"
         }
     }
     
@@ -753,6 +802,7 @@ struct L10n {
         case .vietnamese: return "30 giây"
         case .italian: return "30 secondi"
         case .portuguese: return "30 segundos"
+        case .russian: return "30 секунд"
         }
     }
     
@@ -767,6 +817,7 @@ struct L10n {
         case .vietnamese: return "1 phút"
         case .italian: return "1 minuto"
         case .portuguese: return "1 minuto"
+        case .russian: return "1 минута"
         }
     }
     
@@ -781,6 +832,7 @@ struct L10n {
         case .vietnamese: return "5 phút"
         case .italian: return "5 minuti"
         case .portuguese: return "5 minutos"
+        case .russian: return "5 минут"
         }
     }
     
@@ -795,6 +847,7 @@ struct L10n {
         case .vietnamese: return "Không bao giờ"
         case .italian: return "Mai"
         case .portuguese: return "Nunca"
+        case .russian: return "Никогда"
         }
     }
     
@@ -809,6 +862,7 @@ struct L10n {
         case .vietnamese: return "Thiết bị không xác định (Đã ngắt kết nối)"
         case .italian: return "Dispositivo Sconosciuto (Disconnesso)"
         case .portuguese: return "Dispositivo desconhecido (desconectado)"
+        case .russian: return "Неизвестное устройство (отключено)"
         }
     }
     
@@ -823,6 +877,7 @@ struct L10n {
         case .vietnamese: return "Bàn phím"
         case .italian: return "Tastiera"
         case .portuguese: return "Teclado"
+        case .russian: return "Клавиатура"
         }
     }
     
@@ -837,6 +892,7 @@ struct L10n {
         case .vietnamese: return "Chuột"
         case .italian: return "Mouse"
         case .portuguese: return "Mouse"
+        case .russian: return "Мышь"
         }
     }
     
@@ -851,6 +907,7 @@ struct L10n {
         case .vietnamese: return "Phát âm thanh nhấp chuột"
         case .italian: return "Riproduci suono per i clic del mouse"
         case .portuguese: return "Reproduzir som para cliques do mouse"
+        case .russian: return "Воспроизводить звук при щелчках мыши"
         }
     }
     
@@ -865,6 +922,7 @@ struct L10n {
         case .vietnamese: return "Âm thanh không gian"
         case .italian: return "Audio spaziale"
         case .portuguese: return "Áudio espacial"
+        case .russian: return "Пространственное аудио"
         }
     }
     
@@ -879,6 +937,7 @@ struct L10n {
         case .vietnamese: return "Định vị âm thanh theo vị trí phím và con trỏ. Tốt nhất khi dùng tai nghe"
         case .italian: return "Posiziona i suoni in base al tasto e alla posizione del cursore. Ideale con le cuffie"
         case .portuguese: return "Posiciona os sons pela tecla e pela posição do cursor. Melhor com fones de ouvido"
+        case .russian: return "Расположение звуков соответствует положению клавиш и курсора. Лучше использовать наушники"
         }
     }
     
@@ -893,6 +952,7 @@ struct L10n {
         case .vietnamese: return "Độ rộng không gian"
         case .italian: return "Ampiezza spaziale"
         case .portuguese: return "Largura espacial"
+        case .russian: return "Ширина звуковой сцены"
         }
     }
     
@@ -907,6 +967,7 @@ struct L10n {
         case .vietnamese: return "Mức độ âm thanh trải rộng sang trái và phải"
         case .italian: return "Quanto si estendono i suoni a sinistra e a destra"
         case .portuguese: return "O quanto os sons se espalham para a esquerda e a direita"
+        case .russian: return "Насколько далеко звуки распространяются влево и вправо"
         }
     }
     
@@ -921,6 +982,7 @@ struct L10n {
         case .vietnamese: return "Tự động bật khi kết nối tai nghe"
         case .italian: return "Attiva automaticamente con le cuffie"
         case .portuguese: return "Ativar automaticamente com fones de ouvido"
+        case .russian: return "Включать при подключении наушников"
         }
     }
     
@@ -935,6 +997,7 @@ struct L10n {
         case .vietnamese: return "Tự bật Thock khi kết nối tai nghe, tắt khi ngắt kết nối tai nghe"
         case .italian: return "Attiva Thock automaticamente quando si connettono delle cuffie"
         case .portuguese: return "Ativa o Thock automaticamente quando você conecta os fones"
+        case .russian: return "Автоматически включать Thock при подключении наушников"
         }
     }
     
@@ -950,6 +1013,7 @@ struct L10n {
         case .vietnamese: return "Toàn hệ thống"
         case .italian: return "Globale"
         case .portuguese: return "Global"
+        case .russian: return "Глобальные"
         }
     }
     
@@ -964,6 +1028,7 @@ struct L10n {
         case .vietnamese: return "Bật / tắt Thock"
         case .italian: return "Attiva/Disattiva Thock"
         case .portuguese: return "Alternar Thock"
+        case .russian: return "Включить или выключить Thock"
         }
     }
     
@@ -978,6 +1043,7 @@ struct L10n {
         case .vietnamese: return "Bật / tắt Thock nhanh từ bất kỳ đâu"
         case .italian: return "Abilita o disabilita rapidamente Thock da ovunque"
         case .portuguese: return "Ativar ou desativar o Thock rapidamente de qualquer lugar"
+        case .russian: return "Быстро включать или выключать Thock из любого места"
         }
     }
     
@@ -993,6 +1059,7 @@ struct L10n {
         case .vietnamese: return "Biến tấu cao độ"
         case .italian: return "Variazione di tonalità"
         case .portuguese: return "Variação de tonalidade"
+        case .russian: return "Изменение высоты тона"
         }
     }
     
@@ -1007,6 +1074,7 @@ struct L10n {
         case .vietnamese: return "Mỗi lần nhấn phím sẽ làm lệch cao độ dựa vào giá trị bạn chọn. Giữ cho âm thanh chân thực hoặc một chút méo mó."
         case .italian: return "Ad ogni battitura si scorda leggermente - ± del valore scelto. Rende il tutto più umano. O spettrale."
         case .portuguese: return "Cada tecla sai um pouquinho do tom — ± o valor que você escolher. Mais humano. Ou assombrado."
+        case .russian: return "При каждом нажатии клавиши высота тона немного меняется в пределах ± выбранного значения. Звучит естественнее. Или загадочнее."
         }
     }
     
@@ -1021,6 +1089,7 @@ struct L10n {
         case .vietnamese: return "Thoát"
         case .italian: return "Esci"
         case .portuguese: return "Sair"
+        case .russian: return "Выйти"
         }
     }
     
@@ -1035,6 +1104,7 @@ struct L10n {
         case .vietnamese: return "Phiên bản"
         case .italian: return "Versione"
         case .portuguese: return "Versão"
+        case .russian: return "Версия"
         }
     }
     
@@ -1049,6 +1119,7 @@ struct L10n {
         case .vietnamese: return "Tùy chọn nhanh..."
         case .italian: return "Opzioni rapide..."
         case .portuguese: return "Opções rápidas..."
+        case .russian: return "Быстрые настройки…"
         }
     }
     
@@ -1063,6 +1134,7 @@ struct L10n {
         case .vietnamese: return "Cài đặt..."
         case .italian: return "Impostazioni..."
         case .portuguese: return "Configurações..."
+        case .russian: return "Настройки…"
         }
     }
     
@@ -1077,6 +1149,7 @@ struct L10n {
         case .vietnamese: return "Xem thông tin phiên bản này"
         case .italian: return "Riguardo questa versione"
         case .portuguese: return "Sobre esta versão"
+        case .russian: return "Об этой версии"
         }
     }
     
@@ -1091,6 +1164,7 @@ struct L10n {
         case .vietnamese: return "Đã có phiên bản mới!"
         case .italian: return "Nuova Versione Disponibile!"
         case .portuguese: return "Nova versão disponível!"
+        case .russian: return "Доступна новая версия!"
         }
     }
     
@@ -1105,6 +1179,7 @@ struct L10n {
         case .vietnamese: return "↺ Cập nhật ngay"
         case .italian: return "↺ Aggiorna Ora"
         case .portuguese: return "↺ Atualizar agora"
+        case .russian: return "↺ Обновить сейчас"
         }
     }
     
@@ -1119,6 +1194,7 @@ struct L10n {
         case .vietnamese: return "Kiểm tra cập nhật..."
         case .italian: return "Verifica aggiornamenti..."
         case .portuguese: return "Procurar atualizações..."
+        case .russian: return "Проверить обновления…"
         }
     }
     
@@ -1133,6 +1209,7 @@ struct L10n {
         case .vietnamese: return "Đã có phiên bản cập nhật!"
         case .italian: return "Aggiornamento Disponibile!"
         case .portuguese: return "Atualização disponível!"
+        case .russian: return "Доступно обновление!"
         }
     }
     
@@ -1147,6 +1224,7 @@ struct L10n {
         case .vietnamese: return "Đã có phiên bản mới của Thock. Kiểm tra thanh menu để cập nhật."
         case .italian: return "È disponibile una nuova versione di Thock. Controlla la barra dei menu per l'opzione di aggiornamento."
         case .portuguese: return "Há uma nova versão do Thock. Veja na barra de menus a opção de atualização."
+        case .russian: return "Доступна новая версия Thock. Чтобы обновить приложение, откройте его меню в строке меню."
         }
     }
     
@@ -1161,6 +1239,7 @@ struct L10n {
         case .vietnamese: return "Chưa có bản cập nhật mới"
         case .italian: return "Nessun Aggiornamento Disponibile"
         case .portuguese: return "Nenhuma atualização disponível"
+        case .russian: return "Обновлений нет"
         }
     }
     
@@ -1175,6 +1254,7 @@ struct L10n {
         case .vietnamese: return "Bạn đang chạy phiên bản mới nhất của Thock."
         case .italian: return "Stai già utilizzando l'ultima versione di Thock."
         case .portuguese: return "Você já usa a versão mais recente do Thock."
+        case .russian: return "Вы уже используете последнюю версию Thock."
         }
     }
     
@@ -1189,6 +1269,7 @@ struct L10n {
         case .vietnamese: return "Kiểm tra cập nhật thất bại"
         case .italian: return "Ricerca Aggiornamenti Fallita"
         case .portuguese: return "Falha ao procurar atualizações"
+        case .russian: return "Не удалось проверить обновления"
         }
     }
     
@@ -1203,6 +1284,7 @@ struct L10n {
         case .vietnamese: return "OK"
         case .italian: return "OK"
         case .portuguese: return "OK"
+        case .russian: return "ОК"
         }
     }
     
@@ -1219,6 +1301,7 @@ struct L10n {
         case .vietnamese: return "Tiện ích"
         case .italian: return "Utilità"
         case .portuguese: return "Utilitários"
+        case .russian: return "Утилиты"
         }
     }
     
@@ -1233,6 +1316,7 @@ struct L10n {
         case .vietnamese: return "Vệ sinh bàn phím"
         case .italian: return "Pulizia tastiera"
         case .portuguese: return "Limpeza do teclado"
+        case .russian: return "Чистка клавиатуры"
         }
     }
     
@@ -1247,6 +1331,7 @@ struct L10n {
         case .vietnamese: return "Chặn đầu vào bàn phím"
         case .italian: return "Blocca input da tastiera"
         case .portuguese: return "Bloquear entrada do teclado"
+        case .russian: return "Заблокировать ввод с клавиатуры"
         }
     }
     
@@ -1261,6 +1346,7 @@ struct L10n {
         case .vietnamese: return "Chặn toàn bộ đầu vào bàn phím để bạn có thể vệ sinh phím mà không kích hoạt thao tác nào"
         case .italian: return "Blocca tutti gli input della tastiera per pulire i tasti senza attivare azioni"
         case .portuguese: return "Bloqueia toda entrada do teclado para você limpar as teclas sem disparar nenhuma ação"
+        case .russian: return "Блокирует ввод с клавиатуры, чтобы можно было почистить клавиши без случайного выполнения команд"
         }
     }
     
@@ -1275,6 +1361,7 @@ struct L10n {
         case .vietnamese: return "Bật/tắt chế độ vệ sinh"
         case .italian: return "Attiva modalità pulizia"
         case .portuguese: return "Alternar modo de limpeza"
+        case .russian: return "Переключить режим чистки"
         }
     }
     
@@ -1289,6 +1376,7 @@ struct L10n {
         case .vietnamese: return "Phím tắt để bật hoặc tắt chế độ vệ sinh bàn phím"
         case .italian: return "Scorciatoia da tastiera per attivare o disattivare la modalità pulizia"
         case .portuguese: return "Atalho para ativar ou desativar o modo de limpeza do teclado"
+        case .russian: return "Сочетание клавиш для включения или выключения режима чистки клавиатуры"
         }
     }
     
@@ -1303,6 +1391,7 @@ struct L10n {
         case .vietnamese: return "Cấp quyền truy cập"
         case .italian: return "Concedi accesso"
         case .portuguese: return "Conceder acesso"
+        case .russian: return "Предоставить доступ"
         }
     }
     
@@ -1317,6 +1406,7 @@ struct L10n {
         case .vietnamese: return "⚠️ Thiếu quyền truy cập"
         case .italian: return "⚠️ Permessi mancanti"
         case .portuguese: return "⚠️ Permissões ausentes"
+        case .russian: return "⚠️ Отсутствуют разрешения"
         }
     }
     
@@ -1331,6 +1421,7 @@ struct L10n {
         case .vietnamese: return "Mở tài liệu"
         case .italian: return "Apri docs"
         case .portuguese: return "Abrir documentação"
+        case .russian: return "Открыть документацию"
         }
     }
 }
