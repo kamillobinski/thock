@@ -81,8 +81,10 @@ enum SpatialMath {
 
     /// Averages the channels, which keeps the level of mono and near-mono sources (nearly all key samples)
     static func monoDownmix(interleavedStereo stereo: [Float]) -> [Float] {
-        (0..<stereo.count / 2).map { frame in
-            (stereo[frame * 2] + stereo[frame * 2 + 1]) * 0.5
+        (0..<stereo.count / 2).map { (frame: Int) -> Float in
+            let left: Float = stereo[frame * 2]
+            let right: Float = stereo[frame * 2 + 1]
+            return (left + right) * 0.5
         }
     }
 
