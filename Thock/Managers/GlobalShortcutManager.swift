@@ -2,6 +2,7 @@ import Foundation
 import KeyboardShortcuts
 import Cocoa
 import UserNotifications
+import OSLog
 
 class GlobalShortcutManager {
     static let shared = GlobalShortcutManager()
@@ -49,7 +50,7 @@ class GlobalShortcutManager {
             
             center.add(request) { error in
                 if let error = error {
-                    print("Error showing notification: \(error)")
+                    Logger.ui.error("Error showing notification: \(error, privacy: .public)")
                 }
             }
             

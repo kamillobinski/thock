@@ -1,4 +1,5 @@
 import Cocoa
+import OSLog
 import KeyboardShortcuts
 
 class KeyboardEventTracker {
@@ -115,7 +116,7 @@ class KeyboardEventTracker {
             CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
             CGEvent.tapEnable(tap: eventMonitor, enable: true)
         } else {
-            print("Failed to create event tap.")
+            Logger.keyboard.error("Failed to create event tap")
         }
     }
     

@@ -6,6 +6,7 @@
 //
 
 import ServiceManagement
+import OSLog
 
 /// Manages enabling or disabling the app's login item using `SMAppService`.
 enum OpenAtLoginManager {
@@ -26,7 +27,7 @@ enum OpenAtLoginManager {
                 try appService.unregister()
             }
         } catch {
-            print("Failed to \(enabled ? "enable" : "disable") login item: \(error.localizedDescription)")
+            Logger.settings.error("Failed to \(enabled ? "enable" : "disable", privacy: .public) login item: \(error.localizedDescription, privacy: .public)")
         }
     }
     

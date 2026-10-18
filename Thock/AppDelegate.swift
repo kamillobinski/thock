@@ -109,7 +109,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private func continueAppInitialization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
             if let error = error {
-                print("Error requesting notification permissions: \(error)")
+                Logger.lifecycle.error("Error requesting notification permissions: \(error, privacy: .public)")
             }
         }
         
@@ -135,7 +135,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
             case .success(let isUpdateAvailable):
                 self.menuBarController.setUpdateAvailable(isUpdateAvailable)
             case .failure(let error):
-                print("Error checking for updates: \(error.localizedDescription)")
+                Logger.lifecycle.error("Error checking for updates: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
