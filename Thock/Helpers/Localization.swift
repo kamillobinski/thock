@@ -911,6 +911,36 @@ struct L10n {
         }
     }
     
+    static var softenLoudPeaks: String {
+        switch lang {
+        case .english: return "Soften loud peaks"
+        case .spanish: return "Suavizar los picos de volumen"
+        case .french: return "Atténuer les pics de volume"
+        case .chinese: return "柔化音量峰值"
+        case .japanese: return "大きな音のピークを抑える"
+        case .german: return "Lautstärkespitzen abmildern"
+        case .vietnamese: return "Làm dịu các đỉnh âm lượng"
+        case .italian: return "Attenua i picchi di volume"
+        case .portuguese: return "Suavizar picos de volume"
+        case .russian: return "Смягчать пики громкости"
+        }
+    }
+
+    static var softenLoudPeaksSubtitle: String {
+        switch lang {
+        case .english: return "Reduces clipping when sounds overlap. Can change the tone of louder sounds"
+        case .spanish: return "Reduce la distorsión cuando los sonidos se superponen. Puede cambiar el timbre de los sonidos más fuertes"
+        case .french: return "Réduit l'écrêtage lorsque les sons se superposent. Peut modifier le timbre des sons les plus forts"
+        case .chinese: return "减少声音重叠时的削波失真。可能改变较大声音的音色"
+        case .japanese: return "音が重なったときのクリッピングを抑えます。大きな音の音色が変わることがあります"
+        case .german: return "Verringert Übersteuerung bei überlappenden Tönen. Kann die Klangfarbe lauter Töne verändern"
+        case .vietnamese: return "Giảm méo tiếng khi các âm thanh chồng lên nhau. Có thể thay đổi âm sắc của âm thanh lớn"
+        case .italian: return "Riduce la distorsione quando i suoni si sovrappongono. Può cambiare il timbro dei suoni più forti"
+        case .portuguese: return "Reduz a distorção quando os sons se sobrepõem. Pode alterar o timbre dos sons mais altos"
+        case .russian: return "Уменьшает искажения при наложении звуков. Может менять тембр громких звуков"
+        }
+    }
+
     static var spatialAudio: String {
         switch lang {
         case .english: return "Spatial audio"

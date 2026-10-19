@@ -53,6 +53,7 @@ final class SoundManager {
     
     // MARK: - Volume Control
     private var volumeLevels = VolumeLevels(master: 0.5)
+    private var peakLimitingEnabled = SettingsEngine.shared.isPeakLimitingEnabled()
     private let volumeLock = NSLock()
     
     // MARK: - Models
@@ -112,6 +113,12 @@ final class SoundManager {
     /// Hardware output can be disabled when rendering PCM offline.
     init(audioOutputEnabled: Bool = true) {
         framesPerBuffer = currentBufferSize
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePeakLimitingChange),
+            name: .peakLimitingDidChange,
+            object: nil
+        )
         guard audioOutputEnabled else {
             setupAudioFormat()
             return
@@ -217,6 +224,13 @@ final class SoundManager {
     
     @objc private func handleVolumeChange() {
         updateVolumeFromSettings()
+    }
+
+    @objc private func handlePeakLimitingChange() {
+        let enabled = SettingsEngine.shared.isPeakLimitingEnabled()
+        volumeLock.lock()
+        peakLimitingEnabled = enabled
+        volumeLock.unlock()
     }
     
     @objc private func handleDeviceListChange() {
@@ -757,6 +771,7 @@ final class SoundManager {
         
         volumeLock.lock()
         let currentLevels = volumeLevels
+        let softenPeaks = peakLimitingEnabled
         volumeLock.unlock()
         
         renderer?.beginBlock(frames: frameCount)
@@ -808,8 +823,8 @@ final class SoundManager {
             Logger.audio.debug("Removed \(finishedCount) finished sounds, \(self.activeSounds.count) still active")
         }
         
-        // Limit the final dry + spatial sum before handing it to the output device.
-        OutputLimiter.apply(to: outputBuffer, sampleCount: frameCount * Int(channelCount))
+        // Sanitize the final mix, with optional soft clipping of finite peaks.
+        OutputLimiter.apply(to: outputBuffer, sampleCount: frameCount * Int(channelCount), softClippingEnabled: softenPeaks)
     }
     
     private func primeBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
