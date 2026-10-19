@@ -72,11 +72,19 @@ stall in the local diagnostic build. Apple's
 [AudioQueueNewOutput documentation](https://developer.apple.com/documentation/audiotoolbox/audioqueuenewoutput(_:_:_:_:_:_:_:))
 describes the internal thread used when no callback run loop is supplied.
 
-PR #146 by Rafael Lozano addresses disabled input event taps. That is a separate
-failure mode and was present in the field-test build, but is not included in this
-PR. Recovery here is driven by audio progress, not event-tap status. Related
-symptom reports include #133 and #144; this does not establish that all such
-reports have this same cause.
+PR #146 by Rafael Lozano addresses disabled input event taps and is now included.
+Keyboard and mouse trackers re-enable their taps after system disable
+notifications. Keyboard recovery clears pressed-key state because key-up events
+may have been missed. Stopping tracking removes the source from its original run
+loop, and callback contexts no longer retain their owning tracker indefinitely.
+
+During a local sleep/wake test of the combined build before this addition,
+keyboard sounds stopped while mouse sounds continued. CoreGraphics listed an
+enabled mouse tap but no keyboard tap for the running process. Audio logs showed
+successful queue reconstruction after wake. This supports the input-tap failure
+path; the sleep/wake retest with tap recovery remains pending. Queue recovery and
+tap recovery address distinct failure paths behind related reports such as #133
+and #144; this does not establish that all such reports have the same cause.
 
 ## Verification and reproduction
 
