@@ -56,7 +56,7 @@ final class SoundManager {
     private let volumeLock = NSLock()
     
     // MARK: - Models
-    private final class PCMSound {
+    final class PCMSound {
         /// Interleaved stereo
         let data: [Float]
         let frameCount: Int
@@ -109,8 +109,13 @@ final class SoundManager {
     }
     
     // MARK: - Initialization
-    private init() {
+    /// Hardware output can be disabled when rendering PCM offline.
+    init(audioOutputEnabled: Bool = true) {
         framesPerBuffer = currentBufferSize
+        guard audioOutputEnabled else {
+            setupAudioFormat()
+            return
+        }
         detectHardwareSampleRate()
         setupAudioFormat()
         configureLowLatencyAudio()
@@ -725,12 +730,14 @@ final class SoundManager {
     }
     
     private func fillBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
-        let frameCount = Int(framesPerBuffer)
-        
-        // Get buffer pointer
-        let bufferData = buffer.pointee.mAudioData
-        let outputBuffer = bufferData.assumingMemoryBound(to: Float.self)
-        
+        let outputBuffer = buffer.pointee.mAudioData.assumingMemoryBound(to: Float.self)
+        renderSamples(into: outputBuffer, frameCount: Int(framesPerBuffer))
+        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
+        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+    }
+
+    /// Renders interleaved stereo PCM before ownership of the buffer returns to AudioQueue.
+    func renderSamples(into outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         // Check for active sounds
         activeSoundsLock.lock()
         
@@ -741,15 +748,12 @@ final class SoundManager {
             // No active sounds or spatial tails, output silence and return early.
             // Always clear, a buffer re-enqueued with stale samples would loop them until the next sound
             activeSoundsLock.unlock()
-            memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
-            
-            buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
-            AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+            memset(outputBuffer, 0, frameCount * Int(channelCount) * MemoryLayout<Float>.size)
             return
         }
         
         // Zero out buffer
-        memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
+        memset(outputBuffer, 0, frameCount * Int(channelCount) * MemoryLayout<Float>.size)
         
         volumeLock.lock()
         let currentLevels = volumeLevels
@@ -804,9 +808,8 @@ final class SoundManager {
             Logger.audio.debug("Removed \(finishedCount) finished sounds, \(self.activeSounds.count) still active")
         }
         
-        // Set buffer size and enqueue
-        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
-        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+        // Limit the final dry + spatial sum before handing it to the output device.
+        OutputLimiter.apply(to: outputBuffer, sampleCount: frameCount * Int(channelCount))
     }
     
     private func primeBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
@@ -857,7 +860,7 @@ final class SoundManager {
     }
 
     /// Creates a voice with a random pitch offset in [-variation, +variation] and starts it on the next callback
-    private func enqueue(_ pcmSound: PCMSound, pitchVariation: Float, latencyId: UUID?, position: SoundPosition?, source: VolumeLevels.Source) {
+    func enqueue(_ pcmSound: PCMSound, pitchVariation: Float, latencyId: UUID?, position: SoundPosition?, source: VolumeLevels.Source) {
         let pitchOffset: Float = pitchVariation > 0.0 ? Float.random(in: -pitchVariation...pitchVariation) : 0.0
         // Semitones to playback rate
         let rate = pitchOffset == 0.0 ? 1.0 : Double(pow(2.0, pitchOffset / 12.0))
