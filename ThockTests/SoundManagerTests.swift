@@ -90,6 +90,23 @@ struct SoundManagerTests {
     }
 
     // MARK: - Playback Tests
+
+    @Test func idleRenderingClearsReusedBuffersBeyondOneRotation() {
+        let manager = SoundManager(audioOutputEnabled: false)
+        let frames = 32
+        // Three queue buffers must stay silent on every reuse, not just the first rotation.
+        var buffers = Array(repeating: [Float](repeating: 0, count: frames * 2), count: 3)
+        for callback in 0..<12 {
+            let index = callback % buffers.count
+            for sample in buffers[index].indices {
+                buffers[index][sample] = sample.isMultiple(of: 2) ? 0.8 : -0.6
+            }
+            buffers[index].withUnsafeMutableBufferPointer {
+                manager.renderSamples(into: $0.baseAddress!, frameCount: frames)
+            }
+            #expect(buffers[index].allSatisfy { $0 == 0 }, "Idle callback \(callback) must clear every sample before enqueueing")
+        }
+    }
     
     @Test func playSoundWithNonexistentNameDoesNotCrash() {
         let manager = SoundManager.shared
