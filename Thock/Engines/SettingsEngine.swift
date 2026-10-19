@@ -212,6 +212,17 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .mouseSoundDidChange, object: nil)
     }
     
+    // MARK: - Peak Limiting
+
+    func isPeakLimitingEnabled() -> Bool {
+        return SettingsManager.shared.peakLimitingEnabled
+    }
+
+    func setPeakLimitingEnabled(_ enabled: Bool) {
+        SettingsManager.shared.peakLimitingEnabled = enabled
+        NotificationCenter.default.post(name: .peakLimitingDidChange, object: nil)
+    }
+
     // MARK: - Spatial Audio
     
     func isSpatialAudioEnabled() -> Bool {
@@ -259,5 +270,6 @@ extension Notification.Name {
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
     static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
     static let spatialAudioDidChange = Notification.Name("spatialAudioDidChange")
+    static let peakLimitingDidChange = Notification.Name("peakLimitingDidChange")
     static let cleaningModeDidChange = Notification.Name("cleaningModeDidChange")
 }
