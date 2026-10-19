@@ -16,6 +16,7 @@ final class SettingsManager {
     static let defaultMouseVolume: Float = 1.0
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
+    static let defaultSoftClippingEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
     static let defaultSpatialAudioEnabled: Bool = false
     static let defaultSpatialWidth: Float = SpatialMath.defaultWidth
@@ -96,6 +97,12 @@ final class SettingsManager {
         get { UserDefaults.mouseSoundEnabled }
         set { UserDefaults.mouseSoundEnabled = newValue }
     }
+
+    /// Whether to soften peaks in the final mix of keyboard and mouse sounds.
+    var softClippingEnabled: Bool {
+        get { UserDefaults.softClippingEnabled }
+        set { UserDefaults.softClippingEnabled = newValue }
+    }
     
     /// Whether to position sounds by key and cursor location.
     var spatialAudioEnabled: Bool {
@@ -136,6 +143,7 @@ private extension UserDefaults {
         static let mouseVolume = "mouseVolume"
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
+        static let softClippingEnabled = "softClippingEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
         static let spatialAudioEnabled = "spatialAudioEnabled"
         static let spatialWidth = "spatialWidth"
@@ -285,6 +293,18 @@ private extension UserDefaults {
         }
     }
     
+    static var softClippingEnabled: Bool {
+        get {
+            guard standard.object(forKey: Keys.softClippingEnabled) != nil else {
+                return SettingsManager.defaultSoftClippingEnabled
+            }
+            return standard.bool(forKey: Keys.softClippingEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.softClippingEnabled)
+        }
+    }
+
     static var autoEnableOnHeadphone: Bool {
         get {
             if standard.object(forKey: Keys.autoEnableOnHeadphone) == nil {
