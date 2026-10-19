@@ -1,10 +1,14 @@
 import Cocoa
+import OSLog
 import KeyboardShortcuts
 
 class KeyboardEventTracker {
     private var pressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
+    private var runLoopSource: CFRunLoopSource?
+    private var trackedRunLoop: CFRunLoop?
     private var lastEventTime: Double = 0
+    private var tapReEnableCount = 0
     
     deinit {
         stopTracking()
@@ -21,7 +25,8 @@ class KeyboardEventTracker {
         (1 << CGEventType.flagsChanged.rawValue) |
         CGEventMask(1 << 14) // NSSystemDefined
         
-        let observer = Unmanaged.passRetained(self).toOpaque()
+        // AppDelegate owns the tracker and stops the tap before releasing it.
+        let observer = Unmanaged.passUnretained(self).toOpaque()
         lastEventTime = currentTime()
         
         eventMonitor = CGEvent.tapCreate(
@@ -30,11 +35,12 @@ class KeyboardEventTracker {
             options: .defaultTap,
             eventsOfInterest: eventMask,
             callback: { _, type, event, userInfo in
-                let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo!).takeUnretainedValue()
+                guard let userInfo = userInfo else { return Unmanaged.passUnretained(event) }
+                let tracker = Unmanaged<KeyboardEventTracker>.fromOpaque(userInfo).takeUnretainedValue()
                 
-                if type.rawValue == 0xFFFFFFFE || type.rawValue == 0xFFFFFFFF {
-                    DispatchQueue.main.async { tracker.stopTracking() }
-                    return nil
+                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    tracker.reenableTap()
+                    return Unmanaged.passUnretained(event)
                 }
                 
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
@@ -83,12 +89,23 @@ class KeyboardEventTracker {
                 case .flagsChanged:
                     // Respect the user setting to ignore modifier key sounds
                     if !SettingsEngine.shared.isModifierKeySoundDisabled() {
-                        if tracker.pressedKeys.remove(keyCode) == nil {
-                            tracker.pressedKeys.insert(keyCode)
-                            soundAction = (keyCode, true)
-                        } else {
-                            soundAction = (keyCode, false)
+                        // Event flags survive missed transitions. Side-specific masks
+                        // also distinguish releases while the opposite key stays held.
+                        let modifierMask: CGEventFlags
+                        switch keyCode {
+                        case 54: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERCMDKEYMASK))
+                        case 55: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELCMDKEYMASK))
+                        case 56: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELSHIFTKEYMASK))
+                        case 57: modifierMask = .maskAlphaShift
+                        case 58: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELALTKEYMASK))
+                        case 59: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELCTLKEYMASK))
+                        case 60: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERSHIFTKEYMASK))
+                        case 61: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERALTKEYMASK))
+                        case 62: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERCTLKEYMASK))
+                        case 63: modifierMask = .maskSecondaryFn
+                        default: return Unmanaged.passUnretained(event)
                         }
+                        soundAction = (keyCode, event.flags.contains(modifierMask))
                     } else {
                         soundAction = nil
                     }
@@ -111,23 +128,43 @@ class KeyboardEventTracker {
             userInfo: observer
         )
         if let eventMonitor = eventMonitor {
-            let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+            let runLoop = CFRunLoopGetCurrent()
+            let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventMonitor, 0)
+            CFRunLoopAddSource(runLoop, source, .commonModes)
+            runLoopSource = source
+            trackedRunLoop = runLoop
             CGEvent.tapEnable(tap: eventMonitor, enable: true)
         } else {
-            print("Failed to create event tap.")
+            Logger.keyboard.error("Failed to create event tap")
         }
     }
     
-    /// Stops tracking key events and removes the event tap.
+    /// Stops tracking key events and releases the event tap and its run loop source.
     func stopTracking() {
         if let eventMonitor = eventMonitor {
             CFMachPortInvalidate(eventMonitor)
             self.eventMonitor = nil
         }
+
+        // Remove the source from the run loop that registered it.
+        if let source = runLoopSource, let runLoop = trackedRunLoop {
+            CFRunLoopRemoveSource(runLoop, source, .commonModes)
+        }
+        pressedKeys.removeAll()
+        runLoopSource = nil
+        trackedRunLoop = nil
     }
     
     // MARK: Private methods
+
+    /// Re-enables the tap after the system disabled it.
+    private func reenableTap() {
+        guard let eventMonitor = eventMonitor else { return }
+        pressedKeys.removeAll() // Key-up events may have been missed while disabled.
+        CGEvent.tapEnable(tap: eventMonitor, enable: true)
+        tapReEnableCount += 1
+        Logger.keyboard.warning("Event tap was disabled by the system and re-enabled (re-enable #\(self.tapReEnableCount))")
+    }
     
     private func currentTime() -> Double {
         Double(DispatchTime.now().uptimeNanoseconds) / 1_000_000
