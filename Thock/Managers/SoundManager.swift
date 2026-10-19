@@ -852,6 +852,8 @@ final class SoundManager {
             Logger.audio.debug("Removed \(finishedCount) finished sounds, \(remainingCount) still active")
         }
         
+        // Limit the final dry + spatial sum before handing it to the output device.
+        OutputLimiter.apply(to: outputBuffer, sampleCount: frameCount * Int(channelCount))
     }
     
     private func schedulePlaybackProgressCheck() {
