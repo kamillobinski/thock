@@ -13,6 +13,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     // MARK: - App Lifecycle
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--audio-recovery-self-test") {
+            SoundManager.shared.runAudioRecoverySelfTest { success in
+                print(success ? "AUDIO RECOVERY SELF-TEST PASSED" : "AUDIO RECOVERY SELF-TEST FAILED")
+                fflush(stdout)
+                exit(success ? 0 : 1)
+            }
+            return
+        }
+        #endif
         setupMenuBar()
         
         if AXIsProcessTrusted() {
