@@ -12,7 +12,7 @@ struct UtilitiesSettingsView: View {
                         title: L10n.blockKeyboardInput,
                         subtitle: L10n.keyboardCleaningSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $isCleaningMode)
+                            Toggle(L10n.blockKeyboardInput, isOn: $isCleaningMode)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()

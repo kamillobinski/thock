@@ -31,7 +31,7 @@ changing outputs. This is single-machine field evidence, not a universal fix.
 - Rebuild through the existing output-switching path, serialized with restart,
   idle stop and voice admission. Never take the lifecycle lock in callbacks.
 - Discard the backlog and recreate only the newest pending voice, retaining its
-  pitch and position. On current main this allocates fresh spatial routing
+  pitch, position and keyboard/mouse volume source. On current main this allocates fresh spatial routing
   rather than carrying an invalid bus from the replaced renderer.
 - Reapply the saved per-device volume. Limit recovery attempts to one per ten
   seconds, with another playback request required to arm a later attempt.
@@ -79,7 +79,9 @@ Build a separate Debug product, then execute its binary directly with:
 This Debug-only path returns before menu/input/permission setup. It submits
 silent samples through production playback, withholds the three returned
 buffers, and verifies a single recovery, resumed callbacks, a generation
-advance and one retained voice. Healthy playback and subsequent silence must
+advance and one retained voice. The newest request is a mouse sound, and its
+source must survive reconstruction so independent mouse volume still applies.
+Healthy playback and subsequent silence must
 not reset the queue. It needs a working output device and normal CoreAudio
 access; it does not test audible quality. It uses ordinary audio device setup,
 so use a separate build and avoid running it during an active audio session.

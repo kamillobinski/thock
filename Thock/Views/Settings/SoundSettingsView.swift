@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SoundSettingsView: View {
     @State private var volume = Double(SettingsEngine.shared.getVolume())
+    @State private var keyboardVolume = Double(SettingsEngine.shared.getKeyboardVolume())
+    @State private var mouseVolume = Double(SettingsEngine.shared.getMouseVolume())
     @State private var disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
     @State private var ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
     @State private var autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
@@ -18,33 +20,21 @@ struct SoundSettingsView: View {
         ScrollView {
             VStack(alignment: .leading) {
                 SettingsSectionView(title: L10n.output) {
-                    SettingsRowView(
-                        title: L10n.volume,
-                        subtitle: nil,
-                        control: AnyView(
-                            HStack(spacing: 8) {
-                                Image(systemName: "speaker.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
-                                
-                                Slider(value: $volume, in: 0...1, step: 0.125)
-                                    .frame(width: 240)
-                                    .onChange(of: volume) { newValue in
-                                        SettingsEngine.shared.setVolume(Float(newValue))
-                                    }
-                                
-                                Image(systemName: "speaker.wave.3.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
-                            }
-                        )
-                    )
+                    volumeRow(title: L10n.master, value: $volume) {
+                        SettingsEngine.shared.setVolume(Float($0))
+                    }
+                    volumeRow(title: L10n.keyboard, value: $keyboardVolume) {
+                        SettingsEngine.shared.setKeyboardVolume(Float($0))
+                    }
+                    volumeRow(title: L10n.mouse, value: $mouseVolume) {
+                        SettingsEngine.shared.setMouseVolume(Float($0))
+                    }
                     
                     SettingsRowView(
                         title: L10n.playThrough,
                         subtitle: nil,
                         control: AnyView(
-                            Picker("", selection: $selectedDeviceUID) {
+                            Picker(L10n.playThrough, selection: $selectedDeviceUID) {
                                 Text(L10n.systemDefault).tag("system-default")
                                 
                                 if !availableDevices.isEmpty {
@@ -57,6 +47,7 @@ struct SoundSettingsView: View {
                             }
                                 .pickerStyle(.menu)
                                 .controlSize(.small)
+                                .labelsHidden()
                                 .frame(width: 200, alignment: .trailing)
                                 .onChange(of: selectedDeviceUID) { newValue in
                                     let uidToSave = newValue == "system-default" ? nil : newValue
@@ -69,7 +60,7 @@ struct SoundSettingsView: View {
                         title: L10n.mouseClickSound,
                         subtitle: nil,
                         control: AnyView(
-                            Toggle("", isOn: $mouseSoundEnabled)
+                            Toggle(L10n.mouseClickSound, isOn: $mouseSoundEnabled)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -130,7 +121,7 @@ struct SoundSettingsView: View {
                         title: L10n.disableModifierKeys,
                         subtitle: L10n.disableModifierKeysSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $disableModifierKeys)
+                            Toggle(L10n.disableModifierKeys, isOn: $disableModifierKeys)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -144,7 +135,7 @@ struct SoundSettingsView: View {
                         title: L10n.ignoreRapidKeys,
                         subtitle: L10n.ignoreRapidKeysSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $ignoreRapidKeyEvents)
+                            Toggle(L10n.ignoreRapidKeys, isOn: $ignoreRapidKeyEvents)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -158,7 +149,7 @@ struct SoundSettingsView: View {
                         title: L10n.autoMute,
                         subtitle: L10n.autoMuteSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: $autoMuteOnMusicPlayback)
+                            Toggle(L10n.autoMute, isOn: $autoMuteOnMusicPlayback)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                                 .labelsHidden()
@@ -172,7 +163,7 @@ struct SoundSettingsView: View {
                         title: L10n.autoEnableOnHeadphone,
                         subtitle: L10n.autoEnableOnHeadphoneSubtitle,
                         control: AnyView(
-                            Toggle("", isOn: Binding(
+                            Toggle(L10n.autoEnableOnHeadphone, isOn: Binding(
                                 get: { SettingsEngine.shared.isAutoEnableOnHeadphoneEnabled() },
                                 set: { SettingsEngine.shared.setAutoEnableOnHeadphone($0) }
                             ))
@@ -189,7 +180,7 @@ struct SoundSettingsView: View {
                         title: L10n.audioLatency,
                         subtitle: L10n.audioLatencySubtitle,
                         control: AnyView(
-                            Picker("", selection: $audioBufferSize) {
+                            Picker(L10n.audioLatency, selection: $audioBufferSize) {
                                 Text(L10n.ultraLow).tag(UInt32(64))
                                 Text(L10n.low).tag(UInt32(128))
                                 Text(L10n.normal).tag(UInt32(256))
@@ -209,7 +200,7 @@ struct SoundSettingsView: View {
                         title: L10n.reduceCPU,
                         subtitle: L10n.reduceCPUSubtitle,
                         control: AnyView(
-                            Picker("", selection: $idleTimeoutSeconds) {
+                            Picker(L10n.reduceCPU, selection: $idleTimeoutSeconds) {
                                 Text(L10n.seconds5).tag(5.0)
                                 Text(L10n.seconds10).tag(10.0)
                                 Text(L10n.seconds30).tag(30.0)
@@ -239,6 +230,8 @@ struct SoundSettingsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .volumeDidChange)) { _ in
             volume = Double(SettingsEngine.shared.getVolume())
+            keyboardVolume = Double(SettingsEngine.shared.getKeyboardVolume())
+            mouseVolume = Double(SettingsEngine.shared.getMouseVolume())
         }
         .onReceive(NotificationCenter.default.publisher(for: .audioDeviceListDidChange)) { _ in
             loadAvailableDevices()
@@ -261,6 +254,32 @@ struct SoundSettingsView: View {
         }
     }
     
+    private func volumeRow(title: String, value: Binding<Double>, onChange: @escaping (Double) -> Void) -> some View {
+        SettingsRowView(
+            title: title,
+            subtitle: nil,
+            control: AnyView(
+                HStack(spacing: 8) {
+                    Image(systemName: "speaker.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .accessibilityHidden(true)
+
+                    Slider(value: value, in: 0...1)
+                        .frame(width: 240)
+                        .accessibilityLabel(Text(title))
+                        .accessibilityValue(Text(value.wrappedValue.formatted(.percent.precision(.fractionLength(0)))))
+                        .onChange(of: value.wrappedValue, perform: onChange)
+
+                    Image(systemName: "speaker.wave.3.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .accessibilityHidden(true)
+                }
+            )
+        )
+    }
+
     private func loadAvailableDevices() {
         var devices = AudioDeviceManager.shared.getAvailableOutputDevices()
             .filter { $0.id != "system-default" }

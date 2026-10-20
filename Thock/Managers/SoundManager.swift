@@ -8,6 +8,9 @@ import Accelerate
 final class SoundManager {
     static let shared = SoundManager()
     
+    /// Serial queue for playback requests from the event taps, play() is not safe to run concurrently
+    static let playbackQueue = DispatchQueue(label: "com.thock.playback", qos: .userInteractive)
+
     // MARK: - Constants
     private static let defaultDeviceUID = "default"
     
@@ -69,13 +72,11 @@ final class SoundManager {
     // Used only by --audio-recovery-self-test, before any input trackers start.
     private var selfTestBuffersToWithhold = 0 // Protected by activeSoundsLock.
     private var selfTestRetainedSounds = 0 // Protected by audioLifecycleLock.
+    private var selfTestRetainedSource: VolumeLevels.Source? // Protected by audioLifecycleLock.
     #endif
 
-    // MARK: - Idle State Tracking
-    private var idleCallbackCount: Int = 0
-    
     // MARK: - Volume Control
-    private var volume: Float = 0.5
+    private var volumeLevels = VolumeLevels(master: 0.5)
     private let volumeLock = NSLock()
     
     // MARK: - Models
@@ -115,8 +116,10 @@ final class SoundManager {
         let bus: Int?
         let mono: [Float]?
         let position: SoundPosition?
+        let source: VolumeLevels.Source
 
-        init(sound: PCMSound, rate: Double, latencyId: UUID?, gains: (left: Float, right: Float), bus: Int?, mono: [Float]?, position: SoundPosition?) {
+        init(sound: PCMSound, rate: Double, latencyId: UUID?, gains: (left: Float, right: Float),
+             bus: Int?, mono: [Float]?, position: SoundPosition?, source: VolumeLevels.Source) {
             self.sound = sound
             self.rate = rate
             self.latencyId = latencyId
@@ -124,6 +127,7 @@ final class SoundManager {
             self.bus = bus
             self.mono = mono
             self.position = position
+            self.source = source
         }
 
         var isFinished: Bool {
@@ -345,10 +349,14 @@ final class SoundManager {
     
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
-        let newVolume = SettingsEngine.shared.getVolume(for: deviceUID)
+        let newLevels = VolumeLevels(
+            master: SettingsEngine.shared.getVolume(for: deviceUID),
+            keyboard: SettingsEngine.shared.getKeyboardVolume(),
+            mouse: SettingsEngine.shared.getMouseVolume()
+        )
         
         volumeLock.lock()
-        volume = newVolume
+        volumeLevels = newLevels
         volumeLock.unlock()
         
         if postNotification {
@@ -407,12 +415,13 @@ final class SoundManager {
         rebuildSpatialRenderer()
         if let latestSound {
             enqueue(latestSound.sound, pitchVariation: 0, latencyId: latestSound.latencyId,
-                    position: latestSound.position, playbackRate: latestSound.rate)
+                    position: latestSound.position, source: latestSound.source, playbackRate: latestSound.rate)
         }
         #if DEBUG
         if preservingLatestSound {
             activeSoundsLock.lock()
             selfTestRetainedSounds = activeSounds.count
+            selfTestRetainedSource = activeSounds.last?.source
             activeSoundsLock.unlock()
         }
         #endif
@@ -532,9 +541,6 @@ final class SoundManager {
             return
         }
         
-        activeSoundsLock.lock()
-        idleCallbackCount = 0
-        activeSoundsLock.unlock()
         // Re-prime all buffers
         Logger.audio.debug("Re-priming \(self.audioBuffers.count) buffers before restart")
         for buffer in audioBuffers {
@@ -786,32 +792,27 @@ final class SoundManager {
         let renderer = spatialRenderer.flatMap { $0.maxFrames >= frameCount ? $0 : nil }
         
         if activeSounds.isEmpty && (renderer?.isIdle ?? true) {
-            // No active sounds or spatial tails, output silence and return early
-            let shouldClear = idleCallbackCount < numberOfBuffers
-            idleCallbackCount += 1
+            // No active sounds or spatial tails, output silence and return early.
+            // Always clear, a buffer re-enqueued with stale samples would loop them until the next sound
             activeSoundsLock.unlock()
-            
-            if shouldClear {
-                memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
-            }
+            memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
             
             buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
             AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
             return
         }
         
-        idleCallbackCount = 0
-        
         // Zero out buffer
         memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
         
         volumeLock.lock()
-        let currentVolume = volume
+        let currentLevels = volumeLevels
         volumeLock.unlock()
         
         renderer?.beginBlock(frames: frameCount)
         
         for sound in activeSounds {
+            let currentVolume = currentLevels.gain(for: sound.source)
             // Report playback started on first render
             if ENABLE_LATENCY_MEASUREMENT && !sound.hasReportedPlayback {
                 sound.hasReportedPlayback = true
@@ -820,13 +821,14 @@ final class SoundManager {
             }
             
             if let bus = sound.bus, let mono = sound.mono, let renderer {
-                // Mono into the spatial mixer bus, volume is applied to the mixer output
+                // Apply the source level before spatial mixing; master scales the shared output
+                let sourceGain = currentLevels.sourceGain(for: sound.source)
                 _ = mono.withUnsafeBufferPointer { pcm in
                     Resampler.mix(
                         source: pcm, channels: 1, frameCount: sound.sound.frameCount,
                         position: &sound.sourcePosition, rate: sound.rate,
                         into: renderer.busInput(bus), outChannels: 1, outFrames: frameCount,
-                        gains: (1, 1)
+                        gains: (sourceGain, sourceGain)
                     )
                 }
                 if sound.isFinished {
@@ -844,7 +846,7 @@ final class SoundManager {
             }
         }
         
-        renderer?.render(frames: frameCount, into: outputBuffer, gain: currentVolume * SpatialRenderer.calibrationGain)
+        renderer?.render(frames: frameCount, into: outputBuffer, gain: currentLevels.master * SpatialRenderer.calibrationGain)
         
         let initialCount = activeSounds.count
         activeSounds.removeAll(where: { $0.isFinished })
@@ -938,16 +940,21 @@ final class SoundManager {
                 print("Injected buffer starvation: actualRunning=\(running) propertyStatus=\(status)")
                 // Burst of real play() calls must coalesce into a single recovery.
                 for _ in 0..<20 { self.play(sound: name) }
+                // The newest request is a mouse sound. Recovery must preserve its
+                // source so independent mouse volume still applies after rebuilding.
+                self.mouseSoundLibrary[.leftDown] = [self.soundLibrary[name]!]
+                self.playMouseSound(for: .leftDown)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
                     let snapshot = self.playbackRecovery.snapshot()
                     guard snapshot.recoveries == 1, snapshot.callbacks > stalledCount,
                           self.audioQueueGeneration == generation + 1,
-                          self.selfTestRetainedSounds == 1 else {
+                          self.selfTestRetainedSounds == 1,
+                          self.selfTestRetainedSource == .mouse else {
                         print("FAIL: starvation recovery or backlog discard")
                         completion(false)
                         return
                     }
-                    print("PASS: stalled queue recovered once; callbacks resumed; retained one newest sound")
+                    print("PASS: stalled queue recovered once; callbacks resumed; retained newest mouse sound with its volume source")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
                         guard self.playbackRecovery.snapshot().recoveries == 1 else {
                             print("FAIL: silence caused another recovery")
@@ -1007,11 +1014,11 @@ final class SoundManager {
             recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
         }
         
-        enqueue(pcmSound, pitchVariation: pitchVariation, latencyId: latencyId, position: position)
+        enqueue(pcmSound, pitchVariation: pitchVariation, latencyId: latencyId, position: position, source: .keyboard)
     }
 
     /// Creates a voice with a random pitch offset in [-variation, +variation] and starts it on the next callback
-    private func enqueue(_ pcmSound: PCMSound, pitchVariation: Float, latencyId: UUID?, position: SoundPosition?,
+    private func enqueue(_ pcmSound: PCMSound, pitchVariation: Float, latencyId: UUID?, position: SoundPosition?, source: VolumeLevels.Source,
                          playbackRate: Double? = nil) {
         // Queue replacement also rebuilds spatial routing. Serialize voice admission
         // with it so a request cannot retain a bus from the replaced renderer.
@@ -1035,7 +1042,7 @@ final class SoundManager {
         }
         activeSounds.append(ActiveSound(sound: pcmSound, rate: rate, latencyId: latencyId,
                                         gains: route.gains, bus: route.bus, mono: route.bus == nil ? nil : mono,
-                                        position: position))
+                                        position: position, source: source))
         activeSoundsLock.unlock()
         schedulePlaybackProgressCheck()
     }
@@ -1134,7 +1141,7 @@ final class SoundManager {
             SpatialMath.mousePosition(location: $0, displayBounds: SpatialMath.desktopBounds(activeDisplayBounds()),
                                      width: SettingsEngine.shared.getSpatialWidth())
         } : nil
-        enqueue(sound, pitchVariation: SettingsEngine.shared.getPitchVariation(), latencyId: nil, position: position)
+        enqueue(sound, pitchVariation: SettingsEngine.shared.getPitchVariation(), latencyId: nil, position: position, source: .mouse)
     }
 
     private func activeDisplayBounds() -> [CGRect] {
