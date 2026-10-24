@@ -12,6 +12,7 @@ struct SoundSettingsView: View {
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
     @State private var selectedDeviceUID: String = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
     @State private var mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()
+    @State private var softClippingEnabled = SettingsEngine.shared.isSoftClippingEnabled()
     @State private var spatialAudioEnabled = SettingsEngine.shared.isSpatialAudioEnabled()
     @State private var spatialWidth = Double(SettingsEngine.shared.getSpatialWidth())
     @State private var refreshID = UUID()
@@ -81,8 +82,7 @@ struct SoundSettingsView: View {
                                 .onChange(of: spatialAudioEnabled) { newValue in
                                     SettingsEngine.shared.setSpatialAudioEnabled(newValue)
                                 }
-                        ),
-                        isLast: !spatialAudioEnabled
+                        )
                     )
                     
                     if spatialAudioEnabled {
@@ -109,11 +109,26 @@ struct SoundSettingsView: View {
                                         .font(.system(size: 11))
                                         .foregroundColor(.secondary)
                                 }
-                            ),
-                            isLast: true
+                            )
                         )
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
+
+                    SettingsRowView(
+                        title: L10n.softenLoudPeaks,
+                        subtitle: L10n.softenLoudPeaksSubtitle,
+                        control: AnyView(
+                            Toggle(L10n.softenLoudPeaks, isOn: $softClippingEnabled)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .accessibilityHint(Text(L10n.softenLoudPeaksSubtitle))
+                                .onChange(of: softClippingEnabled) { newValue in
+                                    SettingsEngine.shared.setSoftClippingEnabled(newValue)
+                                }
+                        ),
+                        isLast: true
+                    )
                 }
                 
                 SettingsSectionView(title: L10n.filters) {
@@ -248,6 +263,9 @@ struct SoundSettingsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .mouseSoundDidChange)) { _ in
             mouseSoundEnabled = SettingsEngine.shared.isMouseSoundEnabled()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .softClippingDidChange)) { _ in
+            softClippingEnabled = SettingsEngine.shared.isSoftClippingEnabled()
         }
         .onReceive(NotificationCenter.default.publisher(for: .languageDidChange)) { _ in
             refreshID = UUID()

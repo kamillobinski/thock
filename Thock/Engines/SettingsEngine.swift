@@ -212,6 +212,17 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .mouseSoundDidChange, object: nil)
     }
     
+    // MARK: - Soft Clipping
+
+    func isSoftClippingEnabled() -> Bool {
+        return SettingsManager.shared.softClippingEnabled
+    }
+
+    func setSoftClippingEnabled(_ enabled: Bool) {
+        SettingsManager.shared.softClippingEnabled = enabled
+        NotificationCenter.default.post(name: .softClippingDidChange, object: nil)
+    }
+
     // MARK: - Spatial Audio
     
     func isSpatialAudioEnabled() -> Bool {
@@ -259,5 +270,6 @@ extension Notification.Name {
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
     static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
     static let spatialAudioDidChange = Notification.Name("spatialAudioDidChange")
+    static let softClippingDidChange = Notification.Name("softClippingDidChange")
     static let cleaningModeDidChange = Notification.Name("cleaningModeDidChange")
 }

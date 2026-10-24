@@ -70,6 +70,7 @@ final class SoundManager {
     
     // MARK: - Volume Control
     private var volumeLevels = VolumeLevels(master: 0.5)
+    private var softClippingEnabled = SettingsEngine.shared.isSoftClippingEnabled()
     private let volumeLock = NSLock()
     
     // MARK: - Models
@@ -131,6 +132,12 @@ final class SoundManager {
     /// Hardware output can be disabled when rendering PCM offline.
     init(audioOutputEnabled: Bool = true) {
         framesPerBuffer = storedBufferSize
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSoftClippingChange),
+            name: .softClippingDidChange,
+            object: nil
+        )
         guard audioOutputEnabled else {
             setupAudioFormat()
             return
@@ -236,6 +243,13 @@ final class SoundManager {
     
     @objc private func handleVolumeChange() {
         updateVolumeFromSettings()
+    }
+
+    @objc private func handleSoftClippingChange() {
+        let enabled = SettingsEngine.shared.isSoftClippingEnabled()
+        volumeLock.lock()
+        softClippingEnabled = enabled
+        volumeLock.unlock()
     }
     
     @objc private func handleDeviceListChange() {
@@ -800,6 +814,7 @@ final class SoundManager {
         
         volumeLock.lock()
         let currentLevels = volumeLevels
+        let softClippingEnabled = self.softClippingEnabled
         volumeLock.unlock()
         
         renderer?.beginBlock(frames: frameCount)
@@ -852,6 +867,8 @@ final class SoundManager {
             Logger.audio.debug("Removed \(finishedCount) finished sounds, \(remainingCount) still active")
         }
         
+        // Sanitize the final mix, with optional soft clipping of finite peaks.
+        OutputLimiter.apply(to: outputBuffer, sampleCount: frameCount * Int(channelCount), softClippingEnabled: softClippingEnabled)
     }
     
     private func schedulePlaybackProgressCheck() {
