@@ -446,14 +446,16 @@ class MenuBarController {
         autoMuteOnMusicPlaybackItem.target = self
         subMenu.addItem(autoMuteOnMusicPlaybackItem)
 
-        let microphoneItem = NSMenuItem(
-            title: L10n.autoMuteOnMicrophoneUse,
-            action: #selector(toggleAutoMuteOnMicrophoneUse(_:)),
-            keyEquivalent: ""
-        )
-        microphoneItem.state = SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() ? .on : .off
-        microphoneItem.target = self
-        subMenu.addItem(microphoneItem)
+        if #available(macOS 14.0, *) {
+            let microphoneItem = NSMenuItem(
+                title: L10n.autoMuteOnMicrophoneUse,
+                action: #selector(toggleAutoMuteOnMicrophoneUse(_:)),
+                keyEquivalent: ""
+            )
+            microphoneItem.state = SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() ? .on : .off
+            microphoneItem.target = self
+            subMenu.addItem(microphoneItem)
+        }
         
         subMenu.addItem(NSMenuItem.separator())
         

@@ -30,7 +30,7 @@ final class MicrophoneMonitor {
     }
 
     @objc private func updateMonitoring() {
-        guard SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() else {
+        guard #available(macOS 14.0, *), SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() else {
             timer?.invalidate()
             timer = nil
             setMicrophoneInUse(false)
@@ -55,25 +55,18 @@ final class MicrophoneMonitor {
     }
 
     static func isMicrophoneInUse() -> Bool {
+        guard #available(macOS 14.0, *) else { return false }
         let system = AudioObjectID(kAudioObjectSystemObject)
-        if #available(macOS 14.0, *) {
-            // Per-process input activity avoids treating output on a duplex device as microphone use.
-            return objectIDs(system, selector: kAudioHardwarePropertyProcessObjectList).contains {
-                isRunning($0, selector: kAudioProcessPropertyIsRunningInput)
-            }
-        }
-        return objectIDs(system, selector: kAudioHardwarePropertyDevices).contains {
-            !objectIDs($0, selector: kAudioDevicePropertyStreams, scope: kAudioDevicePropertyScopeInput).isEmpty
-                && isRunning($0, selector: kAudioDevicePropertyDeviceIsRunningSomewhere)
+        return objectIDs(system, selector: kAudioHardwarePropertyProcessObjectList).contains {
+            isRunning($0, selector: kAudioProcessPropertyIsRunningInput)
         }
     }
 
     private static func objectIDs(
-        _ object: AudioObjectID, selector: AudioObjectPropertySelector,
-        scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal
+        _ object: AudioObjectID, selector: AudioObjectPropertySelector
     ) -> [AudioObjectID] {
         var address = AudioObjectPropertyAddress(
-            mSelector: selector, mScope: scope, mElement: kAudioObjectPropertyElementMain
+            mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain
         )
         var size: UInt32 = 0
         guard AudioObjectGetPropertyDataSize(object, &address, 0, nil, &size) == noErr, size > 0 else {

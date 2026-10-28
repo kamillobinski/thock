@@ -22,6 +22,11 @@ struct ThockTests {
 
         settings.setAutoMuteOnMicrophoneUse(true)
         #expect(SettingsManager.shared.autoMuteOnMicrophoneUse)
+        if #unavailable(macOS 14.0) {
+            #expect(!monitor.shouldMute)
+            #expect(!MicrophoneMonitor.isMicrophoneInUse())
+            return
+        }
         #expect(monitor.shouldMute)
 
         active = false
