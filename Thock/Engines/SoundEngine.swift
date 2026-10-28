@@ -27,8 +27,9 @@ final class SoundEngine {
     /// - Parameters:
     ///   - keyCode: The keyboard key code
     ///   - isKeyDown: true for key press, false for key release
+    ///   - layout: Physical layout captured from the originating keyboard event
     ///   - latencyId: Optional UUID for latency measurement tracking
-    func play(for keyCode: Int64, isKeyDown: Bool, latencyId: UUID? = nil) {
+    func play(for keyCode: Int64, isKeyDown: Bool, layout: KeyLayout.Physical = .ansi, latencyId: UUID? = nil) {
         // Don't play if app is disabled
         guard AppEngine.shared.isEnabled() else { return }
         
@@ -43,7 +44,7 @@ final class SoundEngine {
         // Play random sound from the list
         if let soundFileName = keySoundList.randomElement() {
             recordLatencyCheckpoint(latencyId, point: .soundSelected)
-            play(sound: soundFileName, latencyId: latencyId)
+            play(sound: soundFileName, latencyId: latencyId, position: KeyLayout.position(for: keyCode, width: SettingsEngine.shared.getSpatialWidth(), layout: layout))
         }
     }
     
@@ -51,8 +52,9 @@ final class SoundEngine {
     /// - Parameters:
     ///   - name: The sound file name
     ///   - latencyId: Optional UUID for latency measurement tracking
-    func play(sound name: String, latencyId: UUID? = nil) {
+    ///   - position: Where the sound sits in space when spatial audio is on
+    func play(sound name: String, latencyId: UUID? = nil, position: SoundPosition? = nil) {
         let pitchVariation = SettingsEngine.shared.getPitchVariation()
-        SoundManager.shared.play(sound: name, pitchVariation: pitchVariation, latencyId: latencyId)
+        SoundManager.shared.play(sound: name, pitchVariation: pitchVariation, latencyId: latencyId, position: position)
     }
 }

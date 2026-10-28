@@ -8,6 +8,9 @@ import Accelerate
 final class SoundManager {
     static let shared = SoundManager()
     
+    /// Serial queue for playback requests from the event taps, play() is not safe to run concurrently
+    static let playbackQueue = DispatchQueue(label: "com.thock.playback", qos: .userInteractive)
+    
     // MARK: - Constants
     private static let defaultDeviceUID = "default"
     
@@ -15,6 +18,9 @@ final class SoundManager {
     private(set) var isReady = false
     
     // MARK: - Audio Queue State
+    // Serialize queue lifetime operations. Render callbacks must not take this lock:
+    // synchronous Stop/Dispose waits for callbacks before buffers/formats are replaced.
+    private let audioLifecycleLock = NSRecursiveLock()
     private var audioQueue: AudioQueueRef?
     private let numberOfBuffers = 3
     private var audioBuffers: [AudioQueueBufferRef] = []
@@ -25,12 +31,26 @@ final class SoundManager {
     private let timerLock = NSLock()
     private let queueStateLock = NSLock() // Protects audioQueue, isQueueRunning, isReady, initRetryCount and audioQueueGeneration
     
+    private let playbackRecovery = PlaybackRecoveryGuard()
+
     // MARK: - Audio Format
     private var sampleRate: Float64 = 44100.0
     private let channelCount: UInt32 = 2
     private let bitsPerChannel: UInt32 = 32
     private var framesPerBuffer: UInt32
-    private var currentBufferSize: UInt32 = SettingsManager.shared.audioBufferSize
+    private var storedBufferSize: UInt32 = SettingsManager.shared.audioBufferSize
+    private var currentBufferSize: UInt32 {
+        get {
+            audioLifecycleLock.lock()
+            defer { audioLifecycleLock.unlock() }
+            return storedBufferSize
+        }
+        set {
+            audioLifecycleLock.lock()
+            defer { audioLifecycleLock.unlock() }
+            storedBufferSize = newValue
+        }
+    }
     
     private var audioFormat = AudioStreamBasicDescription()
     
@@ -40,47 +60,94 @@ final class SoundManager {
     private var activeSounds: [ActiveSound] = []
     private let activeSoundsLock = NSLock()
     
-    // MARK: - Idle State Tracking
-    private var idleCallbackCount: Int = 0
+    // MARK: - Spatial Audio (guarded by activeSoundsLock)
+    private var spatialRenderer: SpatialRenderer?
+    private var outputKind: OutputKind = .speakers
+    private var spatialEnabled = SettingsEngine.shared.isSpatialAudioEnabled()
+    private lazy var outputKindMonitor = OutputKindMonitor { [weak self] in
+        self?.refreshOutputKind()
+    }
     
     // MARK: - Volume Control
-    private var volume: Float = 0.5
-    private var systemOutputVolume: Float = 1.0
+    private var volumeLevels = VolumeLevels(master: 0.5)
+    private var systemOutputVolume: Float = 1
     private var constantVolumeEnabled = false
+    private var softClippingEnabled = SettingsEngine.shared.isSoftClippingEnabled()
     private let volumeLock = NSLock()
     
     // MARK: - Models
-    private struct PCMSound {
+    final class PCMSound {
+        /// Interleaved stereo
         let data: [Float]
         let frameCount: Int
-    }
-    
-    private class ActiveSound {
-        let pcmData: [Float]
-        let frameCount: Int
-        var currentFrame: Int = 0
-        let latencyId: UUID?
-        var hasReportedPlayback: Bool = false
-        let pitchOffset: Float
+        private var monoCache: [Float]?
+        private let monoLock = NSLock()
         
-        init(pcmData: [Float], frameCount: Int, latencyId: UUID?, pitchOffset: Float) {
-            self.pcmData = pcmData
+        init(data: [Float], frameCount: Int) {
+            self.data = data
             self.frameCount = frameCount
-            self.latencyId = latencyId
-            self.pitchOffset = pitchOffset
         }
         
+        /// Mono downmix fed to the spatial mixer, built on first use so it costs no memory while
+        /// spatial audio is off or playing through speakers
+        var mono: [Float] {
+            monoLock.lock()
+            defer { monoLock.unlock() }
+            if let monoCache { return monoCache }
+            let mono = SpatialMath.monoDownmix(interleavedStereo: data)
+            monoCache = mono
+            return mono
+        }
+    }
+    
+    final class ActiveSound {
+        let sound: PCMSound
+        let rate: Double
+        var sourcePosition: Double = 0
+        let latencyId: UUID?
+        var hasReportedPlayback: Bool = false
+        /// Stereo gains for the dry path, (1, 1) unless panned for speakers
+        let gains: (left: Float, right: Float)
+        /// Spatial mixer input bus and its mono source when rendered through HRTF
+        let bus: Int?
+        let mono: [Float]?
+        let source: VolumeLevels.Source
+        let position: SoundPosition?
+
+        init(sound: PCMSound, rate: Double, latencyId: UUID?, gains: (left: Float, right: Float), bus: Int?, mono: [Float]?, source: VolumeLevels.Source, position: SoundPosition?) {
+            self.sound = sound
+            self.rate = rate
+            self.latencyId = latencyId
+            self.gains = gains
+            self.bus = bus
+            self.mono = mono
+            self.source = source
+            self.position = position
+        }
+
         var isFinished: Bool {
-            currentFrame >= frameCount
+            sourcePosition >= Double(sound.frameCount)
         }
     }
     
     // MARK: - Initialization
-    private init() {
-        framesPerBuffer = currentBufferSize
+    /// Hardware output can be disabled when rendering PCM offline.
+    init(audioOutputEnabled: Bool = true) {
+        framesPerBuffer = storedBufferSize
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSoftClippingChange),
+            name: .softClippingDidChange,
+            object: nil
+        )
+        guard audioOutputEnabled else {
+            setupAudioFormat()
+            return
+        }
         detectHardwareSampleRate()
         setupAudioFormat()
         configureLowLatencyAudio()
+        rebuildSpatialRenderer()
         createAudioQueue()
         
         // Listen for settings changes
@@ -123,9 +190,24 @@ final class SoundManager {
             object: nil
         )
         
+        // Listen for spatial audio toggle
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSpatialAudioChange),
+            name: .spatialAudioDidChange,
+            object: nil
+        )
+        
+        // Headphones plugged into or pulled from the built-in jack
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleHeadphoneJackChange),
+            name: .headphoneJackDidChange,
+            object: nil
+        )
+        
         // Initialize volume from settings
         updateVolumeFromSettings()
-        updateSystemOutputVolume()
         
         // Start monitoring audio device changes
         AudioDeviceManager.shared.startMonitoring()
@@ -165,6 +247,13 @@ final class SoundManager {
     @objc private func handleVolumeChange() {
         updateVolumeFromSettings()
     }
+
+    @objc private func handleSoftClippingChange() {
+        let enabled = SettingsEngine.shared.isSoftClippingEnabled()
+        volumeLock.lock()
+        softClippingEnabled = enabled
+        volumeLock.unlock()
+    }
     
     @objc private func handleDeviceListChange() {
         Logger.audio.info("Audio device list changed, checking if selected device status changed")
@@ -199,14 +288,93 @@ final class SoundManager {
         }
     }
     
+    @objc private func handleSpatialAudioChange() {
+        let enabled = SettingsEngine.shared.isSpatialAudioEnabled()
+        
+        activeSoundsLock.lock()
+        spatialEnabled = enabled
+        let needsRenderer = enabled && spatialRenderer == nil
+        activeSoundsLock.unlock()
+        
+        // Disabling keeps the renderer so voices on it finish naturally, it costs nothing while idle
+        if needsRenderer {
+            buildSpatialRendererInBackground()
+        }
+        Logger.audio.info("Spatial audio \(enabled ? "enabled" : "disabled")")
+    }
+    
+    @objc private func handleHeadphoneJackChange() {
+        refreshOutputKind()
+    }
+    
+    /// Creates the spatial renderer for the current format when spatial audio is on, drops it otherwise
+    private func rebuildSpatialRenderer() {
+        activeSoundsLock.lock()
+        let enabled = spatialEnabled
+        activeSoundsLock.unlock()
+        
+        // Built outside the lock, AU setup is slow
+        let renderer = enabled ? SpatialRenderer.make(sampleRate: sampleRate, maxFrames: Int(framesPerBuffer)) : nil
+        
+        activeSoundsLock.lock()
+        spatialRenderer = renderer
+        // A play() racing the reinit can take a bus on the old renderer after activeSounds was cleared,
+        // its index means nothing on the new one
+        activeSounds.removeAll { $0.bus != nil }
+        activeSoundsLock.unlock()
+    }
+    
+    /// Builds the renderer off the main thread to keep slow AU setup out of UI work
+    private func buildSpatialRendererInBackground() {
+        audioLifecycleLock.lock()
+        queueStateLock.lock()
+        let generation = audioQueueGeneration
+        queueStateLock.unlock()
+        let rate = sampleRate
+        let frames = Int(framesPerBuffer)
+        audioLifecycleLock.unlock()
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self, let renderer = SpatialRenderer.make(sampleRate: rate, maxFrames: frames) else { return }
+            
+            // Hold the queue state so a reinit cannot slip between the check and the swap
+            self.queueStateLock.lock()
+            defer { self.queueStateLock.unlock() }
+            guard self.audioQueueGeneration == generation else { return } // reinit built its own
+            
+            self.activeSoundsLock.lock()
+            if self.spatialEnabled && self.spatialRenderer == nil {
+                self.spatialRenderer = renderer
+            }
+            self.activeSoundsLock.unlock()
+        }
+    }
+    
+    /// Resolves whether the routed device gets HRTF or the speaker pan
+    private func refreshOutputKind() {
+        let deviceID = getPreferredOutputDeviceID()
+        outputKindMonitor.update(deviceID: deviceID)
+        let kind = deviceID.map { HeadphoneDetector.shared.outputKind(for: $0) } ?? .speakers
+        
+        activeSoundsLock.lock()
+        outputKind = kind
+        activeSoundsLock.unlock()
+        
+        Logger.audio.info("Spatial output kind: \(String(describing: kind))")
+    }
+    
     private func updateVolumeFromSettings(postNotification: Bool = false) {
         let deviceUID = getCurrentOutputDeviceUID()
-        let newVolume = SettingsEngine.shared.getVolume(for: deviceUID)
-        let newConstantVolumeEnabled = SettingsEngine.shared.isConstantVolumeEnabled()
+        let newLevels = VolumeLevels(
+            master: SettingsEngine.shared.getVolume(for: deviceUID),
+            keyboard: SettingsEngine.shared.getKeyboardVolume(),
+            mouse: SettingsEngine.shared.getMouseVolume()
+        )
         
+        let constantVolumeEnabled = SettingsEngine.shared.isConstantVolumeEnabled()
         volumeLock.lock()
-        volume = newVolume
-        constantVolumeEnabled = newConstantVolumeEnabled
+        self.constantVolumeEnabled = constantVolumeEnabled
+        volumeLevels = newLevels
         volumeLock.unlock()
         
         if postNotification {
@@ -215,6 +383,7 @@ final class SoundManager {
     }
     
     private func updateSystemOutputVolume() {
+        guard SettingsEngine.shared.isConstantVolumeEnabled() else { return }
         let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID()
         let newSystemVolume = AudioDeviceManager.shared.getOutputVolume(forUID: selectedUID) ?? 1.0
 
@@ -223,23 +392,12 @@ final class SoundManager {
         volumeLock.unlock()
     }
 
-    private func currentRenderVolume() -> Float {
-        let appVolume = volume
-
-        guard constantVolumeEnabled else {
-            return appVolume
-        }
-
-        let minimumSystemVolume: Float = 0.01
-        let maximumGain: Float = 2.0
-        let compensationExponent: Float = 1.08
-        let outputVolume = max(systemOutputVolume, minimumSystemVolume)
-        let compensatedVolume = appVolume / pow(outputVolume, compensationExponent)
-
-        return min(compensatedVolume, maximumGain)
-    }
-
-    private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false) {
+    private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false,
+                                       preservingLatestSound: Bool = false) {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+        playbackRecovery.invalidate()
+        outputKindMonitor.update(deviceID: nil)
         detectHardwareSampleRate()
         
         // Cancel idle timer
@@ -254,9 +412,11 @@ final class SoundManager {
         let queue = audioQueue
         queueStateLock.unlock()
         
-        if let queue = queue {
-            AudioQueueStop(queue, true)
-            AudioQueueDispose(queue, true)
+        let latestSound = stopPlayback(preservingLatestSound: preservingLatestSound) {
+            if let queue {
+                AudioQueueStop(queue, true)
+                AudioQueueDispose(queue, true)
+            }
         }
         
         // Update queue state
@@ -272,28 +432,42 @@ final class SoundManager {
         }
         queueStateLock.unlock()
         
-        // Clear active sounds
-        activeSoundsLock.lock()
-        activeSounds = []
-        activeSoundsLock.unlock()
-        
         // Reinitialize audio queue
         setupAudioFormat()
         configureLowLatencyAudio()
+        rebuildSpatialRenderer()
+        if let latestSound {
+            enqueue(latestSound.sound, pitchVariation: 0, latencyId: latestSound.latencyId,
+                    position: latestSound.position, source: latestSound.source, playbackRate: latestSound.rate)
+        }
         createAudioQueue()
         
         Logger.audio.info("Audio queue reinitialized with buffer size: \(newBufferSize) frames")
+    }
+
+    func stopPlayback(preservingLatestSound: Bool, stopQueue: () -> Void) -> ActiveSound? {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+        // Immediate Stop can return pending buffers through render callbacks. Detach
+        // voices first so those callbacks cannot consume the one we intend to retain.
+        activeSoundsLock.lock()
+        let latestSound = preservingLatestSound ? activeSounds.last : nil
+        activeSounds.removeAll()
+        activeSoundsLock.unlock()
+        // Never hold the callback's lock across synchronous CoreAudio teardown.
+        stopQueue()
+        return latestSound
     }
     
     /// Reinitializes the audio system after wake from sleep.
     func reinitializeAfterWake() {
         Logger.audio.info("Reinitializing audio system after wake from sleep")
-        detectHardwareSampleRate()
         reinitializeAudioQueue(with: currentBufferSize)
         updateVolumeFromSettings(postNotification: true)
     }
     
     deinit {
+        outputKindMonitor.update(deviceID: nil)
         NotificationCenter.default.removeObserver(self)
         idleTimeoutTimer?.cancel()
         if let queue = audioQueue {
@@ -332,6 +506,9 @@ final class SoundManager {
     }
     
     private func stopQueueIfIdle() {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+
         activeSoundsLock.lock()
         let isEmpty = activeSounds.isEmpty
         activeSoundsLock.unlock()
@@ -371,6 +548,9 @@ final class SoundManager {
     }
     
     private func restartQueue() {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+
         queueStateLock.lock()
         let isRunning = isQueueRunning
         let queue = audioQueue
@@ -389,7 +569,6 @@ final class SoundManager {
             return
         }
         
-        idleCallbackCount = 0
         // Re-prime all buffers
         Logger.audio.debug("Re-priming \(self.audioBuffers.count) buffers before restart")
         for buffer in audioBuffers {
@@ -413,6 +592,12 @@ final class SoundManager {
             // Queue failed to restart, full reinit to recover
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
+                self.audioLifecycleLock.lock()
+                defer { self.audioLifecycleLock.unlock() }
+                self.queueStateLock.lock()
+                let needsRecovery = self.audioQueueGeneration == generation && !self.isQueueRunning
+                self.queueStateLock.unlock()
+                guard needsRecovery else { return }
                 self.reinitializeAudioQueue(with: self.currentBufferSize)
             }
         }
@@ -500,17 +685,13 @@ final class SoundManager {
     
     // MARK: - Audio Queue Creation
     
-    /// Creates audio queue, ensuring it's always on the main thread's runloop
+    /// Uses AudioQueue's internal callback thread, independently of the UI run loop.
     private func createAudioQueue() {
-        if !Thread.isMainThread {
-            DispatchQueue.main.sync {
-                createAudioQueueInternal()
-            }
-            return
-        }
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
         createAudioQueueInternal()
     }
-    
+
     /// Internal audio queue creation
     private func createAudioQueueInternal() {
         let selfPointer = Unmanaged.passUnretained(self).toOpaque()
@@ -519,8 +700,8 @@ final class SoundManager {
             &audioFormat,
             audioQueueCallback,
             selfPointer,
-            CFRunLoopGetMain(),
-            CFRunLoopMode.commonModes.rawValue,
+            nil, // Let AudioQueue deliver render callbacks on its internal thread.
+            nil,
             0,
             &audioQueue
         )
@@ -547,58 +728,29 @@ final class SoundManager {
         // Verify allocated all buffers
         guard audioBuffers.count == numberOfBuffers else {
             Logger.audio.error("Incomplete buffer allocation: \(self.audioBuffers.count)/\(self.numberOfBuffers)")
+            disposeAudioQueueAndScheduleRetry(queue)
             return
         }
         
         // Set output device for the audio queue (if not available, abort starting the queue)
         guard let deviceID = getPreferredOutputDeviceID() else {
             Logger.audio.error("Preferred audio device unavailable, cleaning up and scheduling retry")
-            AudioQueueDispose(queue, true)
-            
-            queueStateLock.lock()
-            audioQueue = nil
-            audioBuffers = []
-            isReady = false
-            let currentRetry = initRetryCount
-            initRetryCount += 1
-            queueStateLock.unlock()
-            
-            let delay = min(15.0, pow(2.0, Double(currentRetry))) // capped at 15
-            Logger.audio.info("Scheduling device availability retry #\(currentRetry + 1) after \(delay)s")
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self = self else { return }
-                Logger.audio.info("Retrying audio queue initialization for device availability (attempt #\(currentRetry + 1))")
-                self.reinitializeAudioQueue(with: self.currentBufferSize, isRetry: true)
-            }
+            disposeAudioQueueAndScheduleRetry(queue)
             return
         }
         
-        setAudioQueueOutputDevice(queue, deviceID: deviceID)
+        guard setAudioQueueOutputDevice(queue, deviceID: deviceID) else {
+            // Never start a default-routed queue when binding the preferred device fails.
+            disposeAudioQueueAndScheduleRetry(queue)
+            return
+        }
+        refreshOutputKind()
         
         // Start the queue
         let startStatus = AudioQueueStart(queue, nil)
         guard startStatus == noErr else {
             Logger.audio.error("Audio queue start failed with status: \(startStatus), cleaning up and scheduling retry")
-            AudioQueueDispose(queue, true)
-            
-            queueStateLock.lock()
-            audioQueue = nil
-            audioBuffers = []
-            isReady = false
-            isQueueRunning = false
-            let currentRetry = initRetryCount
-            initRetryCount += 1
-            queueStateLock.unlock()
-            
-            let delay = min(15.0, pow(2.0, Double(currentRetry))) // capped at 15
-            Logger.audio.info("Scheduling retry #\(currentRetry + 1) after \(delay)s")
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self = self else { return }
-                Logger.audio.info("Retrying audio queue initialization (attempt #\(currentRetry + 1))")
-                self.reinitializeAudioQueue(with: self.currentBufferSize, isRetry: true)
-            }
+            disposeAudioQueueAndScheduleRetry(queue)
             return
         }
         
@@ -614,6 +766,33 @@ final class SoundManager {
         
         Logger.audio.info("Audio system initialized successfully")
     }
+
+    /// Caller holds audioLifecycleLock. Ignore this retry if another initialization supersedes it.
+    private func disposeAudioQueueAndScheduleRetry(_ queue: AudioQueueRef) {
+        AudioQueueDispose(queue, true)
+        queueStateLock.lock()
+        audioQueue = nil
+        audioBuffers = []
+        isReady = false
+        isQueueRunning = false
+        let generation = audioQueueGeneration
+        let currentRetry = initRetryCount
+        initRetryCount += 1
+        queueStateLock.unlock()
+
+        let delay = min(15.0, pow(2.0, Double(currentRetry)))
+        Logger.audio.info("Scheduling audio initialization retry #\(currentRetry + 1) after \(delay)s")
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self else { return }
+            self.audioLifecycleLock.lock()
+            defer { self.audioLifecycleLock.unlock() }
+            self.queueStateLock.lock()
+            let needsRetry = self.audioQueueGeneration == generation && !self.isReady && self.audioQueue == nil
+            self.queueStateLock.unlock()
+            guard needsRetry else { return }
+            self.reinitializeAudioQueue(with: self.currentBufferSize, isRetry: true)
+        }
+    }
     
     // MARK: - Audio Callback
     private let audioQueueCallback: AudioQueueOutputCallback = { userData, queue, buffer in
@@ -623,39 +802,42 @@ final class SoundManager {
     }
     
     private func fillBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
-        let frameCount = Int(framesPerBuffer)
-        
-        // Get buffer pointer
-        let bufferData = buffer.pointee.mAudioData
-        let outputBuffer = bufferData.assumingMemoryBound(to: Float.self)
-        
-        // Check for active sounds
+        playbackRecovery.recordCallback()
+        let outputBuffer = buffer.pointee.mAudioData.assumingMemoryBound(to: Float.self)
+        renderSamples(into: outputBuffer, frameCount: Int(framesPerBuffer))
+        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
+        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+    }
+
+    /// Renders interleaved stereo PCM before ownership of the buffer returns to AudioQueue.
+    func renderSamples(into outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         activeSoundsLock.lock()
         
-        if activeSounds.isEmpty {
-            // No active sounds, output silence and return early
-            let shouldClear = idleCallbackCount < numberOfBuffers
-            idleCallbackCount += 1
+        // A renderer built for smaller buffers can't hold this block, its voices play dry instead
+        let renderer = spatialRenderer.flatMap { $0.maxFrames >= frameCount ? $0 : nil }
+        
+        if activeSounds.isEmpty && (renderer?.isIdle ?? true) {
+            // No active sounds or spatial tails, output silence and return early.
+            // Always clear, a buffer re-enqueued with stale samples would loop them until the next sound
             activeSoundsLock.unlock()
-            
-            if shouldClear {
-                memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
-            }
-            
-            buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
-            AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+            memset(outputBuffer, 0, frameCount * Int(channelCount) * MemoryLayout<Float>.size)
             return
         }
         
-        idleCallbackCount = 0
-        
         // Zero out buffer
-        memset(outputBuffer, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
+        memset(outputBuffer, 0, frameCount * Int(channelCount) * MemoryLayout<Float>.size)
         
-        // No lock here coz float reads are atomic
-        let currentVolume = currentRenderVolume()
+        volumeLock.lock()
+        let currentLevels = constantVolumeEnabled
+            ? volumeLevels.compensatingForSystemVolume(systemOutputVolume)
+            : volumeLevels
+        let softClippingEnabled = self.softClippingEnabled
+        volumeLock.unlock()
+        
+        renderer?.beginBlock(frames: frameCount)
         
         for sound in activeSounds {
+            let currentVolume = currentLevels.gain(for: sound.source)
             // Report playback started on first render
             if ENABLE_LATENCY_MEASUREMENT && !sound.hasReportedPlayback {
                 sound.hasReportedPlayback = true
@@ -663,101 +845,101 @@ final class SoundManager {
                 completeLatencyMeasurement(sound.latencyId)
             }
             
-            // EARLY EXIT FOR PITCH
-            if sound.pitchOffset == 0.0 {
-                let remainingFrames = sound.frameCount - sound.currentFrame
-                let framesToCopy = min(frameCount, remainingFrames)
-                
-                if framesToCopy > 0 {
-                    let startSample = sound.currentFrame * Int(channelCount)
-                    let sampleCount = framesToCopy * Int(channelCount)
-                    
-                    sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
-                        var volumeScalar = currentVolume
-                        vDSP_vsma(
-                            pcmBuffer.baseAddress!.advanced(by: startSample), 1,
-                            &volumeScalar,
-                            outputBuffer, 1,
-                            outputBuffer, 1,
-                            vDSP_Length(sampleCount)
-                        )
-                    }
-                    
-                    sound.currentFrame += framesToCopy
+            if let bus = sound.bus, let mono = sound.mono, let renderer {
+                // Apply the source level before spatial mixing; master scales the shared output
+                let sourceGain = currentLevels.sourceGain(for: sound.source)
+                _ = mono.withUnsafeBufferPointer { pcm in
+                    Resampler.mix(
+                        source: pcm, channels: 1, frameCount: sound.sound.frameCount,
+                        position: &sound.sourcePosition, rate: sound.rate,
+                        into: renderer.busInput(bus), outChannels: 1, outFrames: frameCount,
+                        gains: (sourceGain, sourceGain)
+                    )
+                }
+                if sound.isFinished {
+                    renderer.releaseBus(bus)
                 }
             } else {
-                // Pitch variation enabled RESAMPLING TIME
-                renderWithPitch(sound: sound, outputBuffer: outputBuffer, frameCount: frameCount, volume: currentVolume)
+                _ = sound.sound.data.withUnsafeBufferPointer { pcm in
+                    Resampler.mix(
+                        source: pcm, channels: Int(channelCount), frameCount: sound.sound.frameCount,
+                        position: &sound.sourcePosition, rate: sound.rate,
+                        into: outputBuffer, outChannels: Int(channelCount), outFrames: frameCount,
+                        gains: (sound.gains.left * currentVolume, sound.gains.right * currentVolume)
+                    )
+                }
             }
         }
         
+        renderer?.render(frames: frameCount, into: outputBuffer, gain: currentLevels.master * SpatialRenderer.calibrationGain)
+        
         let initialCount = activeSounds.count
         activeSounds.removeAll(where: { $0.isFinished })
-        let finishedCount = initialCount - activeSounds.count
+        let remainingCount = activeSounds.count
+        let finishedCount = initialCount - remainingCount
         
         activeSoundsLock.unlock()
         
         if finishedCount > 0 {
-            Logger.audio.debug("Removed \(finishedCount) finished sounds, \(self.activeSounds.count) still active")
+            Logger.audio.debug("Removed \(finishedCount) finished sounds, \(remainingCount) still active")
         }
         
-        // Set buffer size and enqueue
-        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
-        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+        // Sanitize the final mix, with optional soft clipping of finite peaks.
+        OutputLimiter.apply(to: outputBuffer, sampleCount: frameCount * Int(channelCount), softClippingEnabled: softClippingEnabled)
     }
     
-    // MARK: - Pitch Shifting
-    
-    /// Renders audio with pitch shifting via linear interpolation resampling
-    private func renderWithPitch(sound: ActiveSound, outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int, volume: Float) {
-        // Semitones to playback rate conv
-        let playbackRate = pow(2.0, sound.pitchOffset / 12.0)
-        
-        let initialFrame = sound.currentFrame
-        var didFinish = false
-        
-        sound.pcmData.withUnsafeBufferPointer { pcmBuffer in
-            for outputFrame in 0..<frameCount {
-                // Calc source position
-                let sourcePosition = Float(initialFrame) + Float(outputFrame) * playbackRate
-                let sourceFrame = Int(sourcePosition)
-                
-                guard sourceFrame < sound.frameCount - 1 else {
-                    sound.currentFrame = sound.frameCount
-                    didFinish = true
-                    break
-                }
-                
-                // Linear interpolation fraction
-                let fraction = sourcePosition - Float(sourceFrame)
-                
-                // Interpolate l+r channels
-                let baseSample = sourceFrame * Int(channelCount)
-                let nextSample = baseSample + Int(channelCount)
-                
-                // Left channel
-                let leftCurrent = pcmBuffer[baseSample]
-                let leftNext = pcmBuffer[nextSample]
-                let leftInterpolated = leftCurrent + (leftNext - leftCurrent) * fraction
-                
-                // Right channel
-                let rightCurrent = pcmBuffer[baseSample + 1]
-                let rightNext = pcmBuffer[nextSample + 1]
-                let rightInterpolated = rightCurrent + (rightNext - rightCurrent) * fraction
-                
-                // Mix into output buffer with volume
-                let outputIndex = outputFrame * Int(channelCount)
-                outputBuffer[outputIndex] += leftInterpolated * volume
-                outputBuffer[outputIndex + 1] += rightInterpolated * volume
+    private func schedulePlaybackProgressCheck() {
+        queueStateLock.lock()
+        let generation = audioQueueGeneration
+        let expectedRunning = isReady && isQueueRunning
+        queueStateLock.unlock()
+        activeSoundsLock.lock()
+        let hasPendingSounds = !activeSounds.isEmpty
+        activeSoundsLock.unlock()
+        guard expectedRunning && hasPendingSounds,
+              let probe = playbackRecovery.beginProbe(generation: generation, now: ProcessInfo.processInfo.systemUptime)
+        else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + probe.delay) { [weak self] in
+            self?.recoverIfPlaybackStalled(probe)
+        }
+    }
+
+    private func recoverIfPlaybackStalled(_ probe: PlaybackRecoveryGuard.Probe) {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+        queueStateLock.lock()
+        let generation = audioQueueGeneration
+        let expectedRunning = isReady && isQueueRunning && audioQueue != nil
+        let queue = audioQueue
+        queueStateLock.unlock()
+        activeSoundsLock.lock()
+        let pendingCount = activeSounds.count
+        activeSoundsLock.unlock()
+
+        // A disconnected selected device must not cause fallback to a different output.
+        let deviceAvailable = expectedRunning && pendingCount > 0 && getPreferredOutputDeviceID() != nil
+        guard playbackRecovery.authorizeRecovery(probe, generation: generation,
+                expectedRunning: expectedRunning, hasPendingSounds: pendingCount > 0,
+                deviceAvailable: deviceAvailable, now: ProcessInfo.processInfo.systemUptime),
+              let queue else {
+            if deviceAvailable {
+                schedulePlaybackProgressCheck()
             }
+            return
         }
-        
-        if !didFinish {
-            let framesConsumed = Int(Float(frameCount) * playbackRate)
-            sound.currentFrame += framesConsumed
-        }
+
+        // The running flag can remain true even when buffers stop returning. Log the
+        // actual CoreAudio property, but base recovery on missing callback progress.
+        var actualRunning: UInt32 = 0
+        var propertySize = UInt32(MemoryLayout<UInt32>.size)
+        let status = AudioQueueGetProperty(queue, kAudioQueueProperty_IsRunning, &actualRunning, &propertySize)
+        Logger.audio.warning("Audio recovery: no callbacks after playback demand; generation=\(generation) pending=\(pendingCount) actualRunning=\(actualRunning) propertyStatus=\(status)")
+        reinitializeAudioQueue(with: currentBufferSize, preservingLatestSound: true)
+        updateVolumeFromSettings()
+        schedulePlaybackProgressCheck()
     }
-    
+
     private func primeBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
         // Fill with silence and enqueue
         let bufferData = buffer.pointee.mAudioData
@@ -768,7 +950,10 @@ final class SoundManager {
     
     // MARK: - Public API
     
-    func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil) {
+    func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil, position: SoundPosition? = nil) {
+        // Keep the readiness check, restart, and voice admission atomic with idle stop/replacement.
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
         queueStateLock.lock()
         let ready = isReady
         queueStateLock.unlock()
@@ -802,29 +987,43 @@ final class SoundManager {
             recordLatencyCheckpoint(latencyId, point: .bufferScheduling)
         }
         
-        updateSystemOutputVolume()
+        enqueue(pcmSound, pitchVariation: pitchVariation, latencyId: latencyId, position: position, source: .keyboard)
+    }
 
-        // Gen pitch offset [-variation, +variation]
-        let pitchOffset: Float
-        if pitchVariation > 0.0 {
-            pitchOffset = Float.random(in: -pitchVariation...pitchVariation)
-        } else {
-            pitchOffset = 0.0
-        }
-        
-        let activeSound = ActiveSound(
-            pcmData: pcmSound.data,
-            frameCount: pcmSound.frameCount,
-            latencyId: latencyId,
-            pitchOffset: pitchOffset
-        )
-        
+    /// Creates a voice with a random pitch offset in [-variation, +variation] and starts it on the next callback
+    func enqueue(_ pcmSound: PCMSound, pitchVariation: Float, latencyId: UUID?, position: SoundPosition?, source: VolumeLevels.Source,
+                         playbackRate: Double? = nil) {
+        // Queue replacement also rebuilds spatial routing. Serialize voice admission
+        // with it so a request cannot retain a bus from the replaced renderer.
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
+        updateSystemOutputVolume()
+        let pitchOffset: Float = pitchVariation > 0.0 ? Float.random(in: -pitchVariation...pitchVariation) : 0.0
+        // Semitones to playback rate
+        let rate = playbackRate ?? (pitchOffset == 0.0 ? 1.0 : Double(pow(2.0, pitchOffset / 12.0)))
+
+        // The mono downmix is only needed on the HRTF path, build it outside the lock the audio thread takes
         activeSoundsLock.lock()
-        activeSounds.append(activeSound)
+        let wantsMono = position != nil && spatialEnabled && outputKind == .headphones
         activeSoundsLock.unlock()
+        let mono = wantsMono ? pcmSound.mono : nil
+
+        activeSoundsLock.lock()
+        let renderer = spatialRenderer
+        // Without a mono source (settings changed in between) the voice takes the speaker pan
+        let route = SpatialMath.route(position: position, spatialEnabled: spatialEnabled, outputKind: outputKind) {
+            mono == nil ? nil : renderer?.acquireBus(position: $0)
+        }
+        activeSounds.append(ActiveSound(sound: pcmSound, rate: rate, latencyId: latencyId,
+                                        gains: route.gains, bus: route.bus, mono: route.bus == nil ? nil : mono,
+                                        source: source, position: position))
+        activeSoundsLock.unlock()
+        schedulePlaybackProgressCheck()
     }
     
     func preloadSounds(for soundpack: Soundpack) {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
         soundLibrary.removeAll()
         
         guard let soundDirectory = resolveSoundDirectory(for: soundpack) else {
@@ -852,6 +1051,8 @@ final class SoundManager {
     /// Preloads mouse sounds from a downloaded soundpack.
     /// Config sounds keys: "left" (down/up arrays) and "right" (down/up arrays).
     func preloadMouseSoundsFromPack(for soundpack: Soundpack, config: SoundpackConfig) {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
         mouseSoundLibrary.removeAll()
         
         guard let dir = resolveSoundDirectory(for: soundpack) else {
@@ -879,7 +1080,10 @@ final class SoundManager {
     }
     
     /// Plays a sound for the specified mouse button event.
-    func playMouseSound(for event: MouseButtonEvent) {
+    /// - Parameter location: Cursor location in global CG coordinates, used for spatial audio
+    func playMouseSound(for event: MouseButtonEvent, location: CGPoint? = nil) {
+        audioLifecycleLock.lock()
+        defer { audioLifecycleLock.unlock() }
         guard let sounds = mouseSoundLibrary[event], let sound = sounds.randomElement() else {
             Logger.audio.warning("Mouse sound not found for event: \(event)")
             return
@@ -909,27 +1113,23 @@ final class SoundManager {
             return
         }
         
-        // Get pitch variation
-        let pitchVariation = SettingsEngine.shared.getPitchVariation()
-        updateSystemOutputVolume()
-        
-        let pitchOffset: Float
-        if pitchVariation > 0.0 {
-            pitchOffset = Float.random(in: -pitchVariation...pitchVariation)
-        } else {
-            pitchOffset = 0.0
-        }
-        
-        let activeSound = ActiveSound(
-            pcmData: sound.data,
-            frameCount: sound.frameCount,
-            latencyId: nil,
-            pitchOffset: pitchOffset
-        )
-        
         activeSoundsLock.lock()
-        activeSounds.append(activeSound)
+        let enabled = spatialEnabled
         activeSoundsLock.unlock()
+
+        let position = enabled ? location.map {
+            SpatialMath.mousePosition(location: $0, displayBounds: SpatialMath.desktopBounds(activeDisplayBounds()),
+                                     width: SettingsEngine.shared.getSpatialWidth())
+        } : nil
+        enqueue(sound, pitchVariation: SettingsEngine.shared.getPitchVariation(), latencyId: nil, position: position, source: .mouse)
+    }
+
+    private func activeDisplayBounds() -> [CGRect] {
+        var count: UInt32 = 0
+        guard CGGetActiveDisplayList(0, nil, &count) == .success, count > 0 else { return [] }
+        var displays = [CGDirectDisplayID](repeating: 0, count: Int(count))
+        guard CGGetActiveDisplayList(count, &displays, &count) == .success else { return [] }
+        return displays.prefix(Int(count)).map { CGDisplayBounds($0) }
     }
     
     // MARK: - Sound Loading
@@ -1077,7 +1277,7 @@ final class SoundManager {
     }
     
     /// Sets the output device for an audio queue
-    private func setAudioQueueOutputDevice(_ queue: AudioQueueRef, deviceID: AudioDeviceID) {
+    private func setAudioQueueOutputDevice(_ queue: AudioQueueRef, deviceID: AudioDeviceID) -> Bool {
         // Get device uid
         var deviceUIDCF: Unmanaged<CFString>?
         var uidSize = UInt32(MemoryLayout<Unmanaged<CFString>>.size)
@@ -1098,7 +1298,7 @@ final class SoundManager {
         
         guard uidStatus == noErr, let uid = deviceUIDCF?.takeRetainedValue() else {
             Logger.audio.error("Failed to get device UID for AudioQueue routing: \(uidStatus)")
-            return
+            return false
         }
         
         // Set the output device on the audio queue
@@ -1117,6 +1317,7 @@ final class SoundManager {
         } else {
             Logger.audio.error("Failed to set audio queue device: \(queueStatus)")
         }
+        return queueStatus == noErr
     }
     
     func getCurrentOutputDeviceUID() -> String {

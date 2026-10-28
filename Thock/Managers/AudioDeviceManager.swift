@@ -219,12 +219,14 @@ final class AudioDeviceManager {
             &dataSize
         )
         
-        guard status == noErr && dataSize > 0 else {
+        guard status == noErr && dataSize >= UInt32(MemoryLayout<UInt32>.size) else {
             return false
         }
         
-        // Allocate buffer list
-        let bufferListPointer = UnsafeMutablePointer<AudioBufferList>.allocate(capacity: 1)
+        // AudioBufferList has variable trailing storage: one AudioBuffer per stream.
+        let bufferListPointer = UnsafeMutableRawPointer.allocate(
+            byteCount: Int(dataSize), alignment: MemoryLayout<AudioBufferList>.alignment
+        )
         defer { bufferListPointer.deallocate() }
         
         let getDataStatus = AudioObjectGetPropertyData(
@@ -236,12 +238,12 @@ final class AudioDeviceManager {
             bufferListPointer
         )
         
-        guard getDataStatus == noErr else {
+        guard getDataStatus == noErr && dataSize >= UInt32(MemoryLayout<UInt32>.size) else {
             return false
         }
         
-        let bufferList = bufferListPointer.pointee
-        return bufferList.mNumberBuffers > 0
+        // Only the leading count is needed; a zero-stream list has no AudioBuffer payload.
+        return bufferListPointer.load(as: UInt32.self) > 0
     }
     
     private func getDeviceUID(_ deviceID: AudioDeviceID) -> String? {

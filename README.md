@@ -115,6 +115,8 @@ Features a custom audio engine built on native macOS AudioQueue APIs, achieving 
 
 Whether you are a high-speed programmer or a creative writer, Thock ensures every keystroke is met with organic, realtime sound that keeps pace with your fastest workflow.
 
+Spatial audio positions sounds by key and cursor location. Headphones use Apple’s spatial renderer, while speakers use a gentle stereo pan. The Spatial width slider controls how far left and right sounds spread.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
@@ -165,7 +167,7 @@ With localization, Thock bridges the gap between powerful functionality and effo
 
 Select your preferred language in the general settings to enjoy a workspace tailored to your needs.
 
-> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German, 🇮🇹 Italian, 🇻🇳 Vietnamese.
+> **Supported**: 🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French, 🇨🇳 Chinese, 🇯🇵 Japanese, 🇩🇪 German, 🇮🇹 Italian, 🇻🇳 Vietnamese, 🇧🇷 Portuguese, 🇷🇺 Russian.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -253,16 +255,17 @@ Thanks to the folks that helped make this project a reality!
 | - | - |
 | [sasagar](https://github.com/sasagar) | VLC auto-launch prevention. |
 | [nthnbch](https://github.com/nthnbch) | French translations. |
-| [Bcharlit](https://github.com/Bcharlit) | German translations. |
+| [kaichn](https://github.com/kaichn) | German translations. |
 | [Crocchetto](https://github.com/crocchetto) | Italian translations. |
 | [Kaedeeeeeeeeee](https://github.com/Kaedeeeeeeeeee) | Dynamic localization (Japanese + Chinese), auto-enable on headphones, trackpad sound support. |
-| [distantorigin](https://github.com/distantorigin) | Menu bar accessibility and VoiceOver responsiveness. |
+| [distantorigin](https://github.com/distantorigin) | Menu bar and preferences accessibility, VoiceOver responsiveness, spatial audio, independent keyboard and mouse volume, Russian translations. |
 | [SouhailBlmn](https://github.com/SouhailBlmn) | Volume persistence across output devices, global shortcut to toggle the app. |
 | [shailantani](https://github.com/shailantani) | Raycast extension ([source code](https://github.com/raycast/extensions/tree/main/extensions/thock)). |
 | [qalonbudker](https://github.com/qalonbudker) | Pitch variation for key sounds. |
 | [zenangst](https://github.com/zenangst) | Event handling, mode saving, performance improvements. |
 | [iamsoum](https://github.com/iamsoum) | Clearer step-by-step sound pack conversion instructions. |
 | [cattybeo](https://github.com/cattybeo) | Vietnamese translations. |
+| [RenerPires](https://github.com/RenerPires) | Brazilian Portuguese translations. |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

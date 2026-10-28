@@ -36,6 +36,7 @@ struct SettingsLinkRowView: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text("\(L10n.open) \(title)"))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)

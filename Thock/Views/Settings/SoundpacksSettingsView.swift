@@ -46,6 +46,7 @@ struct SoundpacksSettingsView: View {
                                 }
                             }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel(Text("\(L10n.open) \(L10n.soundpackDirectory)"))
                         ),
                         isLast: false
                     )
@@ -69,6 +70,7 @@ struct SoundpacksSettingsView: View {
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Text(L10n.refreshKeyboardSoundpacks))
                     .disabled(service.isLoading)
                 }) {
                     ForEach(Array(installedKeyboard.enumerated()), id: \.element.id) { index, entry in
@@ -113,6 +115,7 @@ struct SoundpacksSettingsView: View {
                                 control: AnyView(
                                     Button("Retry") { Task { await service.fetchManifest() } }
                                         .controlSize(.small)
+                                        .accessibilityLabel(Text(L10n.retryLoadingKeyboardSoundpacks))
                                 ),
                                 isLast: true
                             )
@@ -140,6 +143,7 @@ struct SoundpacksSettingsView: View {
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Text(L10n.refreshMouseSoundpacks))
                     .disabled(service.isLoading)
                 }) {
                     ForEach(Array(installedMouse.enumerated()), id: \.element.id) { index, entry in
@@ -184,6 +188,7 @@ struct SoundpacksSettingsView: View {
                                 control: AnyView(
                                     Button("Retry") { Task { await service.fetchManifest() } }
                                         .controlSize(.small)
+                                        .accessibilityLabel(Text(L10n.retryLoadingMouseSoundpacks))
                                 ),
                                 isLast: true
                             )
@@ -246,6 +251,7 @@ private struct SoundpackRegistryRowView: View {
                     .foregroundColor(.secondary.opacity(0.6))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text(L10n.removeSoundpack(entry.metadata.name)))
             .help("Remove soundpack")
         } else {
             Button(action: onInstall) {
@@ -254,6 +260,7 @@ private struct SoundpackRegistryRowView: View {
                     .foregroundColor(.accentColor)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text(L10n.installSoundpack(entry.metadata.name)))
             .help("Install soundpack")
         }
     }
@@ -284,6 +291,7 @@ private struct SoundpackCustomRowView: View {
                         .foregroundColor(.secondary.opacity(0.6))
                 }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Text(L10n.removeSoundpack(soundpack.name)))
                     .help("Remove soundpack")
             ),
             isLast: isLast

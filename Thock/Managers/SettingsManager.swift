@@ -12,10 +12,15 @@ final class SettingsManager {
     static let defaultAudioBufferSize: UInt32 = 256
     static let defaultSelectedAudioDeviceUID: String? = nil
     static let defaultPerDeviceVolumes: [String: Float] = [:]
+    static let defaultKeyboardVolume: Float = 1.0
+    static let defaultMouseVolume: Float = 1.0
     static let defaultConstantVolumeEnabled: Bool = false
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
+    static let defaultSoftClippingEnabled: Bool = false
     static let defaultAutoEnableOnHeadphone: Bool = false
+    static let defaultSpatialAudioEnabled: Bool = false
+    static let defaultSpatialWidth: Float = SpatialMath.defaultWidth
     
     
     private init() {}
@@ -69,6 +74,18 @@ final class SettingsManager {
         get { UserDefaults.perDeviceVolumes }
         set { UserDefaults.perDeviceVolumes = newValue }
     }
+
+    /// Keyboard level relative to the master volume, shared across output devices.
+    var keyboardVolume: Float {
+        get { UserDefaults.keyboardVolume }
+        set { UserDefaults.keyboardVolume = newValue }
+    }
+
+    /// Mouse level relative to the master volume, shared across output devices.
+    var mouseVolume: Float {
+        get { UserDefaults.mouseVolume }
+        set { UserDefaults.mouseVolume = newValue }
+    }
     
     /// Whether Thock compensates for output device volume changes.
     var constantVolumeEnabled: Bool {
@@ -86,6 +103,24 @@ final class SettingsManager {
     var mouseSoundEnabled: Bool {
         get { UserDefaults.mouseSoundEnabled }
         set { UserDefaults.mouseSoundEnabled = newValue }
+    }
+
+    /// Whether to soften peaks in the final mix of keyboard and mouse sounds.
+    var softClippingEnabled: Bool {
+        get { UserDefaults.softClippingEnabled }
+        set { UserDefaults.softClippingEnabled = newValue }
+    }
+    
+    /// Whether to position sounds by key and cursor location.
+    var spatialAudioEnabled: Bool {
+        get { UserDefaults.spatialAudioEnabled }
+        set { UserDefaults.spatialAudioEnabled = newValue }
+    }
+    
+    /// Azimuth in degrees of the keyboard and screen edges when spatial audio is on.
+    var spatialWidth: Float {
+        get { UserDefaults.spatialWidth }
+        set { UserDefaults.spatialWidth = newValue }
     }
     
     /// Whether to auto-enable Thock when headphones are connected.
@@ -111,10 +146,15 @@ private extension UserDefaults {
         static let audioBufferSize = "audioBufferSize"
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let perDeviceVolumes = "perDeviceVolume"
+        static let keyboardVolume = "keyboardVolume"
+        static let mouseVolume = "mouseVolume"
         static let constantVolumeEnabled = "constantVolumeEnabled"
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
+        static let softClippingEnabled = "softClippingEnabled"
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
+        static let spatialAudioEnabled = "spatialAudioEnabled"
+        static let spatialWidth = "spatialWidth"
     }
     
     static var openAtLogin: Bool {
@@ -213,6 +253,30 @@ private extension UserDefaults {
         }
     }
     
+    static var keyboardVolume: Float {
+        get {
+            guard standard.object(forKey: Keys.keyboardVolume) != nil else {
+                return SettingsManager.defaultKeyboardVolume
+            }
+            return VolumeLevels.clamped(standard.float(forKey: Keys.keyboardVolume))
+        }
+        set {
+            standard.set(VolumeLevels.clamped(newValue), forKey: Keys.keyboardVolume)
+        }
+    }
+
+    static var mouseVolume: Float {
+        get {
+            guard standard.object(forKey: Keys.mouseVolume) != nil else {
+                return SettingsManager.defaultMouseVolume
+            }
+            return VolumeLevels.clamped(standard.float(forKey: Keys.mouseVolume))
+        }
+        set {
+            standard.set(VolumeLevels.clamped(newValue), forKey: Keys.mouseVolume)
+        }
+    }
+
     static var constantVolumeEnabled: Bool {
         get {
             if standard.object(forKey: Keys.constantVolumeEnabled) == nil {
@@ -249,6 +313,18 @@ private extension UserDefaults {
         }
     }
     
+    static var softClippingEnabled: Bool {
+        get {
+            guard standard.object(forKey: Keys.softClippingEnabled) != nil else {
+                return SettingsManager.defaultSoftClippingEnabled
+            }
+            return standard.bool(forKey: Keys.softClippingEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.softClippingEnabled)
+        }
+    }
+
     static var autoEnableOnHeadphone: Bool {
         get {
             if standard.object(forKey: Keys.autoEnableOnHeadphone) == nil {
@@ -258,6 +334,30 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.autoEnableOnHeadphone)
+        }
+    }
+    
+    static var spatialAudioEnabled: Bool {
+        get {
+            if standard.object(forKey: Keys.spatialAudioEnabled) == nil {
+                return SettingsManager.defaultSpatialAudioEnabled
+            }
+            return standard.bool(forKey: Keys.spatialAudioEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.spatialAudioEnabled)
+        }
+    }
+    
+    static var spatialWidth: Float {
+        get {
+            if standard.object(forKey: Keys.spatialWidth) == nil {
+                return SettingsManager.defaultSpatialWidth
+            }
+            return SpatialMath.clampWidth(standard.float(forKey: Keys.spatialWidth))
+        }
+        set {
+            standard.set(SpatialMath.clampWidth(newValue), forKey: Keys.spatialWidth)
         }
     }
 }

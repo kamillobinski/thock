@@ -146,6 +146,8 @@ final class SettingsEngine {
     }
     
     // MARK: - Volume
+
+    // The existing per-device volume is the master level used by the menu and CLI.
     
     func getVolume(for deviceUID: String) -> Float {
         let perDeviceVolumes = SettingsManager.shared.perDeviceVolumes
@@ -168,6 +170,24 @@ final class SettingsEngine {
     func setVolume(_ volume: Float) {
         let deviceUID = SoundManager.shared.getCurrentOutputDeviceUID()
         setVolume(volume, for: deviceUID)
+    }
+
+    func getKeyboardVolume() -> Float {
+        return SettingsManager.shared.keyboardVolume
+    }
+
+    func setKeyboardVolume(_ volume: Float) {
+        SettingsManager.shared.keyboardVolume = volume
+        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
+    }
+
+    func getMouseVolume() -> Float {
+        return SettingsManager.shared.mouseVolume
+    }
+
+    func setMouseVolume(_ volume: Float) {
+        SettingsManager.shared.mouseVolume = volume
+        NotificationCenter.default.post(name: .volumeDidChange, object: nil)
     }
     
     func isConstantVolumeEnabled() -> Bool {
@@ -201,6 +221,37 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .mouseSoundDidChange, object: nil)
     }
     
+    // MARK: - Soft Clipping
+
+    func isSoftClippingEnabled() -> Bool {
+        return SettingsManager.shared.softClippingEnabled
+    }
+
+    func setSoftClippingEnabled(_ enabled: Bool) {
+        SettingsManager.shared.softClippingEnabled = enabled
+        NotificationCenter.default.post(name: .softClippingDidChange, object: nil)
+    }
+
+    // MARK: - Spatial Audio
+    
+    func isSpatialAudioEnabled() -> Bool {
+        return SettingsManager.shared.spatialAudioEnabled
+    }
+    
+    func setSpatialAudioEnabled(_ enabled: Bool) {
+        SettingsManager.shared.spatialAudioEnabled = enabled
+        NotificationCenter.default.post(name: .spatialAudioDidChange, object: nil)
+    }
+    
+    func getSpatialWidth() -> Float {
+        return SettingsManager.shared.spatialWidth
+    }
+    
+    /// Read on every sound, so no notification is needed.
+    func setSpatialWidth(_ width: Float) {
+        SettingsManager.shared.spatialWidth = width
+    }
+    
     // MARK: - Headphone Auto-Enable
     
     func isAutoEnableOnHeadphoneEnabled() -> Bool {
@@ -227,5 +278,7 @@ extension Notification.Name {
     static let volumeDidChange = Notification.Name("volumeDidChange")
     static let audioDeviceDidChange = Notification.Name("audioDeviceDidChange")
     static let mouseSoundDidChange = Notification.Name("mouseSoundDidChange")
+    static let spatialAudioDidChange = Notification.Name("spatialAudioDidChange")
+    static let softClippingDidChange = Notification.Name("softClippingDidChange")
     static let cleaningModeDidChange = Notification.Name("cleaningModeDidChange")
 }
