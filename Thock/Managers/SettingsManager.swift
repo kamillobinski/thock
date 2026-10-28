@@ -14,6 +14,7 @@ final class SettingsManager {
     static let defaultPerDeviceVolumes: [String: Float] = [:]
     static let defaultKeyboardVolume: Float = 1.0
     static let defaultMouseVolume: Float = 1.0
+    static let defaultConstantVolumeEnabled: Bool = false
     static let defaultPitchVariation: Float = 0.0
     static let defaultMouseSoundEnabled: Bool = false
     static let defaultSoftClippingEnabled: Bool = false
@@ -86,6 +87,12 @@ final class SettingsManager {
         set { UserDefaults.mouseVolume = newValue }
     }
     
+    /// Whether Thock compensates for output device volume changes.
+    var constantVolumeEnabled: Bool {
+        get { UserDefaults.constantVolumeEnabled }
+        set { UserDefaults.constantVolumeEnabled = newValue }
+    }
+
     /// Pitch variation range in semitones for random pitch shifts.
     var pitchVariation: Float {
         get { UserDefaults.pitchVariation }
@@ -141,6 +148,7 @@ private extension UserDefaults {
         static let perDeviceVolumes = "perDeviceVolume"
         static let keyboardVolume = "keyboardVolume"
         static let mouseVolume = "mouseVolume"
+        static let constantVolumeEnabled = "constantVolumeEnabled"
         static let pitchVariation = "pitchVariation"
         static let mouseSoundEnabled = "mouseSoundEnabled"
         static let softClippingEnabled = "softClippingEnabled"
@@ -266,6 +274,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(VolumeLevels.clamped(newValue), forKey: Keys.mouseVolume)
+        }
+    }
+
+    static var constantVolumeEnabled: Bool {
+        get {
+            if standard.object(forKey: Keys.constantVolumeEnabled) == nil {
+                return SettingsManager.defaultConstantVolumeEnabled
+            }
+            return standard.bool(forKey: Keys.constantVolumeEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.constantVolumeEnabled)
         }
     }
 

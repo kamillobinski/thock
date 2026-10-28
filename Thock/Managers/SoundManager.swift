@@ -70,6 +70,8 @@ final class SoundManager {
     
     // MARK: - Volume Control
     private var volumeLevels = VolumeLevels(master: 0.5)
+    private var systemOutputVolume: Float = 1
+    private var constantVolumeEnabled = false
     private var softClippingEnabled = SettingsEngine.shared.isSoftClippingEnabled()
     private let volumeLock = NSLock()
     
@@ -213,6 +215,7 @@ final class SoundManager {
     
     @objc private func handleSettingsChange() {
         let newBufferSize = SettingsManager.shared.audioBufferSize
+        updateVolumeFromSettings()
         
         // Handle buffer size change
         if newBufferSize != currentBufferSize {
@@ -368,7 +371,9 @@ final class SoundManager {
             mouse: SettingsEngine.shared.getMouseVolume()
         )
         
+        let constantVolumeEnabled = SettingsEngine.shared.isConstantVolumeEnabled()
         volumeLock.lock()
+        self.constantVolumeEnabled = constantVolumeEnabled
         volumeLevels = newLevels
         volumeLock.unlock()
         
@@ -377,6 +382,16 @@ final class SoundManager {
         }
     }
     
+    private func updateSystemOutputVolume() {
+        guard SettingsEngine.shared.isConstantVolumeEnabled() else { return }
+        let selectedUID = SettingsEngine.shared.getSelectedAudioDeviceUID()
+        let newSystemVolume = AudioDeviceManager.shared.getOutputVolume(forUID: selectedUID) ?? 1.0
+
+        volumeLock.lock()
+        systemOutputVolume = newSystemVolume
+        volumeLock.unlock()
+    }
+
     private func reinitializeAudioQueue(with newBufferSize: UInt32, isRetry: Bool = false,
                                        preservingLatestSound: Bool = false) {
         audioLifecycleLock.lock()
@@ -813,7 +828,9 @@ final class SoundManager {
         memset(outputBuffer, 0, frameCount * Int(channelCount) * MemoryLayout<Float>.size)
         
         volumeLock.lock()
-        let currentLevels = volumeLevels
+        let currentLevels = constantVolumeEnabled
+            ? volumeLevels.compensatingForSystemVolume(systemOutputVolume)
+            : volumeLevels
         let softClippingEnabled = self.softClippingEnabled
         volumeLock.unlock()
         
@@ -980,6 +997,7 @@ final class SoundManager {
         // with it so a request cannot retain a bus from the replaced renderer.
         audioLifecycleLock.lock()
         defer { audioLifecycleLock.unlock() }
+        updateSystemOutputVolume()
         let pitchOffset: Float = pitchVariation > 0.0 ? Float.random(in: -pitchVariation...pitchVariation) : 0.0
         // Semitones to playback rate
         let rate = playbackRate ?? (pitchOffset == 0.0 ? 1.0 : Double(pow(2.0, pitchOffset / 12.0)))
