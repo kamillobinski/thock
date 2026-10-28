@@ -934,6 +934,7 @@ final class SoundManager {
     // MARK: - Public API
     
     func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil, position: SoundPosition? = nil) {
+        guard !MicrophoneMonitor.shared.shouldMute else { return }
         // Keep the readiness check, restart, and voice admission atomic with idle stop/replacement.
         audioLifecycleLock.lock()
         defer { audioLifecycleLock.unlock() }
@@ -1064,6 +1065,7 @@ final class SoundManager {
     /// Plays a sound for the specified mouse button event.
     /// - Parameter location: Cursor location in global CG coordinates, used for spatial audio
     func playMouseSound(for event: MouseButtonEvent, location: CGPoint? = nil) {
+        guard !MicrophoneMonitor.shared.shouldMute else { return }
         audioLifecycleLock.lock()
         defer { audioLifecycleLock.unlock() }
         guard let sounds = mouseSoundLibrary[event], let sound = sounds.randomElement() else {

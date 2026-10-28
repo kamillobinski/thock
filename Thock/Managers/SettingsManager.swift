@@ -49,6 +49,12 @@ final class SettingsManager {
         set { UserDefaults.autoMuteOnMusicPlayback = newValue }
     }
     
+    /// Whether to mute sounds while an app is using an audio input.
+    var autoMuteOnMicrophoneUse: Bool {
+        get { UserDefaults.standard.bool(forKey: "autoMuteOnMicrophoneUse") }
+        set { UserDefaults.standard.set(newValue, forKey: "autoMuteOnMicrophoneUse") }
+    }
+
     /// Number of seconds of inactivity before stopping the audio queue to save CPU.
     /// Set to 0 to disable idle timeout (queue always runs).
     var idleTimeoutSeconds: TimeInterval {
