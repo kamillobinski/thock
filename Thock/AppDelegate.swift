@@ -64,6 +64,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     private func initializeAudioMonitor() {
         _ = AudioMonitor.shared
+        _ = MicrophoneMonitor.shared
     }
     
     // MARK: - Permission Monitoring

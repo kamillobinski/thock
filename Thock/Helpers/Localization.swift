@@ -416,6 +416,11 @@ struct L10n {
         }
     }
     
+    static var autoMuteOnMicrophoneUse: String { "Mute while microphone is in use" }
+    static var autoMuteOnMicrophoneUseSubtitle: String {
+        "Automatically mute keyboard and mouse sounds while an app uses the microphone"
+    }
+
     static var autoMute: String {
         switch lang {
         case .english: return "Auto-mute with music apps"

@@ -7,6 +7,7 @@ struct SoundSettingsView: View {
     @State private var disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
     @State private var ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
     @State private var autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
+    @State private var autoMuteOnMicrophoneUse = SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled()
     @State private var idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
     @State private var audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
     @State private var availableDevices: [AudioDeviceManager.AudioDevice] = []
@@ -175,6 +176,20 @@ struct SoundSettingsView: View {
                     )
                     
                     SettingsRowView(
+                        title: L10n.autoMuteOnMicrophoneUse,
+                        subtitle: L10n.autoMuteOnMicrophoneUseSubtitle,
+                        control: AnyView(
+                            Toggle("", isOn: $autoMuteOnMicrophoneUse)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: autoMuteOnMicrophoneUse) { newValue in
+                                    SettingsEngine.shared.setAutoMuteOnMicrophoneUse(newValue)
+                                }
+                        )
+                    )
+
+                    SettingsRowView(
                         title: L10n.autoEnableOnHeadphone,
                         subtitle: L10n.autoEnableOnHeadphoneSubtitle,
                         control: AnyView(
@@ -258,6 +273,7 @@ struct SoundSettingsView: View {
             disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
             ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
+            autoMuteOnMicrophoneUse = SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled()
             idleTimeoutSeconds = SettingsEngine.shared.getIdleTimeoutSeconds()
             audioBufferSize = SettingsEngine.shared.getAudioBufferSize()
         }

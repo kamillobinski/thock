@@ -445,6 +445,15 @@ class MenuBarController {
         autoMuteOnMusicPlaybackItem.state = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() ? .on : .off
         autoMuteOnMusicPlaybackItem.target = self
         subMenu.addItem(autoMuteOnMusicPlaybackItem)
+
+        let microphoneItem = NSMenuItem(
+            title: L10n.autoMuteOnMicrophoneUse,
+            action: #selector(toggleAutoMuteOnMicrophoneUse(_:)),
+            keyEquivalent: ""
+        )
+        microphoneItem.state = SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() ? .on : .off
+        microphoneItem.target = self
+        subMenu.addItem(microphoneItem)
         
         subMenu.addItem(NSMenuItem.separator())
         
@@ -553,6 +562,12 @@ class MenuBarController {
         sender.state = SettingsEngine.shared.toggleAutoMuteOnMusicPlayback() ? .on : .off
     }
     
+    @objc private func toggleAutoMuteOnMicrophoneUse(_ sender: NSMenuItem) {
+        let enabled = !SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled()
+        SettingsEngine.shared.setAutoMuteOnMicrophoneUse(enabled)
+        sender.state = enabled ? .on : .off
+    }
+
     @objc private func openAccessibilitySettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility")!)
     }
