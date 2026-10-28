@@ -175,19 +175,21 @@ struct SoundSettingsView: View {
                         )
                     )
                     
-                    SettingsRowView(
-                        title: L10n.autoMuteOnMicrophoneUse,
-                        subtitle: L10n.autoMuteOnMicrophoneUseSubtitle,
-                        control: AnyView(
-                            Toggle("", isOn: $autoMuteOnMicrophoneUse)
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                                .labelsHidden()
-                                .onChange(of: autoMuteOnMicrophoneUse) { newValue in
-                                    SettingsEngine.shared.setAutoMuteOnMicrophoneUse(newValue)
-                                }
+                    if #available(macOS 14.0, *) {
+                        SettingsRowView(
+                            title: L10n.autoMuteOnMicrophoneUse,
+                            subtitle: L10n.autoMuteOnMicrophoneUseSubtitle,
+                            control: AnyView(
+                                Toggle(L10n.autoMuteOnMicrophoneUse, isOn: $autoMuteOnMicrophoneUse)
+                                    .toggleStyle(.switch)
+                                    .controlSize(.small)
+                                    .labelsHidden()
+                                    .onChange(of: autoMuteOnMicrophoneUse) { newValue in
+                                        SettingsEngine.shared.setAutoMuteOnMicrophoneUse(newValue)
+                                    }
+                            )
                         )
-                    )
+                    }
 
                     SettingsRowView(
                         title: L10n.autoEnableOnHeadphone,
