@@ -31,49 +31,89 @@ jobs:
 
       - name: Add CLI
         run: cp cli/thock-cli build/thock-cli
-        
-      - name: Clean quarantine attributes
+
+      - name: Import Developer ID certificate
+        env:
+          P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          xattr -cr build/Thock.app
-          xattr -cr build/thock-cli
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          trap 'rm -f "$CERT_PATH"' EXIT
+          echo "$P12_BASE64" | base64 --decode > "$CERT_PATH"
 
-      - name: Ad-hoc sign the app
-        run: codesign --force --deep --sign - build/Thock.app
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -T /usr/bin/codesign -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
 
-      - name: Verify quarantine removal and signature
-        run: |
-          echo "Checking for quarantine attributes..."
-
-          if xattr -p com.apple.quarantine build/Thock.app; then
-            echo "Error: Thock.app still has quarantine attribute!" >&2
-          exit 1
-          else
-            echo "✅ Thock.app is clean."
-          fi
-
-          if xattr -p com.apple.quarantine build/thock-cli; then
-            echo "Error: thock-cli still has quarantine attribute!" >&2
-            exit 1
-          else
-            echo "✅ thock-cli is clean."
-          fi
-
-          echo "Checking ad-hoc code signature..."
-
-          if codesign --verify --deep --strict build/Thock.app; then
-            echo "✅ Thock.app signature is valid."
-          else
-            echo "Error: Thock.app signature verification failed!" >&2
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" | grep "Developer ID Application" | head -1 | awk '{print $2}')
+          if [ -z "$IDENTITY" ]; then
+            echo "Error: Developer ID Application identity not found in keychain!" >&2
             exit 1
           fi
+          echo "SIGN_IDENTITY=$IDENTITY" >> $GITHUB_ENV
+
+      - name: Sign the app
+        run: |
+          codesign --force --options runtime --timestamp \
+            --entitlements Thock/Thock.entitlements \
+            --sign "$SIGN_IDENTITY" build/Thock.app
+          codesign --verify --strict --verbose=2 build/Thock.app
+
+      - name: Remove signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
+
+      - name: Notarize and staple
+        env:
+          NOTARY_KEY_P8_BASE64: ${{ secrets.NOTARY_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          trap 'rm -f "$KEY_PATH"' EXIT
+          echo "$NOTARY_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+
+          ditto -c -k --keepParent build/Thock.app build/Thock-notarize.zip
+
+          xcrun notarytool submit build/Thock-notarize.zip \
+            --key "$KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" \
+            --wait --timeout 30m --output-format json > notarize.json || true
+          cat notarize.json
+
+          STATUS=$(plutil -extract status raw notarize.json 2>/dev/null || echo "unknown")
+          if [ "$STATUS" != "Accepted" ]; then
+            SUBMISSION_ID=$(plutil -extract id raw notarize.json 2>/dev/null || true)
+            if [ -n "$SUBMISSION_ID" ]; then
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --key "$KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" || true
+            fi
+            echo "Error: notarization status is '$STATUS'" >&2
+            exit 1
+          fi
+
+          xcrun stapler staple build/Thock.app
+          rm -f build/Thock-notarize.zip
+
+      - name: Verify Gatekeeper acceptance
+        run: |
+          xcrun stapler validate build/Thock.app
+          spctl -a -vvv -t exec build/Thock.app 2>&1 | tee spctl.txt
+          grep -q "source=Notarized Developer ID" spctl.txt
 
       - name: Zip with version
+        env:
+          VERSION: ${{ github.ref_name }}
         run: |
           cd build
-          ZIP_NAME="Thock-${{ github.ref_name }}.zip"
-          zip -r "$ZIP_NAME" Thock.app thock-cli
+          ZIP_NAME="Thock-$VERSION.zip"
+          zip -ry "$ZIP_NAME" Thock.app thock-cli
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
-          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Get SHA256
         id: sha
@@ -91,18 +131,20 @@ jobs:
       - name: Update Homebrew Cask
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
+          SHA: ${{ steps.sha.outputs.sha }}
         run: |
-          git config --global user.email "release-bot@thock.dev"
-          git config --global user.name "Thock Release Bot"
+          git config --global user.email "release@thockapp.com"
+          git config --global user.name "Thock Release"
 
-          git clone https://${GH_TOKEN}@github.com/kamillobinski/homebrew-thock.git
+          gh auth setup-git
+          git clone https://github.com/kamillobinski/homebrew-thock.git
           cd homebrew-thock
-          git checkout -b bump-${{ env.VERSION }}
+          git checkout -b "bump-$VERSION"
 
-          sed -i '' "s|version \".*\"|version \"${{ env.VERSION }}\"|" Casks/thock.rb
-          sed -i '' "s|sha256 \".*\"|sha256 \"${{ steps.sha.outputs.sha }}\"|" Casks/thock.rb
+          sed -i '' "s|version \".*\"|version \"$VERSION\"|" Casks/thock.rb
+          sed -i '' "s|sha256 \".*\"|sha256 \"$SHA\"|" Casks/thock.rb
 
           git add Casks/thock.rb
-          git commit -m "chore: bump cask to ${{ env.VERSION }}"
-          git push origin bump-${{ env.VERSION }}
-          gh pr create --title "chore: bump cask to ${{ env.VERSION }}" --body "Automated Thock cask version bump." --head bump-${{ env.VERSION }}
+          git commit -m "chore: bump cask to $VERSION"
+          git push origin "bump-$VERSION"
+          gh pr create --title "chore: bump cask to $VERSION" --body "Automated Thock cask version bump." --head "bump-$VERSION"
