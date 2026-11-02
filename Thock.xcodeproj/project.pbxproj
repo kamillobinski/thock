@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6D5C1ECA2E36A6A500ABE204 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 6D5C1EC92E36A6A500ABE204 /* KeyboardShortcuts */; };
+		5A1E0C012F0A000000ABE204 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 5A1E0C022F0A000000ABE204 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +75,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6D5C1ECA2E36A6A500ABE204 /* KeyboardShortcuts in Frameworks */,
+				5A1E0C012F0A000000ABE204 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,6 +174,7 @@
 			name = Thock;
 			packageProductDependencies = (
 				6D5C1EC92E36A6A500ABE204 /* KeyboardShortcuts */,
+				5A1E0C022F0A000000ABE204 /* Sparkle */,
 			);
 			productName = Tapp;
 			productReference = 7762F4902D7A83BA0033AE42 /* Thock.app */;
@@ -257,6 +260,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				6D5C1EC82E36A69500ABE204 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				5A1E0C032F0A000000ABE204 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7762F4912D7A83BA0033AE42 /* Products */;
@@ -640,6 +644,14 @@
 				minimumVersion = 2.3.0;
 			};
 		};
+		5A1E0C032F0A000000ABE204 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -647,6 +659,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6D5C1EC82E36A69500ABE204 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
+		};
+		5A1E0C022F0A000000ABE204 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A1E0C032F0A000000ABE204 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

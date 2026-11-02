@@ -190,7 +190,7 @@ class MenuBarController {
     private func addUpdateMenuItem() {
         let updateMenuItem = NSMenuItem(
             title: MenuItemTitle.updateNow,
-            action: #selector(copyUpgradeCommand),
+            action: #selector(checkForUpdates),
             keyEquivalent: ""
         )
         updateMenuItem.target = self
@@ -200,68 +200,8 @@ class MenuBarController {
         menu.addItem(NSMenuItem.separator())
     }
     
-    @objc private func copyUpgradeCommand() {
-        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            let pasteboard = NSPasteboard.general
-            pasteboard.clearContents()
-            pasteboard.setString("brew update && brew upgrade thock", forType: .string)
-            
-            // Simulate Command+V to paste the command
-            let source = CGEventSource(stateID: .combinedSessionState)
-            let cmdd = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: true) // CMD down
-            let cmdV = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // V down (correct code)
-            let cmdVUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false) // V up
-            let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: false) // CMD up
-            
-            // Add Command modifier flag to the V key events
-            cmdV?.flags = .maskCommand
-            cmdVUp?.flags = .maskCommand
-            
-            cmdd?.post(tap: .cgAnnotatedSessionEventTap)
-            cmdV?.post(tap: .cgAnnotatedSessionEventTap)
-            cmdVUp?.post(tap: .cgAnnotatedSessionEventTap)
-            cmdUp?.post(tap: .cgAnnotatedSessionEventTap)
-            
-            // Simulate Return key to execute the command
-            let returnDown = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: true)
-            let returnUp = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: false)
-            returnDown?.post(tap: .cgAnnotatedSessionEventTap)
-            returnUp?.post(tap: .cgAnnotatedSessionEventTap)
-        }
-    }
-    
     @objc private func checkForUpdates() {
-        AppUpdater.shared.checkForUpdates { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let isUpdateAvailable):
-                    self?.setUpdateAvailable(isUpdateAvailable)
-                    
-                    let alert = NSAlert()
-                    if isUpdateAvailable {
-                        alert.messageText = L10n.updateAvailableTitle
-                        alert.informativeText = L10n.updateAvailableMessage
-                        alert.alertStyle = .informational
-                    } else {
-                        alert.messageText = L10n.noUpdatesTitle
-                        alert.informativeText = L10n.noUpdatesMessage
-                        alert.alertStyle = .informational
-                    }
-                    alert.addButton(withTitle: L10n.ok)
-                    alert.runModal()
-                    
-                case .failure(let error):
-                    let alert = NSAlert()
-                    alert.messageText = L10n.updateCheckFailed
-                    alert.informativeText = "Unable to check for updates: \(error.localizedDescription)"
-                    alert.alertStyle = .warning
-                    alert.addButton(withTitle: L10n.ok)
-                    alert.runModal()
-                }
-            }
-        }
+        AppUpdater.shared.checkForUpdates()
     }
     
     /// Adds a quit application menu item.
