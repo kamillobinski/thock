@@ -25,6 +25,15 @@ class MenuBarController {
         static var updateAvailable: String { L10n.updateAvailable }
         static var updateNow: String { L10n.updateNow }
         static var checkForUpdates: String { L10n.checkForUpdates }
+        static var keyOverlay: String { L10n.keyOverlay }
+        static var keyOverlayMenu: String { L10n.keyOverlayMenu }
+        static var keyOverlayClickThrough: String { L10n.keyOverlayClickThrough }
+        static var keyOverlayZoomIn: String { L10n.keyOverlayZoomIn }
+        static var keyOverlayZoomOut: String { L10n.keyOverlayZoomOut }
+        static var keyOverlayOpacityUp: String { L10n.keyOverlayOpacityUp }
+        static var keyOverlayOpacityDown: String { L10n.keyOverlayOpacityDown }
+        static var keyOverlayLightTheme: String { L10n.keyOverlayLightTheme }
+        static var keyOverlayResetPosition: String { L10n.keyOverlayResetPosition }
     }
     
     // MARK: - Init
@@ -446,6 +455,66 @@ class MenuBarController {
         autoMuteOnMusicPlaybackItem.target = self
         subMenu.addItem(autoMuteOnMusicPlaybackItem)
         
+        // Key overlay (floating on-screen keyboard) submenu
+        let keyOverlayMenuItem = NSMenuItem(
+            title: MenuItemTitle.keyOverlayMenu,
+            action: nil,
+            keyEquivalent: ""
+        )
+        let keyOverlaySubMenu = NSMenu()
+        
+        let keyOverlayItem = NSMenuItem(
+            title: MenuItemTitle.keyOverlay,
+            action: #selector(toggleKeyOverlay(_:)),
+            keyEquivalent: ""
+        )
+        keyOverlayItem.state = SettingsEngine.shared.isKeyOverlayEnabled() ? .on : .off
+        keyOverlayItem.target = self
+        keyOverlaySubMenu.addItem(keyOverlayItem)
+        
+        let keyOverlayClickThroughItem = NSMenuItem(
+            title: MenuItemTitle.keyOverlayClickThrough,
+            action: #selector(toggleKeyOverlayClickThrough(_:)),
+            keyEquivalent: ""
+        )
+        keyOverlayClickThroughItem.state = SettingsEngine.shared.isKeyOverlayClickThroughEnabled() ? .on : .off
+        keyOverlayClickThroughItem.target = self
+        keyOverlaySubMenu.addItem(keyOverlayClickThroughItem)
+        
+        keyOverlaySubMenu.addItem(NSMenuItem.separator())
+        
+        let zoomInItem = NSMenuItem(title: MenuItemTitle.keyOverlayZoomIn, action: #selector(keyOverlayZoomIn(_:)), keyEquivalent: "")
+        zoomInItem.target = self
+        keyOverlaySubMenu.addItem(zoomInItem)
+        
+        let zoomOutItem = NSMenuItem(title: MenuItemTitle.keyOverlayZoomOut, action: #selector(keyOverlayZoomOut(_:)), keyEquivalent: "")
+        zoomOutItem.target = self
+        keyOverlaySubMenu.addItem(zoomOutItem)
+        
+        keyOverlaySubMenu.addItem(NSMenuItem.separator())
+        
+        let opacityUpItem = NSMenuItem(title: MenuItemTitle.keyOverlayOpacityUp, action: #selector(keyOverlayOpacityUp(_:)), keyEquivalent: "")
+        opacityUpItem.target = self
+        keyOverlaySubMenu.addItem(opacityUpItem)
+        
+        let opacityDownItem = NSMenuItem(title: MenuItemTitle.keyOverlayOpacityDown, action: #selector(keyOverlayOpacityDown(_:)), keyEquivalent: "")
+        opacityDownItem.target = self
+        keyOverlaySubMenu.addItem(opacityDownItem)
+        
+        keyOverlaySubMenu.addItem(NSMenuItem.separator())
+        
+        let themeItem = NSMenuItem(title: MenuItemTitle.keyOverlayLightTheme, action: #selector(toggleKeyOverlayTheme(_:)), keyEquivalent: "")
+        themeItem.state = SettingsEngine.shared.isKeyOverlayLightTheme() ? .on : .off
+        themeItem.target = self
+        keyOverlaySubMenu.addItem(themeItem)
+        
+        let resetPosItem = NSMenuItem(title: MenuItemTitle.keyOverlayResetPosition, action: #selector(keyOverlayResetPosition(_:)), keyEquivalent: "")
+        resetPosItem.target = self
+        keyOverlaySubMenu.addItem(resetPosItem)
+        
+        keyOverlayMenuItem.submenu = keyOverlaySubMenu
+        subMenu.addItem(keyOverlayMenuItem)
+        
         subMenu.addItem(NSMenuItem.separator())
         
         // App version
@@ -551,6 +620,38 @@ class MenuBarController {
     
     @objc private func toggleAutoMuteOnMusicPlayback(_ sender: NSMenuItem) {
         sender.state = SettingsEngine.shared.toggleAutoMuteOnMusicPlayback() ? .on : .off
+    }
+    
+    @objc private func toggleKeyOverlay(_ sender: NSMenuItem) {
+        sender.state = SettingsEngine.shared.toggleKeyOverlay() ? .on : .off
+    }
+    
+    @objc private func toggleKeyOverlayClickThrough(_ sender: NSMenuItem) {
+        sender.state = SettingsEngine.shared.toggleKeyOverlayClickThrough() ? .on : .off
+    }
+    
+    @objc private func keyOverlayZoomIn(_ sender: NSMenuItem) {
+        SettingsEngine.shared.increaseKeyOverlayScale()
+    }
+    
+    @objc private func keyOverlayZoomOut(_ sender: NSMenuItem) {
+        SettingsEngine.shared.decreaseKeyOverlayScale()
+    }
+    
+    @objc private func keyOverlayOpacityUp(_ sender: NSMenuItem) {
+        SettingsEngine.shared.increaseKeyOverlayOpacity()
+    }
+    
+    @objc private func keyOverlayOpacityDown(_ sender: NSMenuItem) {
+        SettingsEngine.shared.decreaseKeyOverlayOpacity()
+    }
+    
+    @objc private func toggleKeyOverlayTheme(_ sender: NSMenuItem) {
+        sender.state = SettingsEngine.shared.toggleKeyOverlayTheme() ? .on : .off
+    }
+    
+    @objc private func keyOverlayResetPosition(_ sender: NSMenuItem) {
+        SettingsEngine.shared.resetKeyOverlayPosition()
     }
     
     @objc private func openAccessibilitySettings() {

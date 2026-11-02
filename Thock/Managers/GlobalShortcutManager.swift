@@ -16,6 +16,18 @@ class GlobalShortcutManager {
         KeyboardShortcuts.onKeyDown(for: .toggleCleaningMode) {
             SettingsEngine.shared.toggleCleaningMode()
         }
+        
+        KeyboardShortcuts.onKeyDown(for: .toggleKeyOverlay) {
+            DispatchQueue.main.async {
+                SettingsEngine.shared.toggleKeyOverlay()
+            }
+        }
+        
+        KeyboardShortcuts.onKeyDown(for: .toggleKeyOverlayControls) {
+            DispatchQueue.main.async {
+                KeyOverlayManager.shared.toggleControlBar()
+            }
+        }
     }
     
     private func handleToggleShortcut() {

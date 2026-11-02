@@ -10,6 +10,10 @@ class KeyboardEventTracker {
     private var lastEventTime: Double = 0
     private var tapReEnableCount = 0
     
+    /// Receives every key transition (keyCode, isKeyDown) for visual display,
+    /// independent of sound-related settings. Invoked on the tap's run loop (main).
+    var onKeyVisualEvent: ((_ keyCode: Int64, _ isKeyDown: Bool) -> Void)?
+    
     deinit {
         stopTracking()
     }
@@ -59,6 +63,23 @@ class KeyboardEventTracker {
                     return nil
                 }
                 
+                // Forward the transition to the key overlay regardless of any
+                // sound-related filtering below.
+                if let onKeyVisualEvent = tracker.onKeyVisualEvent {
+                    switch type {
+                    case .keyDown where !tracker.pressedKeys.contains(keyCode):
+                        onKeyVisualEvent(keyCode, true)
+                    case .keyUp:
+                        onKeyVisualEvent(keyCode, false)
+                    case .flagsChanged:
+                        if let mask = tracker.modifierMask(for: keyCode) {
+                            onKeyVisualEvent(keyCode, event.flags.contains(mask))
+                        }
+                    default:
+                        break
+                    }
+                }
+                
                 // Start latency measurement
                 let latencyId = startLatencyMeasurement()
                 recordLatencyCheckpoint(latencyId, point: .keyEventReceived)
@@ -91,19 +112,8 @@ class KeyboardEventTracker {
                     if !SettingsEngine.shared.isModifierKeySoundDisabled() {
                         // Event flags survive missed transitions. Side-specific masks
                         // also distinguish releases while the opposite key stays held.
-                        let modifierMask: CGEventFlags
-                        switch keyCode {
-                        case 54: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERCMDKEYMASK))
-                        case 55: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELCMDKEYMASK))
-                        case 56: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELSHIFTKEYMASK))
-                        case 57: modifierMask = .maskAlphaShift
-                        case 58: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELALTKEYMASK))
-                        case 59: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELCTLKEYMASK))
-                        case 60: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERSHIFTKEYMASK))
-                        case 61: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERALTKEYMASK))
-                        case 62: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERCTLKEYMASK))
-                        case 63: modifierMask = .maskSecondaryFn
-                        default: return Unmanaged.passUnretained(event)
+                        guard let modifierMask = tracker.modifierMask(for: keyCode) else {
+                            return Unmanaged.passUnretained(event)
                         }
                         soundAction = (keyCode, event.flags.contains(modifierMask))
                     } else {
@@ -157,6 +167,23 @@ class KeyboardEventTracker {
     
     // MARK: Private methods
 
+    /// Maps a modifier key code to the event flag that reports its pressed state.
+    func modifierMask(for keyCode: Int64) -> CGEventFlags? {
+        switch keyCode {
+        case 54: return CGEventFlags(rawValue: UInt64(NX_DEVICERCMDKEYMASK))
+        case 55: return CGEventFlags(rawValue: UInt64(NX_DEVICELCMDKEYMASK))
+        case 56: return CGEventFlags(rawValue: UInt64(NX_DEVICELSHIFTKEYMASK))
+        case 57: return .maskAlphaShift
+        case 58: return CGEventFlags(rawValue: UInt64(NX_DEVICELALTKEYMASK))
+        case 59: return CGEventFlags(rawValue: UInt64(NX_DEVICELCTLKEYMASK))
+        case 60: return CGEventFlags(rawValue: UInt64(NX_DEVICERSHIFTKEYMASK))
+        case 61: return CGEventFlags(rawValue: UInt64(NX_DEVICERALTKEYMASK))
+        case 62: return CGEventFlags(rawValue: UInt64(NX_DEVICERCTLKEYMASK))
+        case 63: return .maskSecondaryFn
+        default: return nil
+        }
+    }
+    
     /// Re-enables the tap after the system disabled it.
     private func reenableTap() {
         guard let eventMonitor = eventMonitor else { return }
