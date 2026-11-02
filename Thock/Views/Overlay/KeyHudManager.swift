@@ -93,7 +93,7 @@ final class KeyHudManager {
         let mouseLocation = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { $0.frame.contains(mouseLocation) } ?? NSScreen.main
         guard let visible = screen?.visibleFrame else { return }
-        let margin: CGFloat = 28
+        let margin: CGFloat = 12
         let size = panel.frame.size
         let origin: NSPoint
         switch SettingsEngine.shared.keyOverlayHudPosition() {

@@ -171,7 +171,7 @@ struct KeyOverlayView: View {
             .cap(KeyCap(label: "⌃", width: 1.25, codes: [59, 62])),
             .cap(KeyCap(label: "⌥", width: 1.25, codes: [58])),
             .cap(KeyCap(label: "⌘", width: 1.25, codes: [55])),
-            .cap(KeyCap(label: "space", width: 5, codes: [49])),
+            .cap(KeyCap(label: "", width: 5, codes: [49])),
             .cap(KeyCap(label: "⌘", width: 1.25, codes: [54])),
             .cap(KeyCap(label: "⌥", width: 1, codes: [61])),
             .cap(KeyCap(label: "←", width: 1, codes: [123])),

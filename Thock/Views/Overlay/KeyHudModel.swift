@@ -73,7 +73,7 @@ enum KeyHudGlyphs {
         switch keyCode {
         case 53: return "esc"
         case 48: return "⇥"
-        case 49: return "space"
+        case 49: return "␣"
         case 51: return "⌫"
         case 54, 55: return "⌘"
         case 56, 60: return "⇧"
