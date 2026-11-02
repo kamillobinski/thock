@@ -257,8 +257,29 @@ final class SettingsEngine {
     
     func setKeyOverlay(_ enabled: Bool) {
         SettingsManager.shared.keyOverlayEnabled = enabled
-        KeyOverlayManager.shared.setEnabled(enabled)
+        applyKeyOverlayVisibility()
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
+    /// Key overlay display mode: "keyboard" (full floating keyboard) or
+    /// "hud" (pressed keys shown briefly at the center of the screen).
+    func keyOverlayMode() -> String {
+        return SettingsManager.shared.keyOverlayMode
+    }
+
+    func setKeyOverlayMode(_ mode: String) {
+        SettingsManager.shared.keyOverlayMode = mode
+        applyKeyOverlayVisibility()
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
+    /// Routes the persisted enabled flag to the matching overlay surface:
+    /// the full keyboard panel or the center-screen key HUD.
+    private func applyKeyOverlayVisibility() {
+        let enabled = SettingsManager.shared.keyOverlayEnabled
+        let mode = SettingsManager.shared.keyOverlayMode
+        KeyOverlayManager.shared.setEnabled(enabled && mode == "keyboard")
+        KeyHudManager.shared.setEnabled(enabled && mode == "hud")
     }
     
     func toggleKeyOverlayClickThrough() -> Bool {
@@ -330,6 +351,7 @@ final class SettingsEngine {
         let newTheme = isKeyOverlayLightTheme() ? "dark" : "light"
         SettingsManager.shared.keyOverlayTheme = newTheme
         KeyOverlayManager.shared.setTheme(newTheme)
+        KeyHudManager.shared.setTheme(newTheme)
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
         return newTheme == "light"
     }
@@ -339,6 +361,7 @@ final class SettingsEngine {
         guard SettingsManager.shared.keyOverlayTheme != newTheme else { return }
         SettingsManager.shared.keyOverlayTheme = newTheme
         KeyOverlayManager.shared.setTheme(newTheme)
+        KeyHudManager.shared.setTheme(newTheme)
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     

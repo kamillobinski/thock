@@ -53,6 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
             keyboardEventTracker = KeyboardEventTracker()
             keyboardEventTracker.onKeyVisualEvent = { keyCode, isKeyDown in
                 KeyOverlayManager.shared.handleKeyEvent(keyCode: keyCode, isKeyDown: isKeyDown)
+                KeyHudManager.shared.handleKeyEvent(keyCode: keyCode, isKeyDown: isKeyDown)
             }
             keyboardEventTracker.startTracking()
         }
@@ -131,6 +132,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
         
         KeyOverlayManager.shared.applyInitialState()
+        KeyHudManager.shared.applyInitialState()
         
         setupGlobalShortcuts()
         setupSleepWakeMonitoring()

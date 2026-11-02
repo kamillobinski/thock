@@ -1816,4 +1816,64 @@ struct L10n {
         case .russian: return "Показать/скрыть панель управления (по умолчанию ⌃⌥L)"
         }
     }
+
+    static var keyOverlayDisplayMode: String {
+        switch lang {
+        case .english: return "Display Mode"
+        case .spanish: return "Modo de visualización"
+        case .french: return "Mode d'affichage"
+        case .chinese: return "显示模式"
+        case .japanese: return "表示モード"
+        case .german: return "Anzeigemodus"
+        case .vietnamese: return "Chế độ hiển thị"
+        case .italian: return "Modalità di visualizzazione"
+        case .portuguese: return "Modo de exibição"
+        case .russian: return "Режим отображения"
+        }
+    }
+
+    static var keyOverlayDisplayModeSubtitle: String {
+        switch lang {
+        case .english: return "Show pressed keys briefly at the center of the screen instead of the full keyboard"
+        case .spanish: return "Muestra las teclas pulsadas brevemente en el centro de la pantalla en lugar del teclado completo"
+        case .french: return "Affiche brièvement les touches pressées au centre de l'écran au lieu du clavier complet"
+        case .chinese: return "不显示完整键盘，按下的键在屏幕中央短暂显示"
+        case .japanese: return "フルキーボードの代わりに押したキーを画面中央に一瞬表示"
+        case .german: return "Zeigt gedrückte Tasten kurz in der Bildschirmmitte statt der ganzen Tastatur"
+        case .vietnamese: return "Hiển thị phím đang nhấn ngắn gọn ở giữa màn hình thay vì bàn phím đầy đủ"
+        case .italian: return "Mostra brevemente i tasti premuti al centro dello schermo invece della tastiera completa"
+        case .portuguese: return "Mostra brevemente as teclas pressionadas no centro da tela em vez do teclado completo"
+        case .russian: return "Кратко показывает нажатые клавиши в центре экрана вместо полной клавиатуры"
+        }
+    }
+
+    static var keyOverlayModeKeyboard: String {
+        switch lang {
+        case .english: return "Full Keyboard"
+        case .spanish: return "Teclado completo"
+        case .french: return "Clavier complet"
+        case .chinese: return "完整键盘"
+        case .japanese: return "フルキーボード"
+        case .german: return "Ganze Tastatur"
+        case .vietnamese: return "Bàn phím đầy đủ"
+        case .italian: return "Tastiera completa"
+        case .portuguese: return "Teclado completo"
+        case .russian: return "Полная клавиатура"
+        }
+    }
+
+    static var keyOverlayModeHud: String {
+        switch lang {
+        case .english: return "Key HUD"
+        case .spanish: return "HUD de teclas"
+        case .french: return "HUD des touches"
+        case .chinese: return "按键提示"
+        case .japanese: return "キーHUD"
+        case .german: return "Tasten-HUD"
+        case .vietnamese: return "HUD phím"
+        case .italian: return "HUD tasti"
+        case .portuguese: return "HUD de teclas"
+        case .russian: return "HUD клавиш"
+        }
+    }
 }

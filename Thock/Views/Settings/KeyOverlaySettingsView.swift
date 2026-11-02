@@ -3,6 +3,7 @@ import SwiftUI
 /// Settings tab for the floating key overlay.
 struct KeyOverlaySettingsView: View {
     @State private var enabled = SettingsEngine.shared.isKeyOverlayEnabled()
+    @State private var displayMode = SettingsEngine.shared.keyOverlayMode()
     @State private var clickThrough = SettingsEngine.shared.isKeyOverlayClickThroughEnabled()
     @State private var isLight = SettingsEngine.shared.isKeyOverlayLightTheme()
     @State private var scale = SettingsEngine.shared.keyOverlayScale()
@@ -23,6 +24,23 @@ struct KeyOverlaySettingsView: View {
                                 .onChange(of: enabled) { newValue in
                                     SettingsEngine.shared.setKeyOverlay(newValue)
                                 }
+                        )
+                    )
+
+                    SettingsRowView(
+                        title: L10n.keyOverlayDisplayMode,
+                        subtitle: L10n.keyOverlayDisplayModeSubtitle,
+                        control: AnyView(
+                            Picker("", selection: $displayMode) {
+                                Text(L10n.keyOverlayModeKeyboard).tag("keyboard")
+                                Text(L10n.keyOverlayModeHud).tag("hud")
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 190)
+                            .labelsHidden()
+                            .onChange(of: displayMode) { newValue in
+                                SettingsEngine.shared.setKeyOverlayMode(newValue)
+                            }
                         )
                     )
 

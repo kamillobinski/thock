@@ -22,7 +22,9 @@ final class KeyOverlayManager {
 
     /// Show or hide the overlay according to the persisted setting.
     func applyInitialState() {
-        let enabled = SettingsEngine.shared.isKeyOverlayEnabled()
+        // Only surface the full keyboard in "keyboard" display mode;
+        // "hud" mode is handled by KeyHudManager.
+        let enabled = SettingsEngine.shared.isKeyOverlayEnabled() && SettingsEngine.shared.keyOverlayMode() == "keyboard"
         model.scale = SettingsEngine.shared.keyOverlayScale()
         model.theme = SettingsEngine.shared.isKeyOverlayLightTheme() ? "light" : "dark"
         model.opacity = SettingsEngine.shared.keyOverlayOpacity()
@@ -127,6 +129,11 @@ final class KeyOverlayManager {
     }
     
     func showControlBar() {
+        // ⌃⌥L in "hud" display mode first switches to the full keyboard,
+        // since the control bar only makes sense with the keyboard visible.
+        if SettingsEngine.shared.keyOverlayMode() == "hud" {
+            SettingsEngine.shared.setKeyOverlayMode("keyboard")
+        }
         // Control bar only makes sense with the keyboard visible.
         if panel == nil || panel?.isVisible == false {
             SettingsEngine.shared.setKeyOverlay(true)

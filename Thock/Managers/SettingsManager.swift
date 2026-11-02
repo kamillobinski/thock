@@ -25,6 +25,7 @@ final class SettingsManager {
     static let defaultKeyOverlayScale: Double = 1.0
     static let defaultKeyOverlayOpacity: Double = 1.0
     static let defaultKeyOverlayTheme: String = "dark"
+    static let defaultKeyOverlayMode: String = "keyboard"
     
     
     private init() {}
@@ -162,8 +163,13 @@ final class SettingsManager {
         get { UserDefaults.keyOverlayTheme }
         set { UserDefaults.keyOverlayTheme = newValue }
     }
-}
 
+    /// Key overlay display mode: "keyboard" (full keyboard) or "hud" (center screen).
+    var keyOverlayMode: String {
+        get { UserDefaults.keyOverlayMode }
+        set { UserDefaults.keyOverlayMode = newValue }
+    }
+}
 private extension UserDefaults {
     private enum Keys {
         static let openAtLogin = "openAtLogin"
@@ -187,6 +193,7 @@ private extension UserDefaults {
         static let keyOverlayScale = "keyOverlayScale"
         static let keyOverlayOpacity = "keyOverlayOpacity"
         static let keyOverlayTheme = "keyOverlayTheme"
+        static let keyOverlayMode = "keyOverlayMode"
     }
     
     static var openAtLogin: Bool {
@@ -438,6 +445,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.keyOverlayTheme)
+        }
+    }
+
+    static var keyOverlayMode: String {
+        get {
+            if standard.object(forKey: Keys.keyOverlayMode) == nil {
+                return SettingsManager.defaultKeyOverlayMode
+            }
+            return standard.string(forKey: Keys.keyOverlayMode) ?? SettingsManager.defaultKeyOverlayMode
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayMode)
         }
     }
 }
