@@ -18,29 +18,26 @@ final class KeyHudModel: ObservableObject {
     @Published private(set) var visible = false
     @Published var theme: String = "dark"
 
-    /// Keys physically held right now.
-    private var pressed: Set<Int64> = []
+    /// Keys physically held right now, in press order.
+    private var pressedOrder: [Int64] = []
     private var lingerTimer: DispatchWorkItem?
 
     func keyDown(_ keyCode: Int64) {
         lingerTimer?.cancel()
         lingerTimer = nil
-        // A press after everything was released starts a fresh combo,
-        // instantly replacing whatever was lingering.
-        if pressed.isEmpty {
-            displayKeys = []
+        if !pressedOrder.contains(keyCode) {
+            pressedOrder.append(keyCode)
         }
-        pressed.insert(keyCode)
-        if !displayKeys.contains(keyCode) {
-            displayKeys.append(keyCode)
-        }
+        // The display always mirrors the currently-held combo: rapid taps
+        // replace the previous key, ⌘+V replaces ⌘+C, etc.
+        displayKeys = pressedOrder
         visible = true
     }
 
     func keyUp(_ keyCode: Int64) {
-        pressed.remove(keyCode)
+        pressedOrder.removeAll { $0 == keyCode }
         // Keep the last combo on screen briefly once nothing is held.
-        if pressed.isEmpty, visible {
+        if pressedOrder.isEmpty, visible {
             let work = DispatchWorkItem { [weak self] in
                 guard let self = self else { return }
                 self.visible = false
@@ -54,7 +51,7 @@ final class KeyHudModel: ObservableObject {
     func reset() {
         lingerTimer?.cancel()
         lingerTimer = nil
-        pressed.removeAll()
+        pressedOrder.removeAll()
         displayKeys = []
         visible = false
     }

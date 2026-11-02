@@ -120,7 +120,10 @@ final class KeyOverlayManager {
     // MARK: - Control bar
     
     /// ⌃⌥L handler: toggle the control bar above the overlay.
+    /// The control bar only operates the full keyboard; it is ignored
+    /// while the "hud" display mode is active.
     func toggleControlBar() {
+        guard SettingsEngine.shared.keyOverlayMode() == "keyboard" else { return }
         if controlPanel?.isVisible == true {
             hideControlBar()
         } else {
@@ -129,11 +132,6 @@ final class KeyOverlayManager {
     }
     
     func showControlBar() {
-        // ⌃⌥L in "hud" display mode first switches to the full keyboard,
-        // since the control bar only makes sense with the keyboard visible.
-        if SettingsEngine.shared.keyOverlayMode() == "hud" {
-            SettingsEngine.shared.setKeyOverlayMode("keyboard")
-        }
         // Control bar only makes sense with the keyboard visible.
         if panel == nil || panel?.isVisible == false {
             SettingsEngine.shared.setKeyOverlay(true)

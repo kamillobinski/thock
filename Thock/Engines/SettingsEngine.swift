@@ -273,6 +273,17 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
 
+    /// Key HUD position: "center", "topLeft", "topRight", "bottomLeft", "bottomRight".
+    func keyOverlayHudPosition() -> String {
+        return SettingsManager.shared.keyOverlayHudPosition
+    }
+
+    func setKeyOverlayHudPosition(_ position: String) {
+        SettingsManager.shared.keyOverlayHudPosition = position
+        KeyHudManager.shared.refreshPosition()
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
     /// Routes the persisted enabled flag to the matching overlay surface:
     /// the full keyboard panel or the center-screen key HUD.
     private func applyKeyOverlayVisibility() {

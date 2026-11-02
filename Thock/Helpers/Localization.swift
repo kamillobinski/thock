@@ -1489,31 +1489,31 @@ struct L10n {
 
     static var keyOverlayShow: String {
         switch lang {
-        case .english: return "Show Floating Keyboard"
-        case .spanish: return "Mostrar teclado flotante"
-        case .french: return "Afficher le clavier flottant"
-        case .chinese: return "显示悬浮小键盘"
-        case .japanese: return "フローティングキーボードを表示"
-        case .german: return "Schwebende Tastatur anzeigen"
-        case .vietnamese: return "Hiển thị bàn phím nổi"
-        case .italian: return "Mostra tastiera fluttuante"
-        case .portuguese: return "Mostrar teclado flutuante"
-        case .russian: return "Показать экранную клавиатуру"
+        case .english: return "Enable Key Overlay"
+        case .spanish: return "Activar visualización de teclas"
+        case .french: return "Activer la visualisation des touches"
+        case .chinese: return "启用键盘可视化"
+        case .japanese: return "キーオーバーレイを有効化"
+        case .german: return "Tastatur-Overlay aktivieren"
+        case .vietnamese: return "Bật hiển thị phím"
+        case .italian: return "Attiva overlay tasti"
+        case .portuguese: return "Ativar sobreposição de teclas"
+        case .russian: return "Включить отображение клавиш"
         }
     }
 
     static var keyOverlayShowSubtitle: String {
         switch lang {
-        case .english: return "Highlights keys as you type (⌃⌥K)"
-        case .spanish: return "Resalta las teclas al escribir (⌃⌥K)"
-        case .french: return "Surligne les touches pendant la frappe (⌃⌥K)"
-        case .chinese: return "实时高亮按下的键（快捷键 ⌃⌥K）"
-        case .japanese: return "入力中のキーをハイライト（⌃⌥K）"
-        case .german: return "Hebt gedrückte Tasten hervor (⌃⌥K)"
-        case .vietnamese: return "Tô sáng phím khi gõ (⌃⌥K)"
-        case .italian: return "Evidenzia i tasti mentre digiti (⌃⌥K)"
-        case .portuguese: return "Destaca as teclas ao digitar (⌃⌥K)"
-        case .russian: return "Подсвечивает нажатые клавиши (⌃⌥K)"
+        case .english: return "Visualizes the keys you press (⌃⌥K)"
+        case .spanish: return "Muestra las teclas que pulsas (⌃⌥K)"
+        case .french: return "Visualise les touches pressées (⌃⌥K)"
+        case .chinese: return "实时显示按下的键（快捷键 ⌃⌥K）"
+        case .japanese: return "押したキーを表示（⌃⌥K）"
+        case .german: return "Zeigt gedrückte Tasten an (⌃⌥K)"
+        case .vietnamese: return "Hiển thị phím bạn nhấn (⌃⌥K)"
+        case .italian: return "Mostra i tasti che premi (⌃⌥K)"
+        case .portuguese: return "Mostra as teclas que você pressiona (⌃⌥K)"
+        case .russian: return "Показывает нажимаемые клавиши (⌃⌥K)"
         }
     }
 
@@ -1874,6 +1874,36 @@ struct L10n {
         case .italian: return "HUD tasti"
         case .portuguese: return "HUD de teclas"
         case .russian: return "HUD клавиш"
+        }
+    }
+
+    static var keyOverlayHudPosition: String {
+        switch lang {
+        case .english: return "HUD Position"
+        case .spanish: return "Posición del HUD"
+        case .french: return "Position du HUD"
+        case .chinese: return "按键提示位置"
+        case .japanese: return "HUDの位置"
+        case .german: return "HUD-Position"
+        case .vietnamese: return "Vị trí HUD"
+        case .italian: return "Posizione HUD"
+        case .portuguese: return "Posição do HUD"
+        case .russian: return "Положение HUD"
+        }
+    }
+
+    static var keyOverlayHudPositionSubtitle: String {
+        switch lang {
+        case .english: return "Where the pressed keys appear on screen"
+        case .spanish: return "Dónde aparecen las teclas pulsadas en la pantalla"
+        case .french: return "Emplacement des touches pressées à l'écran"
+        case .chinese: return "按下的键显示在屏幕的哪个位置"
+        case .japanese: return "押したキーを画面のどこに表示するか"
+        case .german: return "Wo gedrückte Tasten auf dem Bildschirm erscheinen"
+        case .vietnamese: return "Vị trí hiển thị phím trên màn hình"
+        case .italian: return "Dove appaiono i tasti premuti sullo schermo"
+        case .portuguese: return "Onde as teclas pressionadas aparecem na tela"
+        case .russian: return "Где на экране отображаются нажатые клавиши"
         }
     }
 }

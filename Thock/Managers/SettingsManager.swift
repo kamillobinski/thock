@@ -26,6 +26,7 @@ final class SettingsManager {
     static let defaultKeyOverlayOpacity: Double = 1.0
     static let defaultKeyOverlayTheme: String = "dark"
     static let defaultKeyOverlayMode: String = "keyboard"
+    static let defaultKeyOverlayHudPosition: String = "center"
     
     
     private init() {}
@@ -169,6 +170,12 @@ final class SettingsManager {
         get { UserDefaults.keyOverlayMode }
         set { UserDefaults.keyOverlayMode = newValue }
     }
+
+    /// Key HUD position: "center", "topLeft", "topRight", "bottomLeft", "bottomRight".
+    var keyOverlayHudPosition: String {
+        get { UserDefaults.keyOverlayHudPosition }
+        set { UserDefaults.keyOverlayHudPosition = newValue }
+    }
 }
 private extension UserDefaults {
     private enum Keys {
@@ -194,6 +201,7 @@ private extension UserDefaults {
         static let keyOverlayOpacity = "keyOverlayOpacity"
         static let keyOverlayTheme = "keyOverlayTheme"
         static let keyOverlayMode = "keyOverlayMode"
+        static let keyOverlayHudPosition = "keyOverlayHudPosition"
     }
     
     static var openAtLogin: Bool {
@@ -457,6 +465,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.keyOverlayMode)
+        }
+    }
+
+    static var keyOverlayHudPosition: String {
+        get {
+            if standard.object(forKey: Keys.keyOverlayHudPosition) == nil {
+                return SettingsManager.defaultKeyOverlayHudPosition
+            }
+            return standard.string(forKey: Keys.keyOverlayHudPosition) ?? SettingsManager.defaultKeyOverlayHudPosition
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayHudPosition)
         }
     }
 }

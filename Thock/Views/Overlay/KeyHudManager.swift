@@ -42,6 +42,11 @@ final class KeyHudManager {
         }
     }
 
+    /// Re-apply the persisted HUD position (called when the setting changes).
+    func refreshPosition() {
+        reposition()
+    }
+
     // MARK: - Window lifecycle
 
     private func show() {
@@ -81,15 +86,28 @@ final class KeyHudManager {
         return panel
     }
 
-    /// Center the HUD on the visible frame of the display that contains the mouse.
+    /// Place the HUD on the display that contains the mouse, at the persisted
+    /// position: centered, or pinned to one of the four corners.
     private func reposition() {
         guard let panel = panel else { return }
         let mouseLocation = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { $0.frame.contains(mouseLocation) } ?? NSScreen.main
         guard let visible = screen?.visibleFrame else { return }
-        panel.setFrameOrigin(NSPoint(
-            x: visible.midX - panel.frame.width / 2,
-            y: visible.midY - panel.frame.height / 2
-        ))
+        let margin: CGFloat = 28
+        let size = panel.frame.size
+        let origin: NSPoint
+        switch SettingsEngine.shared.keyOverlayHudPosition() {
+        case "topLeft":
+            origin = NSPoint(x: visible.minX + margin, y: visible.maxY - size.height - margin)
+        case "topRight":
+            origin = NSPoint(x: visible.maxX - size.width - margin, y: visible.maxY - size.height - margin)
+        case "bottomLeft":
+            origin = NSPoint(x: visible.minX + margin, y: visible.minY + margin)
+        case "bottomRight":
+            origin = NSPoint(x: visible.maxX - size.width - margin, y: visible.minY + margin)
+        default: // "center"
+            origin = NSPoint(x: visible.midX - size.width / 2, y: visible.midY - size.height / 2)
+        }
+        panel.setFrameOrigin(origin)
     }
 }
