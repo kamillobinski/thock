@@ -25,6 +25,7 @@ jobs:
           xcodebuild -scheme Thock -configuration Release \
             -arch x86_64 -arch arm64 \
             -archivePath build/Thock.xcarchive archive \
+            -clonedSourcePackagesDirPath build/SourcePackages \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
           cp -R build/Thock.xcarchive/Products/Applications/Thock.app build/Thock.app
@@ -59,6 +60,13 @@ jobs:
 
       - name: Sign the app
         run: |
+          SPARKLE="build/Thock.app/Contents/Frameworks/Sparkle.framework"
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$SPARKLE/Versions/B/XPCServices/Installer.xpc"
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" --preserve-metadata=entitlements "$SPARKLE/Versions/B/XPCServices/Downloader.xpc"
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$SPARKLE/Versions/B/Autoupdate"
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$SPARKLE/Versions/B/Updater.app"
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$SPARKLE"
+
           codesign --force --options runtime --timestamp \
             --entitlements Thock/Thock.entitlements \
             --sign "$SIGN_IDENTITY" build/Thock.app
@@ -121,10 +129,65 @@ jobs:
           HASH=$(shasum -a 256 "build/$ZIP_NAME" | awk '{ print $1 }')
           echo "sha=$HASH" >> $GITHUB_OUTPUT
 
+      - name: Generate Sparkle appcast
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          PLIST=build/Thock.app/Contents/Info.plist
+          SHORT_VERSION=$(plutil -extract CFBundleShortVersionString raw "$PLIST")
+          BUILD_VERSION=$(plutil -extract CFBundleVersion raw "$PLIST")
+          MIN_SYSTEM_VERSION=$(plutil -extract LSMinimumSystemVersion raw "$PLIST")
+          if [ "$SHORT_VERSION" != "$VERSION" ]; then
+            echo "Error: tag '$VERSION' does not match app version '$SHORT_VERSION'" >&2
+            exit 1
+          fi
+
+          NOTES_PATH="docs/releases/$VERSION.md"
+          if [ ! -f "$NOTES_PATH" ]; then
+            echo "Error: release notes not found at $NOTES_PATH" >&2
+            exit 1
+          fi
+          RELEASE_NOTES=$(cat "$NOTES_PATH")
+
+          SIGNATURE_ATTRS=$(printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | \
+            build/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update --ed-key-file - "build/$ZIP_NAME")
+          if ! echo "$SIGNATURE_ATTRS" | grep -q 'sparkle:edSignature='; then
+            echo "Error: sign_update did not return a signature" >&2
+            exit 1
+          fi
+
+          PUB_DATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/$ZIP_NAME"
+
+          cat > build/appcast.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+            <channel>
+              <title>Thock</title>
+              <item>
+                <title>$VERSION</title>
+                <pubDate>$PUB_DATE</pubDate>
+                <sparkle:version>$BUILD_VERSION</sparkle:version>
+                <sparkle:shortVersionString>$SHORT_VERSION</sparkle:shortVersionString>
+                <sparkle:minimumSystemVersion>$MIN_SYSTEM_VERSION</sparkle:minimumSystemVersion>
+                <sparkle:fullReleaseNotesLink>https://github.com/${{ github.repository }}/releases</sparkle:fullReleaseNotesLink>
+                <description sparkle:format="markdown"><![CDATA[
+          $RELEASE_NOTES
+                ]]></description>
+                <enclosure url="$DOWNLOAD_URL" $SIGNATURE_ATTRS type="application/octet-stream"/>
+              </item>
+            </channel>
+          </rss>
+          EOF
+          xmllint --noout build/appcast.xml
+          cat build/appcast.xml
+
       - name: Upload release artifact
         uses: softprops/action-gh-release@v1
         with:
-          files: build/${{ env.ZIP_NAME }}
+          files: |
+            build/${{ env.ZIP_NAME }}
+            build/appcast.xml
           body_path: docs/releases/${{ github.ref_name }}.md
           token: ${{ secrets.GITHUB_TOKEN }}
 

@@ -42,8 +42,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         menuBarController = MenuBarController(statusBarItem: statusBarItem, delegate: self)
         menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
+        AppUpdater.shared.onUpdateAvailabilityChange = { [weak self] isAvailable in
+            self?.menuBarController.setUpdateAvailable(isAvailable)
+        }
+        AppUpdater.shared.start()
     }
-    
+
     private func setupGlobalShortcuts() {
         GlobalShortcutManager.shared.setupGlobalShortcuts()
     }
@@ -130,14 +134,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         setupGlobalShortcuts()
         setupSleepWakeMonitoring()
         
-        AppUpdater.shared.checkForUpdates { result in
-            switch result {
-            case .success(let isUpdateAvailable):
-                self.menuBarController.setUpdateAvailable(isUpdateAvailable)
-            case .failure(let error):
-                print("Error checking for updates: \(error.localizedDescription)")
-            }
-        }
     }
     
     // MARK: - Migration
