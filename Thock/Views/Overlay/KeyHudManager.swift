@@ -95,8 +95,10 @@ final class KeyHudManager {
         guard let visible = screen?.visibleFrame else { return }
         let margin: CGFloat = 12
         let size = panel.frame.size
+        let position = SettingsEngine.shared.keyOverlayHudPosition()
+        model.position = position
         let origin: NSPoint
-        switch SettingsEngine.shared.keyOverlayHudPosition() {
+        switch position {
         case "topLeft":
             origin = NSPoint(x: visible.minX + margin, y: visible.maxY - size.height - margin)
         case "topRight":

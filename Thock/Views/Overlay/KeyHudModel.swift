@@ -17,6 +17,9 @@ final class KeyHudModel: ObservableObject {
     /// Whether the HUD is visible (fades via animation in the view).
     @Published private(set) var visible = false
     @Published var theme: String = "dark"
+    /// Mirrors the persisted HUD position so the view can anchor the caps
+    /// to the matching corner inside the panel.
+    @Published var position: String = "center"
 
     /// Keys physically held right now, in press order.
     private var pressedOrder: [Int64] = []

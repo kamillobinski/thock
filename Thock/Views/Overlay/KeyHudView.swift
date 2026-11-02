@@ -5,16 +5,31 @@ import SwiftUI
 struct KeyHudView: View {
     @ObservedObject var model: KeyHudModel
 
+    /// Anchor the caps to the same corner the panel is pinned to, so the
+    /// visible content actually sits in the screen corner (not centered in
+    /// the oversized panel).
+    private var capAlignment: Alignment {
+        switch model.position {
+        case "topLeft": return .topLeading
+        case "topRight": return .topTrailing
+        case "bottomLeft": return .bottomLeading
+        case "bottomRight": return .bottomTrailing
+        default: return .center
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             ForEach(model.displayKeys, id: \.self) { keyCode in
                 KeyHudCap(label: KeyHudGlyphs.label(for: keyCode), isLight: model.theme == "light")
             }
         }
+        // Inner padding doubles as breathing room for the cap shadow.
+        .padding(12)
         .opacity(model.visible ? 1 : 0)
         .animation(.easeOut(duration: 0.15), value: model.visible)
         .animation(.easeOut(duration: 0.1), value: model.displayKeys)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: capAlignment)
     }
 }
 
