@@ -1816,4 +1816,547 @@ struct L10n {
         case .russian: return "Где на экране отображаются нажатые клавиши"
         }
     }
+
+    // MARK: - Onboarding
+    static var onboardingWelcomeTitle: String {
+        switch lang {
+        case .english: return "Welcome to Thock"
+        case .spanish: return "Bienvenido a Thock"
+        case .french: return "Bienvenue dans Thock"
+        case .chinese: return "欢迎使用 Thock"
+        case .japanese: return "Thock へようこそ"
+        case .german: return "Willkommen bei Thock"
+        case .vietnamese: return "Chào mừng đến với Thock"
+        case .italian: return "Benvenuto in Thock"
+        case .portuguese: return "Bem-vindo ao Thock"
+        case .russian: return "Добро пожаловать в Thock"
+        }
+    }
+
+    static var onboardingWelcomeBody: String {
+        switch lang {
+        case .english: return "Every key you press plays a real switch sound."
+        case .spanish: return "Cada tecla que pulses suena como un switch real."
+        case .french: return "Chaque touche pressée joue le son d'un vrai switch."
+        case .chinese: return "你按下的每个键都会发出真实的轴体声音。"
+        case .japanese: return "押したキーごとに本物のスイッチ音が鳴ります。"
+        case .german: return "Jede Taste, die du drückst, klingt wie ein echter Switch."
+        case .vietnamese: return "Mỗi phím bạn nhấn đều phát ra âm thanh switch thật."
+        case .italian: return "Ogni tasto che premi suona come un vero switch."
+        case .portuguese: return "Cada tecla que você pressiona toca o som de um switch real."
+        case .russian: return "Каждая нажатая клавиша звучит как настоящий свитч."
+        }
+    }
+
+    static var onboardingStartTyping: String {
+        switch lang {
+        case .english: return "Start typing…"
+        case .spanish: return "Empieza a escribir…"
+        case .french: return "Commencez à taper…"
+        case .chinese: return "开始输入…"
+        case .japanese: return "入力してみてください…"
+        case .german: return "Fang an zu tippen…"
+        case .vietnamese: return "Hãy bắt đầu gõ…"
+        case .italian: return "Inizia a digitare…"
+        case .portuguese: return "Comece a digitar…"
+        case .russian: return "Начните печатать…"
+        }
+    }
+
+    static var onboardingKeystrokes: String {
+        switch lang {
+        case .english: return "Keystrokes"
+        case .spanish: return "Pulsaciones"
+        case .french: return "Frappes"
+        case .chinese: return "按键"
+        case .japanese: return "キー入力"
+        case .german: return "Tastenanschläge"
+        case .vietnamese: return "Lần nhấn phím"
+        case .italian: return "Battiture"
+        case .portuguese: return "Teclas pressionadas"
+        case .russian: return "Нажатия клавиш"
+        }
+    }
+
+    static var onboardingDownloadingFirstSound: String {
+        switch lang {
+        case .english: return "Downloading your first sound…"
+        case .spanish: return "Descargando tu primer sonido…"
+        case .french: return "Téléchargement de votre premier son…"
+        case .chinese: return "正在下载你的第一个声音…"
+        case .japanese: return "最初のサウンドをダウンロード中…"
+        case .german: return "Dein erster Sound wird geladen…"
+        case .vietnamese: return "Đang tải âm thanh đầu tiên…"
+        case .italian: return "Download del tuo primo suono…"
+        case .portuguese: return "Baixando seu primeiro som…"
+        case .russian: return "Загрузка первого звука…"
+        }
+    }
+
+    static var onboardingCantDownloadSounds: String {
+        switch lang {
+        case .english: return "Can’t download sounds right now."
+        case .spanish: return "No se pueden descargar sonidos ahora."
+        case .french: return "Impossible de télécharger les sons pour le moment."
+        case .chinese: return "暂时无法下载声音。"
+        case .japanese: return "現在サウンドをダウンロードできません。"
+        case .german: return "Sounds können gerade nicht geladen werden."
+        case .vietnamese: return "Hiện không thể tải âm thanh."
+        case .italian: return "Impossibile scaricare i suoni al momento."
+        case .portuguese: return "Não é possível baixar sons agora."
+        case .russian: return "Сейчас не удаётся загрузить звуки."
+        }
+    }
+
+    static var onboardingTryAgain: String {
+        switch lang {
+        case .english: return "Try Again"
+        case .spanish: return "Reintentar"
+        case .french: return "Réessayer"
+        case .chinese: return "重试"
+        case .japanese: return "再試行"
+        case .german: return "Erneut versuchen"
+        case .vietnamese: return "Thử lại"
+        case .italian: return "Riprova"
+        case .portuguese: return "Tentar novamente"
+        case .russian: return "Повторить"
+        }
+    }
+
+    static var onboardingChooseSoundTitle: String {
+        switch lang {
+        case .english: return "Choose a sound"
+        case .spanish: return "Elige un sonido"
+        case .french: return "Choisissez un son"
+        case .chinese: return "选择声音"
+        case .japanese: return "サウンドを選択"
+        case .german: return "Wähle einen Sound"
+        case .vietnamese: return "Chọn âm thanh"
+        case .italian: return "Scegli un suono"
+        case .portuguese: return "Escolha um som"
+        case .russian: return "Выберите звук"
+        }
+    }
+
+    static var onboardingChooseSoundBody: String {
+        switch lang {
+        case .english: return "Navigate with ↑ and ↓. Click to download."
+        case .spanish: return "Navega con ↑ y ↓. Haz clic para descargar."
+        case .french: return "Naviguez avec ↑ et ↓. Cliquez pour télécharger."
+        case .chinese: return "用 ↑ 和 ↓ 浏览。点按即可下载。"
+        case .japanese: return "↑ と ↓ で移動。クリックでダウンロード。"
+        case .german: return "Mit ↑ und ↓ navigieren. Zum Laden klicken."
+        case .vietnamese: return "Di chuyển bằng ↑ và ↓. Nhấp để tải về."
+        case .italian: return "Naviga con ↑ e ↓. Fai clic per scaricare."
+        case .portuguese: return "Navegue com ↑ e ↓. Clique para baixar."
+        case .russian: return "Перемещайтесь с помощью ↑ и ↓. Нажмите, чтобы скачать."
+        }
+    }
+
+    static var onboardingLoadingSoundpacks: String {
+        switch lang {
+        case .english: return "Loading soundpacks…"
+        case .spanish: return "Cargando paquetes de sonido…"
+        case .french: return "Chargement des packs de sons…"
+        case .chinese: return "正在加载声音包…"
+        case .japanese: return "サウンドパックを読み込み中…"
+        case .german: return "Soundpacks werden geladen…"
+        case .vietnamese: return "Đang tải gói âm thanh…"
+        case .italian: return "Caricamento dei pacchetti audio…"
+        case .portuguese: return "Carregando pacotes de som…"
+        case .russian: return "Загрузка звуковых пакетов…"
+        }
+    }
+
+    static var onboardingNoSoundpacks: String {
+        switch lang {
+        case .english: return "No soundpacks available right now."
+        case .spanish: return "No hay paquetes de sonido disponibles ahora."
+        case .french: return "Aucun pack de sons disponible pour le moment."
+        case .chinese: return "暂无可用的声音包。"
+        case .japanese: return "現在利用できるサウンドパックはありません。"
+        case .german: return "Gerade sind keine Soundpacks verfügbar."
+        case .vietnamese: return "Hiện chưa có gói âm thanh nào."
+        case .italian: return "Nessun pacchetto audio disponibile al momento."
+        case .portuguese: return "Nenhum pacote de som disponível agora."
+        case .russian: return "Сейчас нет доступных звуковых пакетов."
+        }
+    }
+
+    static var onboardingDownload: String {
+        switch lang {
+        case .english: return "Download"
+        case .spanish: return "Descargar"
+        case .french: return "Télécharger"
+        case .chinese: return "下载"
+        case .japanese: return "ダウンロード"
+        case .german: return "Laden"
+        case .vietnamese: return "Tải về"
+        case .italian: return "Scarica"
+        case .portuguese: return "Baixar"
+        case .russian: return "Скачать"
+        }
+    }
+
+    static var onboardingSelected: String {
+        switch lang {
+        case .english: return "Selected"
+        case .spanish: return "Seleccionado"
+        case .french: return "Sélectionné"
+        case .chinese: return "已选择"
+        case .japanese: return "選択中"
+        case .german: return "Ausgewählt"
+        case .vietnamese: return "Đã chọn"
+        case .italian: return "Selezionato"
+        case .portuguese: return "Selecionado"
+        case .russian: return "Выбрано"
+        }
+    }
+
+    static var onboardingNotDownloaded: String {
+        switch lang {
+        case .english: return "Not downloaded"
+        case .spanish: return "No descargado"
+        case .french: return "Non téléchargé"
+        case .chinese: return "未下载"
+        case .japanese: return "未ダウンロード"
+        case .german: return "Nicht geladen"
+        case .vietnamese: return "Chưa tải"
+        case .italian: return "Non scaricato"
+        case .portuguese: return "Não baixado"
+        case .russian: return "Не загружено"
+        }
+    }
+
+    static var onboardingAccessTitle: String {
+        switch lang {
+        case .english: return "Allow Accessibility access"
+        case .spanish: return "Permitir acceso de Accesibilidad"
+        case .french: return "Autoriser l'accès Accessibilité"
+        case .chinese: return "允许辅助功能访问"
+        case .japanese: return "アクセシビリティへのアクセスを許可"
+        case .german: return "Bedienungshilfen-Zugriff erlauben"
+        case .vietnamese: return "Cho phép quyền Trợ năng"
+        case .italian: return "Consenti l'accesso Accessibilità"
+        case .portuguese: return "Permitir acesso de Acessibilidade"
+        case .russian: return "Разрешите универсальный доступ"
+        }
+    }
+
+    static var onboardingAccessBody: String {
+        switch lang {
+        case .english: return "Thock only reads key events. It never records, stores, or transmits your keystrokes."
+        case .spanish: return "Thock solo lee eventos de teclado. Nunca graba, guarda ni transmite tus pulsaciones."
+        case .french: return "Thock lit uniquement les événements clavier. Il n'enregistre, ne stocke et ne transmet jamais vos frappes."
+        case .chinese: return "Thock 只读取按键事件，绝不会记录、存储或传输你的按键内容。"
+        case .japanese: return "Thock はキーイベントのみを読み取ります。キー入力を記録・保存・送信することはありません。"
+        case .german: return "Thock liest nur Tastenereignisse. Deine Tastenanschläge werden nie aufgezeichnet, gespeichert oder übertragen."
+        case .vietnamese: return "Thock chỉ đọc sự kiện phím. Thock không bao giờ ghi lại, lưu trữ hay truyền đi các lần gõ phím của bạn."
+        case .italian: return "Thock legge solo gli eventi della tastiera. Non registra, memorizza né trasmette mai le tue battiture."
+        case .portuguese: return "O Thock só lê eventos de teclado. Ele nunca grava, armazena ou transmite o que você digita."
+        case .russian: return "Thock считывает только события клавиш. Он никогда не записывает, не хранит и не передаёт ваши нажатия."
+        }
+    }
+
+    static var onboardingOpenSystemSettings: String {
+        switch lang {
+        case .english: return "Open System Settings"
+        case .spanish: return "Abre Ajustes del Sistema"
+        case .french: return "Ouvrez Réglages Système"
+        case .chinese: return "打开系统设置"
+        case .japanese: return "システム設定を開く"
+        case .german: return "Systemeinstellungen öffnen"
+        case .vietnamese: return "Mở Cài đặt hệ thống"
+        case .italian: return "Apri Impostazioni di Sistema"
+        case .portuguese: return "Abra os Ajustes do Sistema"
+        case .russian: return "Откройте Системные настройки"
+        }
+    }
+
+    static var onboardingAccessPath: String {
+        switch lang {
+        case .english: return "Privacy & Security › Accessibility"
+        case .spanish: return "Privacidad y seguridad › Accesibilidad"
+        case .french: return "Confidentialité et sécurité › Accessibilité"
+        case .chinese: return "隐私与安全性 › 辅助功能"
+        case .japanese: return "プライバシーとセキュリティ › アクセシビリティ"
+        case .german: return "Datenschutz & Sicherheit › Bedienungshilfen"
+        case .vietnamese: return "Quyền riêng tư & Bảo mật › Trợ năng"
+        case .italian: return "Privacy e sicurezza › Accessibilità"
+        case .portuguese: return "Privacidade e Segurança › Acessibilidade"
+        case .russian: return "Конфиденциальность и безопасность › Универсальный доступ"
+        }
+    }
+
+    static var onboardingTurnOnThock: String {
+        switch lang {
+        case .english: return "Turn on Thock"
+        case .spanish: return "Activa Thock"
+        case .french: return "Activez Thock"
+        case .chinese: return "打开 Thock"
+        case .japanese: return "Thock をオンにする"
+        case .german: return "Thock einschalten"
+        case .vietnamese: return "Bật Thock"
+        case .italian: return "Attiva Thock"
+        case .portuguese: return "Ative o Thock"
+        case .russian: return "Включите Thock"
+        }
+    }
+
+    static var onboardingFlipSwitch: String {
+        switch lang {
+        case .english: return "Flip the switch next to Thock"
+        case .spanish: return "Activa el interruptor junto a Thock"
+        case .french: return "Activez l'interrupteur à côté de Thock"
+        case .chinese: return "打开 Thock 旁边的开关"
+        case .japanese: return "Thock の横のスイッチをオンにします"
+        case .german: return "Den Schalter neben Thock aktivieren"
+        case .vietnamese: return "Bật công tắc bên cạnh Thock"
+        case .italian: return "Attiva l'interruttore accanto a Thock"
+        case .portuguese: return "Ative a chave ao lado do Thock"
+        case .russian: return "Включите переключатель рядом с Thock"
+        }
+    }
+
+    static var onboardingHearEverywhere: String {
+        switch lang {
+        case .english: return "Hear it everywhere"
+        case .spanish: return "Escúchalo en todas partes"
+        case .french: return "Entendez-le partout"
+        case .chinese: return "处处可听"
+        case .japanese: return "どこでも鳴らす"
+        case .german: return "Überall hören"
+        case .vietnamese: return "Nghe ở mọi nơi"
+        case .italian: return "Ascoltalo ovunque"
+        case .portuguese: return "Ouça em todo lugar"
+        case .russian: return "Слышно везде"
+        }
+    }
+
+    static var onboardingStepCompleted: String {
+        switch lang {
+        case .english: return "Done"
+        case .spanish: return "Hecho"
+        case .french: return "Terminé"
+        case .chinese: return "已完成"
+        case .japanese: return "完了"
+        case .german: return "Erledigt"
+        case .vietnamese: return "Đã xong"
+        case .italian: return "Fatto"
+        case .portuguese: return "Concluído"
+        case .russian: return "Готово"
+        }
+    }
+
+    static var onboardingStepNotCompleted: String {
+        switch lang {
+        case .english: return "Not done"
+        case .spanish: return "Pendiente"
+        case .french: return "Non terminé"
+        case .chinese: return "未完成"
+        case .japanese: return "未完了"
+        case .german: return "Offen"
+        case .vietnamese: return "Chưa xong"
+        case .italian: return "Da fare"
+        case .portuguese: return "Pendente"
+        case .russian: return "Не выполнено"
+        }
+    }
+
+    static var onboardingDoneTitle: String {
+        switch lang {
+        case .english: return "You’re all set"
+        case .spanish: return "Todo listo"
+        case .french: return "Tout est prêt"
+        case .chinese: return "一切就绪"
+        case .japanese: return "準備完了"
+        case .german: return "Alles bereit"
+        case .vietnamese: return "Đã sẵn sàng"
+        case .italian: return "Tutto pronto"
+        case .portuguese: return "Tudo pronto"
+        case .russian: return "Всё готово"
+        }
+    }
+
+    static var onboardingDoneBody: String {
+        switch lang {
+        case .english: return "Thock lives in your menu bar. Here’s how to reach it."
+        case .spanish: return "Thock vive en tu barra de menús. Así puedes acceder a él."
+        case .french: return "Thock se trouve dans votre barre des menus. Voici comment y accéder."
+        case .chinese: return "Thock 位于菜单栏中。以下是使用方法。"
+        case .japanese: return "Thock はメニューバーにあります。使い方はこちら。"
+        case .german: return "Thock wohnt in deiner Menüleiste. So erreichst du es."
+        case .vietnamese: return "Thock nằm trên thanh menu. Đây là cách truy cập."
+        case .italian: return "Thock si trova nella barra dei menu. Ecco come raggiungerlo."
+        case .portuguese: return "O Thock fica na sua barra de menus. Veja como acessá-lo."
+        case .russian: return "Thock находится в строке меню. Вот как им пользоваться."
+        }
+    }
+
+    static var onboardingOpenThock: String {
+        switch lang {
+        case .english: return "Open Thock"
+        case .spanish: return "Abrir Thock"
+        case .french: return "Ouvrir Thock"
+        case .chinese: return "打开 Thock"
+        case .japanese: return "Thock を開く"
+        case .german: return "Thock öffnen"
+        case .vietnamese: return "Mở Thock"
+        case .italian: return "Apri Thock"
+        case .portuguese: return "Abrir o Thock"
+        case .russian: return "Открыть Thock"
+        }
+    }
+
+    static var onboardingClick: String {
+        switch lang {
+        case .english: return "Click"
+        case .spanish: return "Clic"
+        case .french: return "Clic"
+        case .chinese: return "点按"
+        case .japanese: return "クリック"
+        case .german: return "Klicken"
+        case .vietnamese: return "Nhấp"
+        case .italian: return "Clic"
+        case .portuguese: return "Clique"
+        case .russian: return "Щелчок"
+        }
+    }
+
+    static var onboardingMuteOrUnmute: String {
+        switch lang {
+        case .english: return "Mute or unmute"
+        case .spanish: return "Silenciar o activar sonido"
+        case .french: return "Couper ou rétablir le son"
+        case .chinese: return "静音或取消静音"
+        case .japanese: return "消音／消音解除"
+        case .german: return "Stumm schalten oder aufheben"
+        case .vietnamese: return "Tắt hoặc bật tiếng"
+        case .italian: return "Disattiva o riattiva l'audio"
+        case .portuguese: return "Silenciar ou reativar o som"
+        case .russian: return "Выключить или включить звук"
+        }
+    }
+
+    static var onboardingRightClick: String {
+        switch lang {
+        case .english: return "Right-click"
+        case .spanish: return "Clic derecho"
+        case .french: return "Clic droit"
+        case .chinese: return "右键点按"
+        case .japanese: return "右クリック"
+        case .german: return "Rechtsklick"
+        case .vietnamese: return "Nhấp chuột phải"
+        case .italian: return "Clic destro"
+        case .portuguese: return "Clique com o botão direito"
+        case .russian: return "Правый щелчок"
+        }
+    }
+
+    static var onboardingSetShortcut: String {
+        switch lang {
+        case .english: return "Set Shortcut…"
+        case .spanish: return "Asignar atajo…"
+        case .french: return "Définir un raccourci…"
+        case .chinese: return "设置快捷键…"
+        case .japanese: return "ショートカットを設定…"
+        case .german: return "Kurzbefehl festlegen…"
+        case .vietnamese: return "Đặt phím tắt…"
+        case .italian: return "Imposta scorciatoia…"
+        case .portuguese: return "Definir atalho…"
+        case .russian: return "Задать сочетание…"
+        }
+    }
+
+    static var onboardingBack: String {
+        switch lang {
+        case .english: return "Back"
+        case .spanish: return "Atrás"
+        case .french: return "Retour"
+        case .chinese: return "返回"
+        case .japanese: return "戻る"
+        case .german: return "Zurück"
+        case .vietnamese: return "Quay lại"
+        case .italian: return "Indietro"
+        case .portuguese: return "Voltar"
+        case .russian: return "Назад"
+        }
+    }
+
+    static var onboardingContinue: String {
+        switch lang {
+        case .english: return "Continue"
+        case .spanish: return "Continuar"
+        case .french: return "Continuer"
+        case .chinese: return "继续"
+        case .japanese: return "続ける"
+        case .german: return "Weiter"
+        case .vietnamese: return "Tiếp tục"
+        case .italian: return "Continua"
+        case .portuguese: return "Continuar"
+        case .russian: return "Продолжить"
+        }
+    }
+
+    static var onboardingDone: String {
+        switch lang {
+        case .english: return "Done"
+        case .spanish: return "Listo"
+        case .french: return "Terminé"
+        case .chinese: return "完成"
+        case .japanese: return "完了"
+        case .german: return "Fertig"
+        case .vietnamese: return "Xong"
+        case .italian: return "Fine"
+        case .portuguese: return "Concluir"
+        case .russian: return "Готово"
+        }
+    }
+
+    static var onboardingSkipForNow: String {
+        switch lang {
+        case .english: return "Skip for Now"
+        case .spanish: return "Omitir por ahora"
+        case .french: return "Ignorer pour l'instant"
+        case .chinese: return "暂时跳过"
+        case .japanese: return "今はスキップ"
+        case .german: return "Vorerst überspringen"
+        case .vietnamese: return "Bỏ qua lúc này"
+        case .italian: return "Salta per ora"
+        case .portuguese: return "Pular por enquanto"
+        case .russian: return "Пропустить"
+        }
+    }
+
+    static var onboardingOpenSettings: String {
+        switch lang {
+        case .english: return "Open Settings"
+        case .spanish: return "Abrir Ajustes"
+        case .french: return "Ouvrir les Réglages"
+        case .chinese: return "打开设置"
+        case .japanese: return "設定を開く"
+        case .german: return "Einstellungen öffnen"
+        case .vietnamese: return "Mở Cài đặt"
+        case .italian: return "Apri Impostazioni"
+        case .portuguese: return "Abrir Ajustes"
+        case .russian: return "Открыть настройки"
+        }
+    }
+
+    static func onboardingStep(_ current: Int, of total: Int) -> String {
+        let format: String
+        switch lang {
+        case .english: format = "Step %d of %d"
+        case .spanish: format = "Paso %d de %d"
+        case .french: format = "Étape %d sur %d"
+        case .chinese: format = "第 %d 步，共 %d 步"
+        case .japanese: format = "ステップ %d / %d"
+        case .german: format = "Schritt %d von %d"
+        case .vietnamese: format = "Bước %d / %d"
+        case .italian: format = "Passo %d di %d"
+        case .portuguese: format = "Etapa %d de %d"
+        case .russian: format = "Шаг %d из %d"
+        }
+        return String(format: format, current, total)
+    }
 }

@@ -14,11 +14,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
-        
+        initializeAudio()
+
+        if #available(macOS 14.0, *), OnboardingWindowController.shared.shouldShowOnLaunch {
+            OnboardingWindowController.shared.statusItemButton = statusBarItem.button
+            OnboardingWindowController.shared.show()
+        }
+
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "onboardingSimulateNoAccess") || UserDefaults.standard.bool(forKey: "onboardingShowRecovery") {
+            showPermissionRecovery(takeFocus: !UserDefaults.standard.bool(forKey: "onboardingSimulateRevocation"))
+        }
+        #endif
+
         if AXIsProcessTrusted() {
             continueAppInitialization()
         } else {
             menuBarController.setNeedsAuthorization(true)
+            showPermissionRecovery(takeFocus: true)
             waitForPermissionsRestored()
         }
     }
@@ -101,7 +114,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         mouseEventTracker = nil
         
         menuBarController.setNeedsAuthorization(true)
+        showPermissionRecovery(takeFocus: false)
         waitForPermissionsRestored()
+    }
+
+    private func showPermissionRecovery(takeFocus: Bool) {
+        if #available(macOS 14.0, *) {
+            MainActor.assumeIsolated {
+                OnboardingWindowController.shared.showPermissionRecovery(takeFocus: takeFocus)
+            }
+        }
     }
     
     private func waitForPermissionsRestored() {
@@ -118,25 +140,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     // MARK: - Initialization
     
+    private func initializeAudio() {
+        migrateCustomSoundsDirectoryIfNeeded()
+        SoundpackEngine.shared.loadInitialSoundpacks()
+
+        AudioDeviceManager.shared.startMonitoring()
+        HeadphoneDetector.shared.startMonitoring()
+    }
+
     private func continueAppInitialization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
             if let error = error {
                 print("Error requesting notification permissions: \(error)")
             }
         }
-        
+
         _ = PipeListenerService.shared
         initializeKeyboardEventTracker()
+        NotificationCenter.default.post(name: .keyboardTrackingDidStart, object: nil)
         initializeMouseEventTracker()
         initializeAudioMonitor()
         startPermissionMonitor()
-        
-        migrateCustomSoundsDirectoryIfNeeded()
-        SoundpackEngine.shared.loadInitialSoundpacks()
-        
-        AudioDeviceManager.shared.startMonitoring()
-        HeadphoneDetector.shared.startMonitoring()
-        
+
         menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
         
         KeyOverlayManager.shared.applyInitialState()
