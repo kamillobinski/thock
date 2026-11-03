@@ -112,6 +112,15 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    func isAutoMuteOnMicrophoneUseEnabled() -> Bool {
+        SettingsManager.shared.autoMuteOnMicrophoneUse
+    }
+
+    func setAutoMuteOnMicrophoneUse(_ enabled: Bool) {
+        SettingsManager.shared.autoMuteOnMicrophoneUse = enabled
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
     // MARK: - Idle Timeout
     
     func getIdleTimeoutSeconds() -> TimeInterval {
