@@ -1504,16 +1504,16 @@ struct L10n {
 
     static var keyOverlayShowSubtitle: String {
         switch lang {
-        case .english: return "Visualizes the keys you press (⌃⌥K)"
-        case .spanish: return "Muestra las teclas que pulsas (⌃⌥K)"
-        case .french: return "Visualise les touches pressées (⌃⌥K)"
-        case .chinese: return "实时显示按下的键（快捷键 ⌃⌥K）"
-        case .japanese: return "押したキーを表示（⌃⌥K）"
-        case .german: return "Zeigt gedrückte Tasten an (⌃⌥K)"
-        case .vietnamese: return "Hiển thị phím bạn nhấn (⌃⌥K)"
-        case .italian: return "Mostra i tasti che premi (⌃⌥K)"
-        case .portuguese: return "Mostra as teclas que você pressiona (⌃⌥K)"
-        case .russian: return "Показывает нажимаемые клавиши (⌃⌥K)"
+        case .english: return "Visualizes the keys you press"
+        case .spanish: return "Muestra las teclas que pulsas"
+        case .french: return "Visualise les touches pressées"
+        case .chinese: return "实时显示按下的键"
+        case .japanese: return "押したキーを表示"
+        case .german: return "Zeigt gedrückte Tasten an"
+        case .vietnamese: return "Hiển thị phím bạn nhấn"
+        case .italian: return "Mostra i tasti che premi"
+        case .portuguese: return "Mostra as teclas que você pressiona"
+        case .russian: return "Показывает нажимаемые клавиши"
         }
     }
 
@@ -1534,16 +1534,16 @@ struct L10n {
 
     static var keyOverlayClickThroughSubtitle: String {
         switch lang {
-        case .english: return "Mouse ignores the keyboard; press ⌃⌥L for the control bar to drag it"
-        case .spanish: return "El ratón ignora el teclado; pulsa ⌃⌥L para la barra de control y arrastrarlo"
-        case .french: return "La souris ignore le clavier ; ⌃⌥L affiche la barre de contrôle pour le déplacer"
-        case .chinese: return "开启后鼠标完全忽略小键盘；按 ⌃⌥L 呼出控制条可临时拖动"
-        case .japanese: return "マウス操作を受け付けません。⌃⌥Lでコントロールバーを表示してドラッグ"
-        case .german: return "Maus ignoriert die Tastatur; ⌃⌥L öffnet die Steuerleiste zum Verschieben"
-        case .vietnamese: return "Chuột bỏ qua bàn phím; nhấn ⌃⌥L để mở thanh điều khiển và kéo"
-        case .italian: return "Il mouse ignora la tastiera; premi ⌃⌥L per la barra di controllo e trascinarla"
-        case .portuguese: return "O mouse ignora o teclado; pressione ⌃⌥L para a barra de controle e arrastá-lo"
-        case .russian: return "Мышь игнорирует клавиатуру; ⌃⌥L открывает панель управления для перетаскивания"
+        case .english: return "Mouse ignores the keyboard; show the control bar (assign a shortcut in Settings) to drag it"
+        case .spanish: return "El ratón ignora el teclado; muestra la barra de control (asigna un atajo en Ajustes) para arrastrarlo"
+        case .french: return "La souris ignore le clavier ; affichez la barre de contrôle (assignez un raccourci dans Réglages) pour le déplacer"
+        case .chinese: return "开启后鼠标完全忽略小键盘；可先在设置中为控制条指定快捷键，呼出后即可拖动"
+        case .japanese: return "マウス操作を受け付けません。設定でショートカットを割り当て、コントロールバーを表示してドラッグできます"
+        case .german: return "Maus ignoriert die Tastatur; Steuerleiste einblenden (Kurzbefehl in den Einstellungen zuweisen) zum Verschieben"
+        case .vietnamese: return "Chuột bỏ qua bàn phím; hiện thanh điều khiển (gán phím tắt trong Cài đặt) để kéo"
+        case .italian: return "Il mouse ignora la tastiera; mostra la barra di controllo (assegna una scorciatoia in Impostazioni) per trascinarla"
+        case .portuguese: return "O mouse ignora o teclado; mostre a barra de controle (atribua um atalho em Ajustes) para arrastá-lo"
+        case .russian: return "Мышь игнорирует клавиатуру; откройте панель управления (назначьте сочетание в Настройках) для перетаскивания"
         }
     }
 
@@ -1624,16 +1624,16 @@ struct L10n {
 
     static var keyOverlayPositionSubtitle: String {
         switch lang {
-        case .english: return "Long-press the keyboard to drag it, or press ⌃⌥L for the control bar"
-        case .spanish: return "Mantén pulsado el teclado para arrastrarlo, o pulsa ⌃⌥L para la barra de control"
-        case .french: return "Maintenez le clavier pour le déplacer, ou ⌃⌥L pour la barre de contrôle"
-        case .chinese: return "长按小键盘拖动；或按 ⌃⌥L 呼出控制条后拖动"
-        case .japanese: return "キーボードを長押ししてドラッグ、または⌃⌥Lでコントロールバーを表示"
-        case .german: return "Tastatur gedrückt halten zum Verschieben oder ⌃⌥L für die Steuerleiste"
-        case .vietnamese: return "Nhấn giữ bàn phím để kéo, hoặc nhấn ⌃⌥L mở thanh điều khiển"
-        case .italian: return "Tieni premuta la tastiera per trascinarla, o premi ⌃⌥L per la barra di controllo"
-        case .portuguese: return "Pressione e segure o teclado para arrastá-lo, ou ⌃⌥L para a barra de controle"
-        case .russian: return "Удерживайте клавиатуру для перетаскивания или ⌃⌥L для панели управления"
+        case .english: return "Long-press the keyboard to drag it, or use the control bar shortcut"
+        case .spanish: return "Mantén pulsado el teclado para arrastrarlo, o usa el atajo de la barra de control"
+        case .french: return "Maintenez le clavier pour le déplacer, ou utilisez le raccourci de la barre de contrôle"
+        case .chinese: return "长按小键盘拖动；或使用控制条快捷键呼出后拖动"
+        case .japanese: return "キーボードを長押ししてドラッグ、またはコントロールバーのショートカットを使用"
+        case .german: return "Tastatur gedrückt halten zum Verschieben oder den Steuerleisten-Kurzbefehl nutzen"
+        case .vietnamese: return "Nhấn giữ bàn phím để kéo, hoặc dùng phím tắt thanh điều khiển"
+        case .italian: return "Tieni premuta la tastiera per trascinarla, o usa la scorciatoia della barra di controllo"
+        case .portuguese: return "Pressione e segure o teclado para arrastá-lo, ou use o atalho da barra de controle"
+        case .russian: return "Удерживайте клавиатуру для перетаскивания или используйте сочетание панели управления"
         }
     }
 

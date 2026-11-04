@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Temporary control bar shown above the key overlay (⌃⌥L).
+/// Temporary control bar shown above the key overlay via its shortcut.
 /// While visible, the overlay becomes draggable; it auto-hides after
 /// a few seconds of inactivity.
 struct KeyOverlayControlBarView: View {
@@ -86,6 +86,13 @@ struct KeyOverlayControlBarView: View {
         .padding(.vertical, 8)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        // Reflect changes made outside the control bar (settings window, menu bar).
+        .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
+            scale = SettingsEngine.shared.keyOverlayScale()
+            opacity = SettingsEngine.shared.keyOverlayOpacity()
+            isLight = SettingsEngine.shared.isKeyOverlayLightTheme()
+            clickThrough = SettingsEngine.shared.isKeyOverlayClickThroughEnabled()
+        }
     }
 
     private func interact() {

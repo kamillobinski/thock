@@ -142,5 +142,15 @@ struct KeyOverlaySettingsView: View {
             .padding([.leading, .trailing, .bottom], 20)
         }
         .ignoresSafeArea(edges: .top)
+        // Reflect changes made outside this window (menu bar, control bar).
+        .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
+            enabled = SettingsEngine.shared.isKeyOverlayEnabled()
+            displayMode = SettingsEngine.shared.keyOverlayMode()
+            hudPosition = SettingsEngine.shared.keyOverlayHudPosition()
+            clickThrough = SettingsEngine.shared.isKeyOverlayClickThroughEnabled()
+            isLight = SettingsEngine.shared.isKeyOverlayLightTheme()
+            scale = SettingsEngine.shared.keyOverlayScale()
+            opacity = SettingsEngine.shared.keyOverlayOpacity()
+        }
     }
 }
