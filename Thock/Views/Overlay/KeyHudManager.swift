@@ -32,7 +32,8 @@ final class KeyHudManager {
 
     /// Called from the keyboard event tap (main run loop).
     func handleKeyEvent(keyCode: Int64, isKeyDown: Bool) {
-        guard panel != nil else { return }
+        // Skip updates while hidden (e.g. the other display mode is active).
+        guard let panel = panel, panel.isVisible else { return }
         if isKeyDown {
             // Follow the mouse so the HUD appears on the display being used.
             reposition()

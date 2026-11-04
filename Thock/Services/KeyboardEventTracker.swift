@@ -4,6 +4,10 @@ import KeyboardShortcuts
 
 class KeyboardEventTracker {
     private var pressedKeys: Set<Int64> = []
+    /// Held-key state for the visual overlay path, tracked separately so
+    /// sound-related filters (rapid-event filter, music auto-mute, cleaning
+    /// mode) can never leave it stale.
+    private var visualPressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var trackedRunLoop: CFRunLoop?
@@ -13,6 +17,10 @@ class KeyboardEventTracker {
     /// Receives every key transition (keyCode, isKeyDown) for visual display,
     /// independent of sound-related settings. Invoked on the tap's run loop (main).
     var onKeyVisualEvent: ((_ keyCode: Int64, _ isKeyDown: Bool) -> Void)?
+
+    /// Invoked when the tracker drops its held-key state (tap re-enable,
+    /// stop tracking): overlays should clear any held-key visuals.
+    var onKeyVisualReset: (() -> Void)?
     
     deinit {
         stopTracking()
@@ -49,6 +57,26 @@ class KeyboardEventTracker {
                 
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                 
+                // Forward the transition to the key overlay first, regardless of
+                // any sound-related filtering below — cleaning mode included, so
+                // releases swallowed there can never leave a key stuck lit.
+                if let onKeyVisualEvent = tracker.onKeyVisualEvent {
+                    switch type {
+                    case .keyDown where !tracker.visualPressedKeys.contains(keyCode):
+                        tracker.visualPressedKeys.insert(keyCode)
+                        onKeyVisualEvent(keyCode, true)
+                    case .keyUp:
+                        tracker.visualPressedKeys.remove(keyCode)
+                        onKeyVisualEvent(keyCode, false)
+                    case .flagsChanged:
+                        if let mask = tracker.modifierMask(for: keyCode) {
+                            onKeyVisualEvent(keyCode, event.flags.contains(mask))
+                        }
+                    default:
+                        break
+                    }
+                }
+                
                 if SettingsEngine.shared.isCleaningModeEnabled() {
                     if type == .keyDown,
                        let shortcut = KeyboardShortcuts.getShortcut(for: .toggleCleaningMode),
@@ -61,23 +89,6 @@ class KeyboardEventTracker {
                         }
                     }
                     return nil
-                }
-                
-                // Forward the transition to the key overlay regardless of any
-                // sound-related filtering below.
-                if let onKeyVisualEvent = tracker.onKeyVisualEvent {
-                    switch type {
-                    case .keyDown where !tracker.pressedKeys.contains(keyCode):
-                        onKeyVisualEvent(keyCode, true)
-                    case .keyUp:
-                        onKeyVisualEvent(keyCode, false)
-                    case .flagsChanged:
-                        if let mask = tracker.modifierMask(for: keyCode) {
-                            onKeyVisualEvent(keyCode, event.flags.contains(mask))
-                        }
-                    default:
-                        break
-                    }
                 }
                 
                 // Start latency measurement
@@ -161,8 +172,10 @@ class KeyboardEventTracker {
             CFRunLoopRemoveSource(runLoop, source, .commonModes)
         }
         pressedKeys.removeAll()
+        visualPressedKeys.removeAll()
         runLoopSource = nil
         trackedRunLoop = nil
+        DispatchQueue.main.async { [weak self] in self?.onKeyVisualReset?() }
     }
     
     // MARK: Private methods
@@ -188,6 +201,8 @@ class KeyboardEventTracker {
     private func reenableTap() {
         guard let eventMonitor = eventMonitor else { return }
         pressedKeys.removeAll() // Key-up events may have been missed while disabled.
+        visualPressedKeys.removeAll()
+        onKeyVisualReset?()
         CGEvent.tapEnable(tap: eventMonitor, enable: true)
         tapReEnableCount += 1
         Logger.keyboard.warning("Event tap was disabled by the system and re-enabled (re-enable #\(self.tapReEnableCount))")

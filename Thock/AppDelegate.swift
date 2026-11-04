@@ -55,6 +55,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
                 KeyOverlayManager.shared.handleKeyEvent(keyCode: keyCode, isKeyDown: isKeyDown)
                 KeyHudManager.shared.handleKeyEvent(keyCode: keyCode, isKeyDown: isKeyDown)
             }
+            keyboardEventTracker.onKeyVisualReset = {
+                KeyOverlayManager.shared.model.reset()
+                KeyHudManager.shared.model.reset()
+            }
             keyboardEventTracker.startTracking()
         }
     }

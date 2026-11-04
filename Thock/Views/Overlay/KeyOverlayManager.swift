@@ -119,7 +119,7 @@ final class KeyOverlayManager {
     
     // MARK: - Control bar
     
-    /// ⌃⌥L handler: toggle the control bar above the overlay.
+    /// Control-bar shortcut handler: toggle the control bar above the overlay.
     /// The control bar only operates the full keyboard; it is ignored
     /// while the "hud" display mode is active.
     func toggleControlBar() {
@@ -168,6 +168,17 @@ final class KeyOverlayManager {
             }
         }) {
             controlBarEventMonitors.append(keyMonitor)
+        }
+
+        // Global monitors miss events delivered to our own app (e.g. the
+        // settings window is focused), so listen locally for Esc as well.
+        if let localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak self] event in
+            if event.keyCode == 53 { // Esc
+                self?.hideControlBar()
+            }
+            return event
+        }) {
+            controlBarEventMonitors.append(localKeyMonitor)
         }
         
         if let clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
@@ -259,7 +270,8 @@ final class KeyOverlayManager {
 
     /// Called from the keyboard event tap (main run loop).
     func handleKeyEvent(keyCode: Int64, isKeyDown: Bool) {
-        guard panel != nil else { return }
+        // Skip updates while hidden (e.g. the other display mode is active).
+        guard let panel = panel, panel.isVisible else { return }
         if isKeyDown {
             model.keyDown(keyCode)
         } else {

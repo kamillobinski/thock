@@ -19,7 +19,7 @@ class GlobalShortcutManager {
         
         KeyboardShortcuts.onKeyDown(for: .toggleKeyOverlay) {
             DispatchQueue.main.async {
-                SettingsEngine.shared.toggleKeyOverlay()
+                _ = SettingsEngine.shared.toggleKeyOverlay()
             }
         }
         
