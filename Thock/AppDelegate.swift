@@ -55,6 +55,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private func initializeKeyboardEventTracker() {
         if keyboardEventTracker == nil {
             keyboardEventTracker = KeyboardEventTracker()
+            keyboardEventTracker.onKeyVisualEvent = { keyCode, isKeyDown in
+                KeyOverlayManager.shared.handleKeyEvent(keyCode: keyCode, isKeyDown: isKeyDown)
+                KeyHudManager.shared.handleKeyEvent(keyCode: keyCode, isKeyDown: isKeyDown)
+            }
+            keyboardEventTracker.onKeyVisualReset = {
+                KeyOverlayManager.shared.model.reset()
+                KeyHudManager.shared.model.reset()
+            }
             keyboardEventTracker.startTracking()
         }
     }
@@ -130,6 +138,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         HeadphoneDetector.shared.startMonitoring()
         
         menuBarController.updateMenuBarIcon(for: AppEngine.shared.isEnabled())
+        
+        KeyOverlayManager.shared.applyInitialState()
+        KeyHudManager.shared.applyInitialState()
         
         setupGlobalShortcuts()
         setupSleepWakeMonitoring()

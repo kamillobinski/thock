@@ -7,6 +7,7 @@ enum SettingsTab: String, CaseIterable {
     case soundpacks
     case shortcuts
     case utilities
+    case keyOverlay
     
     var localizedName: String {
         switch self {
@@ -15,6 +16,7 @@ enum SettingsTab: String, CaseIterable {
         case .soundpacks: return L10n.soundpacks
         case .shortcuts: return L10n.shortcuts
         case .utilities: return L10n.utilities
+        case .keyOverlay: return L10n.keyOverlay
         }
     }
     
@@ -25,6 +27,7 @@ enum SettingsTab: String, CaseIterable {
         case .soundpacks: return "music.note.list"
         case .shortcuts: return "command"
         case .utilities: return "wrench.and.screwdriver.fill"
+        case .keyOverlay: return "keyboard"
         }
     }
 }
@@ -67,6 +70,8 @@ struct SettingsView: View {
                 ShortcutsSettingsView()
             case .utilities:
                 UtilitiesSettingsView()
+            case .keyOverlay:
+                KeyOverlaySettingsView()
             }
         }
         .id(refreshID)

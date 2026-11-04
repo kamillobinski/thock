@@ -1364,4 +1364,456 @@ struct L10n {
         case .russian: return "Открыть документацию"
         }
     }
+
+    // MARK: - Key Overlay
+
+    static var keyOverlay: String {
+        switch lang {
+        case .english: return "Key Overlay"
+        case .spanish: return "Teclado flotante"
+        case .french: return "Clavier flottant"
+        case .chinese: return "键盘可视化"
+        case .japanese: return "キーオーバーレイ"
+        case .german: return "Tastatur-Overlay"
+        case .vietnamese: return "Hiển thị phím"
+        case .italian: return "Overlay tastiera"
+        case .portuguese: return "Teclado flutuante"
+        case .russian: return "Экранная клавиатура"
+        }
+    }
+
+    static var keyOverlayMenu: String {
+        switch lang {
+        case .english: return "Key Overlay…"
+        case .spanish: return "Teclado flotante…"
+        case .french: return "Clavier flottant…"
+        case .chinese: return "键盘可视化…"
+        case .japanese: return "キーオーバーレイ…"
+        case .german: return "Tastatur-Overlay…"
+        case .vietnamese: return "Hiển thị phím…"
+        case .italian: return "Overlay tastiera…"
+        case .portuguese: return "Teclado flutuante…"
+        case .russian: return "Экранная клавиатура…"
+        }
+    }
+
+    static var keyOverlayShow: String {
+        switch lang {
+        case .english: return "Enable Key Overlay"
+        case .spanish: return "Activar visualización de teclas"
+        case .french: return "Activer la visualisation des touches"
+        case .chinese: return "启用键盘可视化"
+        case .japanese: return "キーオーバーレイを有効化"
+        case .german: return "Tastatur-Overlay aktivieren"
+        case .vietnamese: return "Bật hiển thị phím"
+        case .italian: return "Attiva overlay tasti"
+        case .portuguese: return "Ativar sobreposição de teclas"
+        case .russian: return "Включить отображение клавиш"
+        }
+    }
+
+    static var keyOverlayShowSubtitle: String {
+        switch lang {
+        case .english: return "Visualizes the keys you press"
+        case .spanish: return "Muestra las teclas que pulsas"
+        case .french: return "Visualise les touches pressées"
+        case .chinese: return "实时显示按下的键"
+        case .japanese: return "押したキーを表示"
+        case .german: return "Zeigt gedrückte Tasten an"
+        case .vietnamese: return "Hiển thị phím bạn nhấn"
+        case .italian: return "Mostra i tasti che premi"
+        case .portuguese: return "Mostra as teclas que você pressiona"
+        case .russian: return "Показывает нажимаемые клавиши"
+        }
+    }
+
+    static var keyOverlayClickThrough: String {
+        switch lang {
+        case .english: return "Click Through"
+        case .spanish: return "Clic a través"
+        case .french: return "Clic à travers"
+        case .chinese: return "点击穿透"
+        case .japanese: return "クリックを透過"
+        case .german: return "Klickdurchlässig"
+        case .vietnamese: return "Nhấp xuyên qua"
+        case .italian: return "Clic attraverso"
+        case .portuguese: return "Clique através"
+        case .russian: return "Прозрачность для кликов"
+        }
+    }
+
+    static var keyOverlayClickThroughSubtitle: String {
+        switch lang {
+        case .english: return "Mouse ignores the keyboard; show the control bar (assign a shortcut in Settings) to drag it"
+        case .spanish: return "El ratón ignora el teclado; muestra la barra de control (asigna un atajo en Ajustes) para arrastrarlo"
+        case .french: return "La souris ignore le clavier ; affichez la barre de contrôle (assignez un raccourci dans Réglages) pour le déplacer"
+        case .chinese: return "开启后鼠标完全忽略小键盘；可先在设置中为控制条指定快捷键，呼出后即可拖动"
+        case .japanese: return "マウス操作を受け付けません。設定でショートカットを割り当て、コントロールバーを表示してドラッグできます"
+        case .german: return "Maus ignoriert die Tastatur; Steuerleiste einblenden (Kurzbefehl in den Einstellungen zuweisen) zum Verschieben"
+        case .vietnamese: return "Chuột bỏ qua bàn phím; hiện thanh điều khiển (gán phím tắt trong Cài đặt) để kéo"
+        case .italian: return "Il mouse ignora la tastiera; mostra la barra di controllo (assegna una scorciatoia in Impostazioni) per trascinarla"
+        case .portuguese: return "O mouse ignora o teclado; mostre a barra de controle (atribua um atalho em Ajustes) para arrastá-lo"
+        case .russian: return "Мышь игнорирует клавиатуру; откройте панель управления (назначьте сочетание в Настройках) для перетаскивания"
+        }
+    }
+
+    static var keyOverlayLightTheme: String {
+        switch lang {
+        case .english: return "Light Theme"
+        case .spanish: return "Tema claro"
+        case .french: return "Thème clair"
+        case .chinese: return "浅色主题"
+        case .japanese: return "ライトテーマ"
+        case .german: return "Helles Thema"
+        case .vietnamese: return "Giao diện sáng"
+        case .italian: return "Tema chiaro"
+        case .portuguese: return "Tema claro"
+        case .russian: return "Светлая тема"
+        }
+    }
+
+    static var keyOverlayLightThemeSubtitle: String {
+        switch lang {
+        case .english: return "White keyboard style"
+        case .spanish: return "Estilo de teclado blanco"
+        case .french: return "Style de clavier blanc"
+        case .chinese: return "白底键盘样式"
+        case .japanese: return "白背景のキーボード"
+        case .german: return "Weißer Tastatur-Stil"
+        case .vietnamese: return "Kiểu bàn phím nền trắng"
+        case .italian: return "Stile tastiera bianca"
+        case .portuguese: return "Estilo de teclado branco"
+        case .russian: return "Белый стиль клавиатуры"
+        }
+    }
+
+    static var keyOverlayScale: String {
+        switch lang {
+        case .english: return "Scale"
+        case .spanish: return "Escala"
+        case .french: return "Échelle"
+        case .chinese: return "缩放"
+        case .japanese: return "拡大縮小"
+        case .german: return "Skalierung"
+        case .vietnamese: return "Tỷ lệ"
+        case .italian: return "Scala"
+        case .portuguese: return "Escala"
+        case .russian: return "Масштаб"
+        }
+    }
+
+    static var keyOverlayOpacity: String {
+        switch lang {
+        case .english: return "Opacity"
+        case .spanish: return "Opacidad"
+        case .french: return "Opacité"
+        case .chinese: return "不透明度"
+        case .japanese: return "不透明度"
+        case .german: return "Deckkraft"
+        case .vietnamese: return "Độ mờ"
+        case .italian: return "Opacità"
+        case .portuguese: return "Opacidade"
+        case .russian: return "Непрозрачность"
+        }
+    }
+
+    static var keyOverlayPosition: String {
+        switch lang {
+        case .english: return "Position"
+        case .spanish: return "Posición"
+        case .french: return "Position"
+        case .chinese: return "位置"
+        case .japanese: return "位置"
+        case .german: return "Position"
+        case .vietnamese: return "Vị trí"
+        case .italian: return "Posizione"
+        case .portuguese: return "Posição"
+        case .russian: return "Положение"
+        }
+    }
+
+    static var keyOverlayPositionSubtitle: String {
+        switch lang {
+        case .english: return "Long-press the keyboard to drag it, or use the control bar shortcut"
+        case .spanish: return "Mantén pulsado el teclado para arrastrarlo, o usa el atajo de la barra de control"
+        case .french: return "Maintenez le clavier pour le déplacer, ou utilisez le raccourci de la barre de contrôle"
+        case .chinese: return "长按小键盘拖动；或使用控制条快捷键呼出后拖动"
+        case .japanese: return "キーボードを長押ししてドラッグ、またはコントロールバーのショートカットを使用"
+        case .german: return "Tastatur gedrückt halten zum Verschieben oder den Steuerleisten-Kurzbefehl nutzen"
+        case .vietnamese: return "Nhấn giữ bàn phím để kéo, hoặc dùng phím tắt thanh điều khiển"
+        case .italian: return "Tieni premuta la tastiera per trascinarla, o usa la scorciatoia della barra di controllo"
+        case .portuguese: return "Pressione e segure o teclado para arrastá-lo, ou use o atalho da barra de controle"
+        case .russian: return "Удерживайте клавиатуру для перетаскивания или используйте сочетание панели управления"
+        }
+    }
+
+    static var keyOverlayResetPosition: String {
+        switch lang {
+        case .english: return "Reset Position"
+        case .spanish: return "Restablecer posición"
+        case .french: return "Réinitialiser la position"
+        case .chinese: return "重置位置"
+        case .japanese: return "位置をリセット"
+        case .german: return "Position zurücksetzen"
+        case .vietnamese: return "Đặt lại vị trí"
+        case .italian: return "Ripristina posizione"
+        case .portuguese: return "Redefinir posição"
+        case .russian: return "Сбросить положение"
+        }
+    }
+
+    static var keyOverlayZoomIn: String {
+        switch lang {
+        case .english: return "Zoom In"
+        case .spanish: return "Ampliar"
+        case .french: return "Agrandir"
+        case .chinese: return "放大"
+        case .japanese: return "拡大"
+        case .german: return "Vergrößern"
+        case .vietnamese: return "Phóng to"
+        case .italian: return "Ingrandisci"
+        case .portuguese: return "Ampliar"
+        case .russian: return "Увеличить"
+        }
+    }
+
+    static var keyOverlayZoomOut: String {
+        switch lang {
+        case .english: return "Zoom Out"
+        case .spanish: return "Reducir"
+        case .french: return "Réduire"
+        case .chinese: return "缩小"
+        case .japanese: return "縮小"
+        case .german: return "Verkleinern"
+        case .vietnamese: return "Thu nhỏ"
+        case .italian: return "Riduci"
+        case .portuguese: return "Reduzir"
+        case .russian: return "Уменьшить"
+        }
+    }
+
+    static var keyOverlayOpacityUp: String {
+        switch lang {
+        case .english: return "Increase Opacity"
+        case .spanish: return "Aumentar opacidad"
+        case .french: return "Augmenter l'opacité"
+        case .chinese: return "提高不透明度"
+        case .japanese: return "不透明度を上げる"
+        case .german: return "Deckkraft erhöhen"
+        case .vietnamese: return "Tăng độ mờ"
+        case .italian: return "Aumenta opacità"
+        case .portuguese: return "Aumentar opacidade"
+        case .russian: return "Увеличить непрозрачность"
+        }
+    }
+
+    static var keyOverlayOpacityDown: String {
+        switch lang {
+        case .english: return "Decrease Opacity"
+        case .spanish: return "Reducir opacidad"
+        case .french: return "Réduire l'opacité"
+        case .chinese: return "降低不透明度"
+        case .japanese: return "不透明度を下げる"
+        case .german: return "Deckkraft verringern"
+        case .vietnamese: return "Giảm độ mờ"
+        case .italian: return "Riduci opacità"
+        case .portuguese: return "Reduzir opacidade"
+        case .russian: return "Уменьшить непрозрачность"
+        }
+    }
+
+    static var keyOverlayDone: String {
+        switch lang {
+        case .english: return "Done"
+        case .spanish: return "Listo"
+        case .french: return "Terminé"
+        case .chinese: return "完成"
+        case .japanese: return "完了"
+        case .german: return "Fertig"
+        case .vietnamese: return "Xong"
+        case .italian: return "Fine"
+        case .portuguese: return "Concluído"
+        case .russian: return "Готово"
+        }
+    }
+
+    static var keyOverlayThemeToggle: String {
+        switch lang {
+        case .english: return "Toggle light/dark theme"
+        case .spanish: return "Cambiar tema claro/oscuro"
+        case .french: return "Basculer thème clair/sombre"
+        case .chinese: return "切换浅色/深色主题"
+        case .japanese: return "ライト/ダークテーマ切替"
+        case .german: return "Helles/dunkles Thema wechseln"
+        case .vietnamese: return "Chuyển giao diện sáng/tối"
+        case .italian: return "Cambia tema chiaro/scuro"
+        case .portuguese: return "Alternar tema claro/escuro"
+        case .russian: return "Переключить светлую/тёмную тему"
+        }
+    }
+
+    static var keyOverlayClickThroughOnHint: String {
+        switch lang {
+        case .english: return "Click-through on (click to disable)"
+        case .spanish: return "Clic a través activado (clic para desactivar)"
+        case .french: return "Clic à travers activé (cliquer pour désactiver)"
+        case .chinese: return "点击穿透已开（点击关闭）"
+        case .japanese: return "クリック透過オン（クリックでオフ）"
+        case .german: return "Klickdurchlässig an (Klick zum Aus)"
+        case .vietnamese: return "Đang bật nhấp xuyên (nhấp để tắt)"
+        case .italian: return "Clic attraverso attivo (clic per disattivare)"
+        case .portuguese: return "Clique através ativado (clique para desativar)"
+        case .russian: return "Клики сквозь: вкл (нажмите, чтобы выкл)"
+        }
+    }
+
+    static var keyOverlayClickThroughOffHint: String {
+        switch lang {
+        case .english: return "Click-through off (click to enable)"
+        case .spanish: return "Clic a través desactivado (clic para activar)"
+        case .french: return "Clic à travers désactivé (cliquer pour activer)"
+        case .chinese: return "点击穿透已关（点击开启）"
+        case .japanese: return "クリック透過オフ（クリックでオン）"
+        case .german: return "Klickdurchlässig aus (Klick zum An)"
+        case .vietnamese: return "Đang tắt nhấp xuyên (nhấp để bật)"
+        case .italian: return "Clic attraverso disattivato (clic per attivare)"
+        case .portuguese: return "Clique através desativado (clique para ativar)"
+        case .russian: return "Клики сквозь: выкл (нажмите, чтобы вкл)"
+        }
+    }
+
+    static var keyOverlayShortcutSubtitle: String {
+        switch lang {
+        case .english: return "Show/hide the floating keyboard (default ⌃⌥K)"
+        case .spanish: return "Mostrar/ocultar el teclado flotante (⌃⌥K por defecto)"
+        case .french: return "Afficher/masquer le clavier flottant (⌃⌥K par défaut)"
+        case .chinese: return "显示/隐藏悬浮小键盘（默认 ⌃⌥K）"
+        case .japanese: return "フローティングキーボードの表示/非表示（デフォルト⌃⌥K）"
+        case .german: return "Schwebende Tastatur ein-/ausblenden (Standard ⌃⌥K)"
+        case .vietnamese: return "Hiện/ẩn bàn phím nổi (mặc định ⌃⌥K)"
+        case .italian: return "Mostra/nascondi la tastiera fluttuante (predefinito ⌃⌥K)"
+        case .portuguese: return "Mostrar/ocultar o teclado flutuante (padrão ⌃⌥K)"
+        case .russian: return "Показать/скрыть экранную клавиатуру (по умолчанию ⌃⌥K)"
+        }
+    }
+
+    static var keyOverlayControls: String {
+        switch lang {
+        case .english: return "Keyboard Control Bar"
+        case .spanish: return "Barra de control del teclado"
+        case .french: return "Barre de contrôle du clavier"
+        case .chinese: return "键盘控制条"
+        case .japanese: return "キーボードコントロールバー"
+        case .german: return "Tastatur-Steuerleiste"
+        case .vietnamese: return "Thanh điều khiển bàn phím"
+        case .italian: return "Barra di controllo tastiera"
+        case .portuguese: return "Barra de controle do teclado"
+        case .russian: return "Панель управления клавиатурой"
+        }
+    }
+
+    static var keyOverlayControlsSubtitle: String {
+        switch lang {
+        case .english: return "Summon/dismiss the control bar (default ⌃⌥L)"
+        case .spanish: return "Mostrar/ocultar la barra de control (⌃⌥L por defecto)"
+        case .french: return "Afficher/masquer la barre de contrôle (⌃⌥L par défaut)"
+        case .chinese: return "呼出/收起键盘可视化的控制条（默认 ⌃⌥L）"
+        case .japanese: return "コントロールバーの表示/非表示（デフォルト⌃⌥L）"
+        case .german: return "Steuerleiste ein-/ausblenden (Standard ⌃⌥L)"
+        case .vietnamese: return "Hiện/ẩn thanh điều khiển (mặc định ⌃⌥L)"
+        case .italian: return "Mostra/nascondi la barra di controllo (predefinito ⌃⌥L)"
+        case .portuguese: return "Mostrar/ocultar a barra de controle (padrão ⌃⌥L)"
+        case .russian: return "Показать/скрыть панель управления (по умолчанию ⌃⌥L)"
+        }
+    }
+
+    static var keyOverlayDisplayMode: String {
+        switch lang {
+        case .english: return "Display Mode"
+        case .spanish: return "Modo de visualización"
+        case .french: return "Mode d'affichage"
+        case .chinese: return "显示模式"
+        case .japanese: return "表示モード"
+        case .german: return "Anzeigemodus"
+        case .vietnamese: return "Chế độ hiển thị"
+        case .italian: return "Modalità di visualizzazione"
+        case .portuguese: return "Modo de exibição"
+        case .russian: return "Режим отображения"
+        }
+    }
+
+    static var keyOverlayDisplayModeSubtitle: String {
+        switch lang {
+        case .english: return "Show pressed keys briefly at the center of the screen instead of the full keyboard"
+        case .spanish: return "Muestra las teclas pulsadas brevemente en el centro de la pantalla en lugar del teclado completo"
+        case .french: return "Affiche brièvement les touches pressées au centre de l'écran au lieu du clavier complet"
+        case .chinese: return "不显示完整键盘，按下的键在屏幕中央短暂显示"
+        case .japanese: return "フルキーボードの代わりに押したキーを画面中央に一瞬表示"
+        case .german: return "Zeigt gedrückte Tasten kurz in der Bildschirmmitte statt der ganzen Tastatur"
+        case .vietnamese: return "Hiển thị phím đang nhấn ngắn gọn ở giữa màn hình thay vì bàn phím đầy đủ"
+        case .italian: return "Mostra brevemente i tasti premuti al centro dello schermo invece della tastiera completa"
+        case .portuguese: return "Mostra brevemente as teclas pressionadas no centro da tela em vez do teclado completo"
+        case .russian: return "Кратко показывает нажатые клавиши в центре экрана вместо полной клавиатуры"
+        }
+    }
+
+    static var keyOverlayModeKeyboard: String {
+        switch lang {
+        case .english: return "Full Keyboard"
+        case .spanish: return "Teclado completo"
+        case .french: return "Clavier complet"
+        case .chinese: return "完整键盘"
+        case .japanese: return "フルキーボード"
+        case .german: return "Ganze Tastatur"
+        case .vietnamese: return "Bàn phím đầy đủ"
+        case .italian: return "Tastiera completa"
+        case .portuguese: return "Teclado completo"
+        case .russian: return "Полная клавиатура"
+        }
+    }
+
+    static var keyOverlayModeHud: String {
+        switch lang {
+        case .english: return "Key HUD"
+        case .spanish: return "HUD de teclas"
+        case .french: return "HUD des touches"
+        case .chinese: return "按键提示"
+        case .japanese: return "キーHUD"
+        case .german: return "Tasten-HUD"
+        case .vietnamese: return "HUD phím"
+        case .italian: return "HUD tasti"
+        case .portuguese: return "HUD de teclas"
+        case .russian: return "HUD клавиш"
+        }
+    }
+
+    static var keyOverlayHudPosition: String {
+        switch lang {
+        case .english: return "HUD Position"
+        case .spanish: return "Posición del HUD"
+        case .french: return "Position du HUD"
+        case .chinese: return "按键提示位置"
+        case .japanese: return "HUDの位置"
+        case .german: return "HUD-Position"
+        case .vietnamese: return "Vị trí HUD"
+        case .italian: return "Posizione HUD"
+        case .portuguese: return "Posição do HUD"
+        case .russian: return "Положение HUD"
+        }
+    }
+
+    static var keyOverlayHudPositionSubtitle: String {
+        switch lang {
+        case .english: return "Where the pressed keys appear on screen"
+        case .spanish: return "Dónde aparecen las teclas pulsadas en la pantalla"
+        case .french: return "Emplacement des touches pressées à l'écran"
+        case .chinese: return "按下的键显示在屏幕的哪个位置"
+        case .japanese: return "押したキーを画面のどこに表示するか"
+        case .german: return "Wo gedrückte Tasten auf dem Bildschirm erscheinen"
+        case .vietnamese: return "Vị trí hiển thị phím trên màn hình"
+        case .italian: return "Dove appaiono i tasti premuti sullo schermo"
+        case .portuguese: return "Onde as teclas pressionadas aparecem na tela"
+        case .russian: return "Где на экране отображаются нажатые клавиши"
+        }
+    }
 }

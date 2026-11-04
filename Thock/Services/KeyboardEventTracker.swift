@@ -4,11 +4,23 @@ import KeyboardShortcuts
 
 class KeyboardEventTracker {
     private var pressedKeys: Set<Int64> = []
+    /// Held-key state for the visual overlay path, tracked separately so
+    /// sound-related filters (rapid-event filter, music auto-mute, cleaning
+    /// mode) can never leave it stale.
+    private var visualPressedKeys: Set<Int64> = []
     private var eventMonitor: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var trackedRunLoop: CFRunLoop?
     private var lastEventTime: Double = 0
     private var tapReEnableCount = 0
+    
+    /// Receives every key transition (keyCode, isKeyDown) for visual display,
+    /// independent of sound-related settings. Invoked on the tap's run loop (main).
+    var onKeyVisualEvent: ((_ keyCode: Int64, _ isKeyDown: Bool) -> Void)?
+
+    /// Invoked when the tracker drops its held-key state (tap re-enable,
+    /// stop tracking): overlays should clear any held-key visuals.
+    var onKeyVisualReset: (() -> Void)?
     
     deinit {
         stopTracking()
@@ -44,6 +56,26 @@ class KeyboardEventTracker {
                 }
                 
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+                
+                // Forward the transition to the key overlay first, regardless of
+                // any sound-related filtering below — cleaning mode included, so
+                // releases swallowed there can never leave a key stuck lit.
+                if let onKeyVisualEvent = tracker.onKeyVisualEvent {
+                    switch type {
+                    case .keyDown where !tracker.visualPressedKeys.contains(keyCode):
+                        tracker.visualPressedKeys.insert(keyCode)
+                        onKeyVisualEvent(keyCode, true)
+                    case .keyUp:
+                        tracker.visualPressedKeys.remove(keyCode)
+                        onKeyVisualEvent(keyCode, false)
+                    case .flagsChanged:
+                        if let mask = tracker.modifierMask(for: keyCode) {
+                            onKeyVisualEvent(keyCode, event.flags.contains(mask))
+                        }
+                    default:
+                        break
+                    }
+                }
                 
                 if SettingsEngine.shared.isCleaningModeEnabled() {
                     if type == .keyDown,
@@ -91,19 +123,8 @@ class KeyboardEventTracker {
                     if !SettingsEngine.shared.isModifierKeySoundDisabled() {
                         // Event flags survive missed transitions. Side-specific masks
                         // also distinguish releases while the opposite key stays held.
-                        let modifierMask: CGEventFlags
-                        switch keyCode {
-                        case 54: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERCMDKEYMASK))
-                        case 55: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELCMDKEYMASK))
-                        case 56: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELSHIFTKEYMASK))
-                        case 57: modifierMask = .maskAlphaShift
-                        case 58: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELALTKEYMASK))
-                        case 59: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICELCTLKEYMASK))
-                        case 60: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERSHIFTKEYMASK))
-                        case 61: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERALTKEYMASK))
-                        case 62: modifierMask = CGEventFlags(rawValue: UInt64(NX_DEVICERCTLKEYMASK))
-                        case 63: modifierMask = .maskSecondaryFn
-                        default: return Unmanaged.passUnretained(event)
+                        guard let modifierMask = tracker.modifierMask(for: keyCode) else {
+                            return Unmanaged.passUnretained(event)
                         }
                         soundAction = (keyCode, event.flags.contains(modifierMask))
                     } else {
@@ -151,16 +172,37 @@ class KeyboardEventTracker {
             CFRunLoopRemoveSource(runLoop, source, .commonModes)
         }
         pressedKeys.removeAll()
+        visualPressedKeys.removeAll()
         runLoopSource = nil
         trackedRunLoop = nil
+        DispatchQueue.main.async { [weak self] in self?.onKeyVisualReset?() }
     }
     
     // MARK: Private methods
 
+    /// Maps a modifier key code to the event flag that reports its pressed state.
+    func modifierMask(for keyCode: Int64) -> CGEventFlags? {
+        switch keyCode {
+        case 54: return CGEventFlags(rawValue: UInt64(NX_DEVICERCMDKEYMASK))
+        case 55: return CGEventFlags(rawValue: UInt64(NX_DEVICELCMDKEYMASK))
+        case 56: return CGEventFlags(rawValue: UInt64(NX_DEVICELSHIFTKEYMASK))
+        case 57: return .maskAlphaShift
+        case 58: return CGEventFlags(rawValue: UInt64(NX_DEVICELALTKEYMASK))
+        case 59: return CGEventFlags(rawValue: UInt64(NX_DEVICELCTLKEYMASK))
+        case 60: return CGEventFlags(rawValue: UInt64(NX_DEVICERSHIFTKEYMASK))
+        case 61: return CGEventFlags(rawValue: UInt64(NX_DEVICERALTKEYMASK))
+        case 62: return CGEventFlags(rawValue: UInt64(NX_DEVICERCTLKEYMASK))
+        case 63: return .maskSecondaryFn
+        default: return nil
+        }
+    }
+    
     /// Re-enables the tap after the system disabled it.
     private func reenableTap() {
         guard let eventMonitor = eventMonitor else { return }
         pressedKeys.removeAll() // Key-up events may have been missed while disabled.
+        visualPressedKeys.removeAll()
+        onKeyVisualReset?()
         CGEvent.tapEnable(tap: eventMonitor, enable: true)
         tapReEnableCount += 1
         Logger.keyboard.warning("Event tap was disabled by the system and re-enabled (re-enable #\(self.tapReEnableCount))")

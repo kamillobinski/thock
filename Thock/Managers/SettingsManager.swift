@@ -20,6 +20,13 @@ final class SettingsManager {
     static let defaultAutoEnableOnHeadphone: Bool = false
     static let defaultSpatialAudioEnabled: Bool = false
     static let defaultSpatialWidth: Float = SpatialMath.defaultWidth
+    static let defaultKeyOverlayEnabled: Bool = false
+    static let defaultKeyOverlayClickThrough: Bool = false
+    static let defaultKeyOverlayScale: Double = 1.0
+    static let defaultKeyOverlayOpacity: Double = 1.0
+    static let defaultKeyOverlayTheme: String = "dark"
+    static let defaultKeyOverlayMode: String = "keyboard"
+    static let defaultKeyOverlayHudPosition: String = "center"
     
     
     private init() {}
@@ -127,8 +134,49 @@ final class SettingsManager {
         get { UtilityManager.shared.isCleaningMode }
         set { UtilityManager.shared.isCleaningMode = newValue }
     }
-}
+    
+    /// Whether the floating key overlay window is visible.
+    var keyOverlayEnabled: Bool {
+        get { UserDefaults.keyOverlayEnabled }
+        set { UserDefaults.keyOverlayEnabled = newValue }
+    }
+    
+    /// Whether the key overlay window ignores mouse events (click-through).
+    var keyOverlayClickThrough: Bool {
+        get { UserDefaults.keyOverlayClickThrough }
+        set { UserDefaults.keyOverlayClickThrough = newValue }
+    }
+    
+    /// Key overlay scale factor (0.5 - 2.0).
+    var keyOverlayScale: Double {
+        get { UserDefaults.keyOverlayScale }
+        set { UserDefaults.keyOverlayScale = newValue }
+    }
+    
+    /// Key overlay window opacity (0.2 - 1.0).
+    var keyOverlayOpacity: Double {
+        get { UserDefaults.keyOverlayOpacity }
+        set { UserDefaults.keyOverlayOpacity = newValue }
+    }
+    
+    /// Key overlay color theme: "dark" or "light".
+    var keyOverlayTheme: String {
+        get { UserDefaults.keyOverlayTheme }
+        set { UserDefaults.keyOverlayTheme = newValue }
+    }
 
+    /// Key overlay display mode: "keyboard" (full keyboard) or "hud" (center screen).
+    var keyOverlayMode: String {
+        get { UserDefaults.keyOverlayMode }
+        set { UserDefaults.keyOverlayMode = newValue }
+    }
+
+    /// Key HUD position: "center", "topLeft", "topRight", "bottomLeft", "bottomRight".
+    var keyOverlayHudPosition: String {
+        get { UserDefaults.keyOverlayHudPosition }
+        set { UserDefaults.keyOverlayHudPosition = newValue }
+    }
+}
 private extension UserDefaults {
     private enum Keys {
         static let openAtLogin = "openAtLogin"
@@ -147,6 +195,13 @@ private extension UserDefaults {
         static let autoEnableOnHeadphone = "autoEnableOnHeadphone"
         static let spatialAudioEnabled = "spatialAudioEnabled"
         static let spatialWidth = "spatialWidth"
+        static let keyOverlayEnabled = "keyOverlayEnabled"
+        static let keyOverlayClickThrough = "keyOverlayClickThrough"
+        static let keyOverlayScale = "keyOverlayScale"
+        static let keyOverlayOpacity = "keyOverlayOpacity"
+        static let keyOverlayTheme = "keyOverlayTheme"
+        static let keyOverlayMode = "keyOverlayMode"
+        static let keyOverlayHudPosition = "keyOverlayHudPosition"
     }
     
     static var openAtLogin: Bool {
@@ -338,6 +393,90 @@ private extension UserDefaults {
         }
         set {
             standard.set(SpatialMath.clampWidth(newValue), forKey: Keys.spatialWidth)
+        }
+    }
+    
+    static var keyOverlayEnabled: Bool {
+        get {
+            if standard.object(forKey: Keys.keyOverlayEnabled) == nil {
+                return SettingsManager.defaultKeyOverlayEnabled
+            }
+            return standard.bool(forKey: Keys.keyOverlayEnabled)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayEnabled)
+        }
+    }
+    
+    static var keyOverlayClickThrough: Bool {
+        get {
+            if standard.object(forKey: Keys.keyOverlayClickThrough) == nil {
+                return SettingsManager.defaultKeyOverlayClickThrough
+            }
+            return standard.bool(forKey: Keys.keyOverlayClickThrough)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayClickThrough)
+        }
+    }
+    
+    static var keyOverlayScale: Double {
+        get {
+            if standard.object(forKey: Keys.keyOverlayScale) == nil {
+                return SettingsManager.defaultKeyOverlayScale
+            }
+            return standard.double(forKey: Keys.keyOverlayScale)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayScale)
+        }
+    }
+    
+    static var keyOverlayOpacity: Double {
+        get {
+            if standard.object(forKey: Keys.keyOverlayOpacity) == nil {
+                return SettingsManager.defaultKeyOverlayOpacity
+            }
+            return standard.double(forKey: Keys.keyOverlayOpacity)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayOpacity)
+        }
+    }
+    
+    static var keyOverlayTheme: String {
+        get {
+            if standard.object(forKey: Keys.keyOverlayTheme) == nil {
+                return SettingsManager.defaultKeyOverlayTheme
+            }
+            return standard.string(forKey: Keys.keyOverlayTheme) ?? SettingsManager.defaultKeyOverlayTheme
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayTheme)
+        }
+    }
+
+    static var keyOverlayMode: String {
+        get {
+            if standard.object(forKey: Keys.keyOverlayMode) == nil {
+                return SettingsManager.defaultKeyOverlayMode
+            }
+            return standard.string(forKey: Keys.keyOverlayMode) ?? SettingsManager.defaultKeyOverlayMode
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayMode)
+        }
+    }
+
+    static var keyOverlayHudPosition: String {
+        get {
+            if standard.object(forKey: Keys.keyOverlayHudPosition) == nil {
+                return SettingsManager.defaultKeyOverlayHudPosition
+            }
+            return standard.string(forKey: Keys.keyOverlayHudPosition) ?? SettingsManager.defaultKeyOverlayHudPosition
+        }
+        set {
+            standard.set(newValue, forKey: Keys.keyOverlayHudPosition)
         }
     }
 }

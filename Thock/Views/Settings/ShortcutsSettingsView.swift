@@ -23,6 +23,24 @@ struct ShortcutsSettingsView: View {
                         control: AnyView(
                             KeyboardShortcuts.Recorder(L10n.toggleCleaningMode, name: .toggleCleaningMode)
                                 .labelsHidden()
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.keyOverlay,
+                        subtitle: L10n.keyOverlayShortcutSubtitle,
+                        control: AnyView(
+                            KeyboardShortcuts.Recorder(L10n.keyOverlay, name: .toggleKeyOverlay)
+                                .labelsHidden()
+                        )
+                    )
+                    
+                    SettingsRowView(
+                        title: L10n.keyOverlayControls,
+                        subtitle: L10n.keyOverlayControlsSubtitle,
+                        control: AnyView(
+                            KeyboardShortcuts.Recorder(L10n.keyOverlayControls, name: .toggleKeyOverlayControls)
+                                .labelsHidden()
                         ),
                         isLast: true
                     )

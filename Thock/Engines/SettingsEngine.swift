@@ -243,6 +243,143 @@ final class SettingsEngine {
         SettingsManager.shared.spatialWidth = width
     }
     
+    // MARK: - Key Overlay
+    
+    func toggleKeyOverlay() -> Bool {
+        let newState = !SettingsManager.shared.keyOverlayEnabled
+        setKeyOverlay(newState)
+        return newState
+    }
+    
+    func isKeyOverlayEnabled() -> Bool {
+        return SettingsManager.shared.keyOverlayEnabled
+    }
+    
+    func setKeyOverlay(_ enabled: Bool) {
+        SettingsManager.shared.keyOverlayEnabled = enabled
+        applyKeyOverlayVisibility()
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
+    /// Key overlay display mode: "keyboard" (full floating keyboard) or
+    /// "hud" (pressed keys shown briefly at the center of the screen).
+    func keyOverlayMode() -> String {
+        return SettingsManager.shared.keyOverlayMode
+    }
+
+    func setKeyOverlayMode(_ mode: String) {
+        SettingsManager.shared.keyOverlayMode = mode
+        applyKeyOverlayVisibility()
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
+    /// Key HUD position: "center", "topLeft", "topRight", "bottomLeft", "bottomRight".
+    func keyOverlayHudPosition() -> String {
+        return SettingsManager.shared.keyOverlayHudPosition
+    }
+
+    func setKeyOverlayHudPosition(_ position: String) {
+        SettingsManager.shared.keyOverlayHudPosition = position
+        KeyHudManager.shared.refreshPosition()
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+
+    /// Routes the persisted enabled flag to the matching overlay surface:
+    /// the full keyboard panel or the center-screen key HUD.
+    private func applyKeyOverlayVisibility() {
+        let enabled = SettingsManager.shared.keyOverlayEnabled
+        let mode = SettingsManager.shared.keyOverlayMode
+        KeyOverlayManager.shared.setEnabled(enabled && mode == "keyboard")
+        KeyHudManager.shared.setEnabled(enabled && mode == "hud")
+    }
+    
+    func toggleKeyOverlayClickThrough() -> Bool {
+        let newState = !SettingsManager.shared.keyOverlayClickThrough
+        setKeyOverlayClickThrough(newState)
+        return newState
+    }
+    
+    func isKeyOverlayClickThroughEnabled() -> Bool {
+        return SettingsManager.shared.keyOverlayClickThrough
+    }
+    
+    func setKeyOverlayClickThrough(_ enabled: Bool) {
+        SettingsManager.shared.keyOverlayClickThrough = enabled
+        KeyOverlayManager.shared.setClickThrough(enabled)
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    // MARK: - Key Overlay Appearance
+    
+    static let keyOverlayScaleStep: Double = 0.25
+    static let keyOverlayScaleRange: ClosedRange<Double> = 0.5...2.0
+    static let keyOverlayOpacityStep: Double = 0.1
+    static let keyOverlayOpacityRange: ClosedRange<Double> = 0.2...1.0
+    
+    func keyOverlayScale() -> Double {
+        return SettingsManager.shared.keyOverlayScale
+    }
+    
+    func setKeyOverlayScale(_ scale: Double) {
+        let clamped = min(max(scale, Self.keyOverlayScaleRange.lowerBound), Self.keyOverlayScaleRange.upperBound)
+        SettingsManager.shared.keyOverlayScale = clamped
+        KeyOverlayManager.shared.setScale(clamped)
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    func increaseKeyOverlayScale() {
+        setKeyOverlayScale(keyOverlayScale() + Self.keyOverlayScaleStep)
+    }
+    
+    func decreaseKeyOverlayScale() {
+        setKeyOverlayScale(keyOverlayScale() - Self.keyOverlayScaleStep)
+    }
+    
+    func keyOverlayOpacity() -> Double {
+        return SettingsManager.shared.keyOverlayOpacity
+    }
+    
+    func setKeyOverlayOpacity(_ opacity: Double) {
+        let clamped = min(max(opacity, Self.keyOverlayOpacityRange.lowerBound), Self.keyOverlayOpacityRange.upperBound)
+        SettingsManager.shared.keyOverlayOpacity = clamped
+        KeyOverlayManager.shared.setOpacity(clamped)
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    func increaseKeyOverlayOpacity() {
+        setKeyOverlayOpacity(keyOverlayOpacity() + Self.keyOverlayOpacityStep)
+    }
+    
+    func decreaseKeyOverlayOpacity() {
+        setKeyOverlayOpacity(keyOverlayOpacity() - Self.keyOverlayOpacityStep)
+    }
+    
+    func isKeyOverlayLightTheme() -> Bool {
+        return SettingsManager.shared.keyOverlayTheme == "light"
+    }
+    
+    func toggleKeyOverlayTheme() -> Bool {
+        let newTheme = isKeyOverlayLightTheme() ? "dark" : "light"
+        SettingsManager.shared.keyOverlayTheme = newTheme
+        KeyOverlayManager.shared.setTheme(newTheme)
+        KeyHudManager.shared.setTheme(newTheme)
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+        return newTheme == "light"
+    }
+    
+    func setKeyOverlayLightTheme(_ isLight: Bool) {
+        let newTheme = isLight ? "light" : "dark"
+        guard SettingsManager.shared.keyOverlayTheme != newTheme else { return }
+        SettingsManager.shared.keyOverlayTheme = newTheme
+        KeyOverlayManager.shared.setTheme(newTheme)
+        KeyHudManager.shared.setTheme(newTheme)
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+    }
+    
+    func resetKeyOverlayPosition() {
+        KeyOverlayManager.shared.resetPosition()
+    }
+    
     // MARK: - Headphone Auto-Enable
     
     func isAutoEnableOnHeadphoneEnabled() -> Bool {
