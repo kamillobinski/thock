@@ -24,6 +24,9 @@ class LatencyTracker {
     private var measurements: [UUID: LatencyMeasurement] = [:]
     private let queue = DispatchQueue(label: "dev.kamillobinski.Thock.latency", qos: .userInteractive)
     
+    /// How long a measurement may sit unfinished before it is dropped.
+    private static let staleMeasurementLifetime: CFAbsoluteTime = 5.0
+
     private struct LatencyMeasurement {
         let id: UUID
         let startTime: CFAbsoluteTime
@@ -47,10 +50,15 @@ class LatencyTracker {
         guard ENABLE_LATENCY_MEASUREMENT else { return nil }
         
         let id = UUID()
-        let measurement = LatencyMeasurement(id: id, startTime: CFAbsoluteTimeGetCurrent())
+        let startedAt = CFAbsoluteTimeGetCurrent()
+        let measurement = LatencyMeasurement(id: id, startTime: startedAt)
         
         queue.async { [weak self] in
-            self?.measurements[id] = measurement
+            guard let self = self else { return }
+            // complete() only runs when a sound actually renders, so a keystroke that
+            // never resolves to a sound would otherwise leave its entry behind forever.
+            self.pruneMeasurements(olderThan: startedAt - Self.staleMeasurementLifetime)
+            self.measurements[id] = measurement
         }
         
         return id
@@ -111,6 +119,11 @@ class LatencyTracker {
     
     // MARK: - Private Helpers
     
+    /// Drops measurements that never completed. Only called on `queue`.
+    private func pruneMeasurements(olderThan cutoff: CFAbsoluteTime) {
+        measurements = measurements.filter { $0.value.startTime >= cutoff }
+    }
+
     private func logResults(totalLatency: Double, checkpoints: [(LatencyPoint, Double)]) {
         var output = "Audio Engine Latency:\n\n"
         for (point, latency) in checkpoints {
@@ -122,7 +135,7 @@ class LatencyTracker {
         
         if measuredHardwareLatencyMs > 0 {
             let totalRealLatency = totalLatency + measuredHardwareLatencyMs
-            let realLabel = "Total (real):".padding(toLength: 18, withPad: " ", startingAt: 0)
+            let realLabel = "Total (estimated):".padding(toLength: 18, withPad: " ", startingAt: 0)
             output += String(format: "%@  %.2f ms (measured + HW %.2f ms)\n\n", realLabel, totalRealLatency, measuredHardwareLatencyMs)
         } else {
             output += "\n"
@@ -152,87 +165,89 @@ func completeLatencyMeasurement(_ id: UUID?) {
     LatencyTracker.shared.complete(id)
 }
 
-/// Measures and reports the actual audio latency from the hardware.
-/// - Parameter deviceID: The audio device to measure
-/// - Returns: The total hardware latency in milliseconds
+// MARK: - CoreAudio Property Reading
+
+/// Reads a Float64 property, returning nil when the query fails.
+private func readAudioPropertyFloat64(
+    _ deviceID: AudioDeviceID,
+    _ selector: AudioObjectPropertySelector,
+    scope: AudioObjectPropertyScope
+) -> Float64? {
+    var value: Float64 = 0
+    var size = UInt32(MemoryLayout<Float64>.size)
+    var address = AudioObjectPropertyAddress(
+        mSelector: selector,
+        mScope: scope,
+        mElement: kAudioObjectPropertyElementMain
+    )
+    guard AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &value) == noErr else {
+        return nil
+    }
+    return value
+}
+
+/// Reads a UInt32 property, returning nil when the query fails.
+private func readAudioPropertyUInt32(
+    _ deviceID: AudioDeviceID,
+    _ selector: AudioObjectPropertySelector,
+    scope: AudioObjectPropertyScope
+) -> UInt32? {
+    var value: UInt32 = 0
+    var size = UInt32(MemoryLayout<UInt32>.size)
+    var address = AudioObjectPropertyAddress(
+        mSelector: selector,
+        mScope: scope,
+        mElement: kAudioObjectPropertyElementMain
+    )
+    guard AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &value) == noErr else {
+        return nil
+    }
+    return value
+}
+
+/// Estimates the device contribution to latency from reported hardware properties.
+/// This does not measure end-to-end playback or the current AudioQueue depth.
+/// - Returns: The estimate in milliseconds, or 0 when a property is unavailable.
 @discardableResult
 func measureHardwareLatency(deviceID: AudioDeviceID) -> Double {
-    var sampleRate: Float64 = 0
-    var dataSize = UInt32(MemoryLayout<Float64>.size)
-    var sampleRateAddress = AudioObjectPropertyAddress(
-        mSelector: kAudioDevicePropertyNominalSampleRate,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMain
-    )
-    
-    // Get sample rate
-    AudioObjectGetPropertyData(
+    // Every query below used to ignore its status, so a failed sample rate lookup left
+    // this at zero and each division produced inf or NaN, which then propagated into the
+    // reported total as the hardware term.
+    guard let sampleRate = readAudioPropertyFloat64(
         deviceID,
-        &sampleRateAddress,
-        0,
-        nil,
-        &dataSize,
-        &sampleRate
-    )
+        kAudioDevicePropertyNominalSampleRate,
+        scope: kAudioObjectPropertyScopeGlobal
+    ), sampleRate.isFinite, sampleRate > 0 else {
+        Logger.latency.error("Cannot measure hardware latency: nominal sample rate unavailable")
+        LatencyTracker.shared.setHardwareLatency(0)
+        return 0
+    }
     
-    // Get actual buffer size
-    var actualBufferSize: UInt32 = 0
-    var bufferSizeSize = UInt32(MemoryLayout<UInt32>.size)
-    var bufferAddress = AudioObjectPropertyAddress(
-        mSelector: kAudioDevicePropertyBufferFrameSize,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMain
-    )
-    
-    AudioObjectGetPropertyData(
+    guard let actualBufferSize = readAudioPropertyUInt32(
         deviceID,
-        &bufferAddress,
-        0,
-        nil,
-        &bufferSizeSize,
-        &actualBufferSize
-    )
-    
-    // Get device latency
-    var deviceLatency: UInt32 = 0
-    var latencySize = UInt32(MemoryLayout<UInt32>.size)
-    var latencyAddress = AudioObjectPropertyAddress(
-        mSelector: kAudioDevicePropertyLatency,
-        mScope: kAudioDevicePropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMain
-    )
-    
-    AudioObjectGetPropertyData(
+        kAudioDevicePropertyBufferFrameSize,
+        scope: kAudioObjectPropertyScopeGlobal
+    ), let deviceLatency = readAudioPropertyUInt32(
         deviceID,
-        &latencyAddress,
-        0,
-        nil,
-        &latencySize,
-        &deviceLatency
-    )
-    
-    // Get safety offset
-    var safetyOffset: UInt32 = 0
-    var safetySize = UInt32(MemoryLayout<UInt32>.size)
-    var safetyAddress = AudioObjectPropertyAddress(
-        mSelector: kAudioDevicePropertySafetyOffset,
-        mScope: kAudioDevicePropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMain
-    )
-    
-    AudioObjectGetPropertyData(
+        kAudioDevicePropertyLatency,
+        scope: kAudioDevicePropertyScopeOutput
+    ), let safetyOffset = readAudioPropertyUInt32(
         deviceID,
-        &safetyAddress,
-        0,
-        nil,
-        &safetySize,
-        &safetyOffset
-    )
+        kAudioDevicePropertySafetyOffset,
+        scope: kAudioDevicePropertyScopeOutput
+    ) else {
+        Logger.latency.error("Cannot estimate hardware latency: device timing property unavailable")
+        LatencyTracker.shared.setHardwareLatency(0)
+        return 0
+    }
+
+    func milliseconds(forFrames frames: UInt32) -> Double {
+        (Double(frames) / sampleRate) * 1000.0
+    }
     
-    // Calculate latencies in ms
-    let bufferLatencyMs = (Double(actualBufferSize) / sampleRate) * 1000.0
-    let deviceLatencyMs = (Double(deviceLatency) / sampleRate) * 1000.0
-    let safetyOffsetMs = (Double(safetyOffset) / sampleRate) * 1000.0
+    let bufferLatencyMs = milliseconds(forFrames: actualBufferSize)
+    let deviceLatencyMs = milliseconds(forFrames: deviceLatency)
+    let safetyOffsetMs = milliseconds(forFrames: safetyOffset)
     let totalHardwareLatencyMs = bufferLatencyMs + deviceLatencyMs + safetyOffsetMs
     
     let sampleLabel = "Sample Rate:".padding(toLength: 20, withPad: " ", startingAt: 0)
@@ -242,7 +257,7 @@ func measureHardwareLatency(deviceID: AudioDeviceID) -> Double {
     let safetyLabel = "- Safety Offset:".padding(toLength: 20, withPad: " ", startingAt: 0)
     let totalLabel = "Total:".padding(toLength: 20, withPad: " ", startingAt: 0)
     
-    var output = "Audio Hardware Latency:\n\n"
+    var output = "Audio Hardware Latency Estimate:\n\n"
     output += String(format: "%@%.1f kHz\n", sampleLabel, sampleRate / 1000.0)
     output += String(format: "%@%d frames\n", bufferLabel, actualBufferSize)
     output += String(format: "%@%.2f ms\n", ioLabel, bufferLatencyMs)
