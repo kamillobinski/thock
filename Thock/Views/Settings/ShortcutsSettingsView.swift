@@ -41,6 +41,24 @@ struct ShortcutsSettingsView: View {
                         control: AnyView(
                             KeyboardShortcuts.Recorder(L10n.keyOverlayControls, name: .toggleKeyOverlayControls)
                                 .labelsHidden()
+                        )
+                    )
+
+                    SettingsRowView(
+                        title: L10n.nextKeyboardSoundpack,
+                        subtitle: L10n.nextKeyboardSoundpackSubtitle,
+                        control: AnyView(
+                            KeyboardShortcuts.Recorder(L10n.nextKeyboardSoundpack, name: .nextKeyboardSoundpack)
+                                .labelsHidden()
+                        )
+                    )
+
+                    SettingsRowView(
+                        title: L10n.previousKeyboardSoundpack,
+                        subtitle: L10n.previousKeyboardSoundpackSubtitle,
+                        control: AnyView(
+                            KeyboardShortcuts.Recorder(L10n.previousKeyboardSoundpack, name: .previousKeyboardSoundpack)
+                                .labelsHidden()
                         ),
                         isLast: true
                     )
