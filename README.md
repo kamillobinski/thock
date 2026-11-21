@@ -83,7 +83,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
   <tbody>
     <tr>
       <td><b>Custom Engine</b></td>
-      <td>Native AudioQueue APIs achieving ultra-low latency for perfectly synced feedback.</td>
+      <td>Native Core Audio APIs achieving ultra-low latency for perfectly synced feedback.</td>
     </tr>
     <tr>
       <td><b>Sound Library</b></td>
@@ -111,7 +111,7 @@ Started this project to challenge the status quo. While paid alternatives exist,
 
 ### Custom Engine
 
-Features a custom audio engine built on native macOS AudioQueue APIs, achieving ultra-low latency that feels instantaneous. By bypassing standard high-level processing layers, we have eliminated perceptual lag to provide perfectly synced auditory feedback.
+Features a custom audio engine built on native macOS Core Audio APIs, achieving ultra-low latency that feels instantaneous. By bypassing standard high-level processing layers, we have eliminated perceptual lag to provide perfectly synced auditory feedback.
 
 Whether you are a high-speed programmer or a creative writer, Thock ensures every keystroke is met with organic, realtime sound that keeps pace with your fastest workflow.
 

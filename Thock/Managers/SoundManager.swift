@@ -19,17 +19,19 @@ final class SoundManager {
     
     // MARK: - Audio Queue State
     // Serialize queue lifetime operations. Render callbacks must not take this lock:
-    // synchronous Stop/Dispose waits for callbacks before buffers/formats are replaced.
+    // synchronous Stop/Dispose waits for callbacks before formats are replaced.
     private let audioLifecycleLock = NSRecursiveLock()
-    private var audioQueue: AudioQueueRef?
-    private let numberOfBuffers = 3
-    private var audioBuffers: [AudioQueueBufferRef] = []
+    /// HAL output unit. Its render callback runs inside the device's IO cycle, so a new
+    /// voice reaches the device in the next buffer with nothing queued ahead of it.
+    private var outputUnit: AudioUnit?
+    /// Upper bound on the frames one IO cycle can ask for, above any buffer size a device reports
+    private static let maximumFramesPerSlice: UInt32 = 4096
     private var isQueueRunning = false
     private var audioQueueGeneration: UInt64 = 0 // Incremented on each reinitialization to detect stale references
     private var initRetryCount: Int = 0
     private var idleTimeoutTimer: DispatchSourceTimer?
     private let timerLock = NSLock()
-    private let queueStateLock = NSLock() // Protects audioQueue, isQueueRunning, isReady, initRetryCount and audioQueueGeneration
+    private let queueStateLock = NSLock() // Protects outputUnit, isQueueRunning, isReady, initRetryCount and audioQueueGeneration
     
     private let playbackRecovery = PlaybackRecoveryGuard()
 
@@ -58,7 +60,9 @@ final class SoundManager {
     private var soundLibrary: [String: PCMSound] = [:]
     private var mouseSoundLibrary: [MouseButtonEvent: [PCMSound]] = [:]
     private var activeSounds: [ActiveSound] = []
-    private let activeSoundsLock = NSLock()
+    // The render callback takes this lock and the volume lock on the device's realtime
+    // thread. Unfair locks hand that thread's priority to whoever holds them.
+    private let activeSoundsLock = OSAllocatedUnfairLock()
     
     // MARK: - Spatial Audio (guarded by activeSoundsLock)
     private var spatialRenderer: SpatialRenderer?
@@ -71,7 +75,7 @@ final class SoundManager {
     // MARK: - Volume Control
     private var volumeLevels = VolumeLevels(master: 0.5)
     private var softClippingEnabled = SettingsEngine.shared.isSoftClippingEnabled()
-    private let volumeLock = NSLock()
+    private let volumeLock = OSAllocatedUnfairLock()
     
     // MARK: - Models
     final class PCMSound {
@@ -394,13 +398,12 @@ final class SoundManager {
         // Stop and dispose current audio queue
         queueStateLock.lock()
         audioQueueGeneration += 1
-        let queue = audioQueue
+        let unit = outputUnit
         queueStateLock.unlock()
         
         let latestSound = stopPlayback(preservingLatestSound: preservingLatestSound) {
-            if let queue {
-                AudioQueueStop(queue, true)
-                AudioQueueDispose(queue, true)
+            if let unit {
+                Self.dispose(unit)
             }
         }
         
@@ -408,8 +411,7 @@ final class SoundManager {
         queueStateLock.lock()
         currentBufferSize = newBufferSize
         framesPerBuffer = newBufferSize
-        audioQueue = nil
-        audioBuffers = []
+        outputUnit = nil
         isQueueRunning = false
         isReady = false
         if !isRetry {
@@ -433,8 +435,8 @@ final class SoundManager {
     func stopPlayback(preservingLatestSound: Bool, stopQueue: () -> Void) -> ActiveSound? {
         audioLifecycleLock.lock()
         defer { audioLifecycleLock.unlock() }
-        // Immediate Stop can return pending buffers through render callbacks. Detach
-        // voices first so those callbacks cannot consume the one we intend to retain.
+        // A render callback can still run while the unit stops. Detach voices
+        // first so it cannot consume the one we intend to retain.
         activeSoundsLock.lock()
         let latestSound = preservingLatestSound ? activeSounds.last : nil
         activeSounds.removeAll()
@@ -455,10 +457,16 @@ final class SoundManager {
         outputKindMonitor.update(deviceID: nil)
         NotificationCenter.default.removeObserver(self)
         idleTimeoutTimer?.cancel()
-        if let queue = audioQueue {
-            AudioQueueStop(queue, true)
-            AudioQueueDispose(queue, true)
+        if let unit = outputUnit {
+            Self.dispose(unit)
         }
+    }
+    
+    /// Stops and releases an output unit. Stop returns once its render callback can no longer run.
+    private static func dispose(_ unit: AudioUnit) {
+        AudioOutputUnitStop(unit)
+        AudioUnitUninitialize(unit)
+        AudioComponentInstanceDispose(unit)
     }
     
     // MARK: - Idle Timeout Management
@@ -500,11 +508,11 @@ final class SoundManager {
         
         queueStateLock.lock()
         let isRunning = isQueueRunning
-        let queue = audioQueue
+        let unit = outputUnit
         let generation = audioQueueGeneration
         queueStateLock.unlock()
         
-        guard isEmpty && isRunning, let queue = queue else { return }
+        guard isEmpty && isRunning, let unit else { return }
         
         // Validate generation before calling core audio api
         queueStateLock.lock()
@@ -516,7 +524,7 @@ final class SoundManager {
             return
         }
         
-        let status = AudioQueueStop(queue, true)
+        let status = AudioOutputUnitStop(unit)
         if status == noErr {
             queueStateLock.lock()
             // Update state only if queue hasnt been reinitialized
@@ -538,11 +546,11 @@ final class SoundManager {
 
         queueStateLock.lock()
         let isRunning = isQueueRunning
-        let queue = audioQueue
+        let unit = outputUnit
         let generation = audioQueueGeneration
         queueStateLock.unlock()
         
-        guard !isRunning, let queue = queue else { return }
+        guard !isRunning, let unit else { return }
         
         // Validate generation before calling core audio api
         queueStateLock.lock()
@@ -554,13 +562,7 @@ final class SoundManager {
             return
         }
         
-        // Re-prime all buffers
-        Logger.audio.debug("Re-priming \(self.audioBuffers.count) buffers before restart")
-        for buffer in audioBuffers {
-            primeBuffer(buffer, queue: queue)
-        }
-        
-        let status = AudioQueueStart(queue, nil)
+        let status = AudioOutputUnitStart(unit)
         if status == noErr {
             queueStateLock.lock()
             // Update state only if queue hasnt been reinitialized
@@ -670,76 +672,56 @@ final class SoundManager {
     
     // MARK: - Audio Queue Creation
     
-    /// Uses AudioQueue's internal callback thread, independently of the UI run loop.
+    /// Renders on the device's IO thread, independently of the UI run loop.
     private func createAudioQueue() {
         audioLifecycleLock.lock()
         defer { audioLifecycleLock.unlock() }
         createAudioQueueInternal()
     }
 
-    /// Internal audio queue creation
+    /// Internal output unit creation
     private func createAudioQueueInternal() {
-        let selfPointer = Unmanaged.passUnretained(self).toOpaque()
-        
-        let status = AudioQueueNewOutput(
-            &audioFormat,
-            audioQueueCallback,
-            selfPointer,
-            nil, // Let AudioQueue deliver render callbacks on its internal thread.
-            nil,
-            0,
-            &audioQueue
-        )
-        
-        guard status == noErr, let queue = audioQueue else {
-            Logger.audio.error("Audio queue creation failed with status: \(status)")
-            return
-        }
-        
-        // Allocate buffers
-        let bufferSize = framesPerBuffer * audioFormat.mBytesPerFrame
-        for _ in 0..<numberOfBuffers {
-            var buffer: AudioQueueBufferRef?
-            let allocStatus = AudioQueueAllocateBuffer(queue, bufferSize, &buffer)
-            if allocStatus == noErr, let buffer = buffer {
-                audioBuffers.append(buffer)
-                // Prime the buffer
-                primeBuffer(buffer, queue: queue)
-            } else {
-                Logger.audio.error("Buffer allocation failed with status: \(allocStatus)")
-            }
-        }
-        
-        // Verify allocated all buffers
-        guard audioBuffers.count == numberOfBuffers else {
-            Logger.audio.error("Incomplete buffer allocation: \(self.audioBuffers.count)/\(self.numberOfBuffers)")
-            disposeAudioQueueAndScheduleRetry(queue)
-            return
-        }
-        
-        // Set output device for the audio queue (if not available, abort starting the queue)
+        // A HAL unit plays through the device it is bound to and nothing else, so an
+        // unavailable preferred device aborts here instead of falling back to the default.
         guard let deviceID = getPreferredOutputDeviceID() else {
-            Logger.audio.error("Preferred audio device unavailable, cleaning up and scheduling retry")
-            disposeAudioQueueAndScheduleRetry(queue)
+            Logger.audio.error("Preferred audio device unavailable, scheduling retry")
+            disposeOutputUnitAndScheduleRetry(nil)
             return
         }
         
-        guard setAudioQueueOutputDevice(queue, deviceID: deviceID) else {
-            // Never start a default-routed queue when binding the preferred device fails.
-            disposeAudioQueueAndScheduleRetry(queue)
+        var description = AudioComponentDescription(
+            componentType: kAudioUnitType_Output,
+            componentSubType: kAudioUnitSubType_HALOutput,
+            componentManufacturer: kAudioUnitManufacturer_Apple,
+            componentFlags: 0,
+            componentFlagsMask: 0
+        )
+        var newUnit: AudioUnit?
+        guard let component = AudioComponentFindNext(nil, &description),
+              AudioComponentInstanceNew(component, &newUnit) == noErr, let unit = newUnit else {
+            Logger.audio.error("Output unit creation failed, scheduling retry")
+            disposeOutputUnitAndScheduleRetry(nil)
+            return
+        }
+        
+        let setupStatus = configure(unit, deviceID: deviceID)
+        guard setupStatus == noErr else {
+            Logger.audio.error("Output unit setup failed with status: \(setupStatus), cleaning up and scheduling retry")
+            disposeOutputUnitAndScheduleRetry(unit)
             return
         }
         refreshOutputKind()
         
-        // Start the queue
-        let startStatus = AudioQueueStart(queue, nil)
+        // Start rendering
+        let startStatus = AudioOutputUnitStart(unit)
         guard startStatus == noErr else {
-            Logger.audio.error("Audio queue start failed with status: \(startStatus), cleaning up and scheduling retry")
-            disposeAudioQueueAndScheduleRetry(queue)
+            Logger.audio.error("Output unit start failed with status: \(startStatus), cleaning up and scheduling retry")
+            disposeOutputUnitAndScheduleRetry(unit)
             return
         }
         
         queueStateLock.lock()
+        outputUnit = unit
         isQueueRunning = true
         isReady = true
         initRetryCount = 0
@@ -751,13 +733,43 @@ final class SoundManager {
         
         Logger.audio.info("Audio system initialized successfully")
     }
+    
+    /// Routes the unit to the device, installs the render callback and initializes it.
+    /// Returns the status of the first step that failed.
+    private func configure(_ unit: AudioUnit, deviceID: AudioDeviceID) -> OSStatus {
+        func set<Value>(_ property: AudioUnitPropertyID, scope: AudioUnitScope, to value: Value) -> OSStatus {
+            var value = value
+            return AudioUnitSetProperty(unit, property, scope, 0, &value, UInt32(MemoryLayout<Value>.size))
+        }
+        let callback = AURenderCallbackStruct(inputProc: renderCallback,
+                                              inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
+        
+        var status = set(kAudioOutputUnitProperty_CurrentDevice, scope: kAudioUnitScope_Global, to: deviceID)
+        if status == noErr {
+            status = set(kAudioUnitProperty_MaximumFramesPerSlice, scope: kAudioUnitScope_Global, to: Self.maximumFramesPerSlice)
+        }
+        if status == noErr {
+            status = set(kAudioUnitProperty_StreamFormat, scope: kAudioUnitScope_Input, to: audioFormat)
+        }
+        if status == noErr {
+            status = set(kAudioUnitProperty_SetRenderCallback, scope: kAudioUnitScope_Input, to: callback)
+        }
+        if status == noErr {
+            status = AudioUnitInitialize(unit)
+        }
+        if status == noErr {
+            Logger.audio.info("Output unit routed to device: \(deviceID)")
+        }
+        return status
+    }
 
     /// Caller holds audioLifecycleLock. Ignore this retry if another initialization supersedes it.
-    private func disposeAudioQueueAndScheduleRetry(_ queue: AudioQueueRef) {
-        AudioQueueDispose(queue, true)
+    private func disposeOutputUnitAndScheduleRetry(_ unit: AudioUnit?) {
+        if let unit {
+            Self.dispose(unit)
+        }
         queueStateLock.lock()
-        audioQueue = nil
-        audioBuffers = []
+        outputUnit = nil
         isReady = false
         isQueueRunning = false
         let generation = audioQueueGeneration
@@ -772,7 +784,7 @@ final class SoundManager {
             self.audioLifecycleLock.lock()
             defer { self.audioLifecycleLock.unlock() }
             self.queueStateLock.lock()
-            let needsRetry = self.audioQueueGeneration == generation && !self.isReady && self.audioQueue == nil
+            let needsRetry = self.audioQueueGeneration == generation && !self.isReady && self.outputUnit == nil
             self.queueStateLock.unlock()
             guard needsRetry else { return }
             self.reinitializeAudioQueue(with: self.currentBufferSize, isRetry: true)
@@ -780,21 +792,27 @@ final class SoundManager {
     }
     
     // MARK: - Audio Callback
-    private let audioQueueCallback: AudioQueueOutputCallback = { userData, queue, buffer in
-        guard let userData = userData else { return }
+    private let renderCallback: AURenderCallback = { userData, _, _, _, frameCount, data in
+        guard let outputBuffer = data?.pointee.mBuffers.mData else { return noErr }
         let manager = Unmanaged<SoundManager>.fromOpaque(userData).takeUnretainedValue()
-        manager.fillBuffer(buffer, queue: queue)
+        manager.fillOutput(outputBuffer.assumingMemoryBound(to: Float.self), frameCount: Int(frameCount))
+        return noErr
     }
     
-    private func fillBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
+    /// Fills one IO cycle. The device decides how many frames a cycle asks for, so they are
+    /// rendered in blocks no larger than the configured buffer, the size the spatial renderer holds.
+    func fillOutput(_ outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         playbackRecovery.recordCallback()
-        let outputBuffer = buffer.pointee.mAudioData.assumingMemoryBound(to: Float.self)
-        renderSamples(into: outputBuffer, frameCount: Int(framesPerBuffer))
-        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
-        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+        let blockFrames = max(Int(framesPerBuffer), 1)
+        var rendered = 0
+        while rendered < frameCount {
+            let frames = min(blockFrames, frameCount - rendered)
+            renderSamples(into: outputBuffer + rendered * Int(channelCount), frameCount: frames)
+            rendered += frames
+        }
     }
 
-    /// Renders interleaved stereo PCM before ownership of the buffer returns to AudioQueue.
+    /// Renders interleaved stereo PCM into the block the device is about to play.
     func renderSamples(into outputBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         activeSoundsLock.lock()
         
@@ -803,7 +821,7 @@ final class SoundManager {
         
         if activeSounds.isEmpty && (renderer?.isIdle ?? true) {
             // No active sounds or spatial tails, output silence and return early.
-            // Always clear, a buffer re-enqueued with stale samples would loop them until the next sound
+            // Always clear, the device hands over the buffer with whatever it held before
             activeSoundsLock.unlock()
             memset(outputBuffer, 0, frameCount * Int(channelCount) * MemoryLayout<Float>.size)
             return
@@ -893,8 +911,8 @@ final class SoundManager {
         defer { audioLifecycleLock.unlock() }
         queueStateLock.lock()
         let generation = audioQueueGeneration
-        let expectedRunning = isReady && isQueueRunning && audioQueue != nil
-        let queue = audioQueue
+        let expectedRunning = isReady && isQueueRunning && outputUnit != nil
+        let unit = outputUnit
         queueStateLock.unlock()
         activeSoundsLock.lock()
         let pendingCount = activeSounds.count
@@ -905,32 +923,25 @@ final class SoundManager {
         guard playbackRecovery.authorizeRecovery(probe, generation: generation,
                 expectedRunning: expectedRunning, hasPendingSounds: pendingCount > 0,
                 deviceAvailable: deviceAvailable, now: ProcessInfo.processInfo.systemUptime),
-              let queue else {
+              let unit else {
             if deviceAvailable {
                 schedulePlaybackProgressCheck()
             }
             return
         }
 
-        // The running flag can remain true even when buffers stop returning. Log the
+        // The running flag can remain true even when render callbacks stop. Log the
         // actual CoreAudio property, but base recovery on missing callback progress.
         var actualRunning: UInt32 = 0
         var propertySize = UInt32(MemoryLayout<UInt32>.size)
-        let status = AudioQueueGetProperty(queue, kAudioQueueProperty_IsRunning, &actualRunning, &propertySize)
+        let status = AudioUnitGetProperty(unit, kAudioOutputUnitProperty_IsRunning, kAudioUnitScope_Global, 0,
+                                          &actualRunning, &propertySize)
         Logger.audio.warning("Audio recovery: no callbacks after playback demand; generation=\(generation) pending=\(pendingCount) actualRunning=\(actualRunning) propertyStatus=\(status)")
         reinitializeAudioQueue(with: currentBufferSize, preservingLatestSound: true)
         updateVolumeFromSettings()
         schedulePlaybackProgressCheck()
     }
 
-    private func primeBuffer(_ buffer: AudioQueueBufferRef, queue: AudioQueueRef) {
-        // Fill with silence and enqueue
-        let bufferData = buffer.pointee.mAudioData
-        memset(bufferData, 0, Int(framesPerBuffer * audioFormat.mBytesPerFrame))
-        buffer.pointee.mAudioDataByteSize = framesPerBuffer * audioFormat.mBytesPerFrame
-        AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
-    }
-    
     // MARK: - Public API
     
     func play(sound name: String, pitchVariation: Float = 0.0, latencyId: UUID? = nil, position: SoundPosition? = nil) {
@@ -1256,50 +1267,6 @@ final class SoundManager {
         }
         
         return nil
-    }
-    
-    /// Sets the output device for an audio queue
-    private func setAudioQueueOutputDevice(_ queue: AudioQueueRef, deviceID: AudioDeviceID) -> Bool {
-        // Get device uid
-        var deviceUIDCF: Unmanaged<CFString>?
-        var uidSize = UInt32(MemoryLayout<Unmanaged<CFString>>.size)
-        var uidAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioDevicePropertyDeviceUID,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        
-        let uidStatus = AudioObjectGetPropertyData(
-            deviceID,
-            &uidAddress,
-            0,
-            nil,
-            &uidSize,
-            &deviceUIDCF
-        )
-        
-        guard uidStatus == noErr, let uid = deviceUIDCF?.takeRetainedValue() else {
-            Logger.audio.error("Failed to get device UID for AudioQueue routing: \(uidStatus)")
-            return false
-        }
-        
-        // Set the output device on the audio queue
-        var uidRef: CFString = uid
-        let queueStatus = withUnsafePointer(to: &uidRef) { pointer in
-            AudioQueueSetProperty(
-                queue,
-                kAudioQueueProperty_CurrentDevice,
-                pointer,
-                UInt32(MemoryLayout<CFString>.size)
-            )
-        }
-        
-        if queueStatus == noErr {
-            Logger.audio.info("Audio queue routed to device: \(uid)")
-        } else {
-            Logger.audio.error("Failed to set audio queue device: \(queueStatus)")
-        }
-        return queueStatus == noErr
     }
     
     func getCurrentOutputDeviceUID() -> String {

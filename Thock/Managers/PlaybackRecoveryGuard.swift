@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Pending playback keeps one delayed check armed. Silence alone never arms recovery.
 /// Callbacks only increment a counter; they never touch queue lifecycle state.
@@ -13,7 +14,7 @@ final class PlaybackRecoveryGuard {
 
     let observationInterval: TimeInterval
     private let cooldown: TimeInterval
-    private let lock = NSLock()
+    private let lock = OSAllocatedUnfairLock()
     private var callbacks: UInt64 = 0
     private var nextID: UInt64 = 0
     private var pending: Probe?
