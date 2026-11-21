@@ -78,12 +78,15 @@ final class SoundManager {
         /// Interleaved stereo
         let data: [Float]
         let frameCount: Int
+        /// Rate the samples were recorded at, nil when they already match the output
+        let sampleRate: Double?
         private var monoCache: [Float]?
         private let monoLock = NSLock()
         
-        init(data: [Float], frameCount: Int) {
+        init(data: [Float], frameCount: Int, sampleRate: Double? = nil) {
             self.data = data
             self.frameCount = frameCount
+            self.sampleRate = sampleRate
         }
         
         /// Mono downmix fed to the spatial mixer, built on first use so it costs no memory while
@@ -100,7 +103,11 @@ final class SoundManager {
     
     final class ActiveSound {
         let sound: PCMSound
+        /// Pitch as a playback rate, 1 plays the sound as recorded
         let rate: Double
+        /// Source frames consumed per output frame: the pitch rate scaled by the
+        /// ratio of the sound's sample rate to the output's
+        let step: Double
         var sourcePosition: Double = 0
         let latencyId: UUID?
         var hasReportedPlayback: Bool = false
@@ -112,9 +119,10 @@ final class SoundManager {
         let source: VolumeLevels.Source
         let position: SoundPosition?
 
-        init(sound: PCMSound, rate: Double, latencyId: UUID?, gains: (left: Float, right: Float), bus: Int?, mono: [Float]?, source: VolumeLevels.Source, position: SoundPosition?) {
+        init(sound: PCMSound, rate: Double, outputSampleRate: Double, latencyId: UUID?, gains: (left: Float, right: Float), bus: Int?, mono: [Float]?, source: VolumeLevels.Source, position: SoundPosition?) {
             self.sound = sound
             self.rate = rate
+            self.step = rate * (sound.sampleRate ?? outputSampleRate) / outputSampleRate
             self.latencyId = latencyId
             self.gains = gains
             self.bus = bus
@@ -834,7 +842,7 @@ final class SoundManager {
                 _ = mono.withUnsafeBufferPointer { pcm in
                     Resampler.mix(
                         source: pcm, channels: 1, frameCount: sound.sound.frameCount,
-                        position: &sound.sourcePosition, rate: sound.rate,
+                        position: &sound.sourcePosition, rate: sound.step,
                         into: renderer.busInput(bus), outChannels: 1, outFrames: frameCount,
                         gains: (sourceGain, sourceGain)
                     )
@@ -846,7 +854,7 @@ final class SoundManager {
                 _ = sound.sound.data.withUnsafeBufferPointer { pcm in
                     Resampler.mix(
                         source: pcm, channels: Int(channelCount), frameCount: sound.sound.frameCount,
-                        position: &sound.sourcePosition, rate: sound.rate,
+                        position: &sound.sourcePosition, rate: sound.step,
                         into: outputBuffer, outChannels: Int(channelCount), outFrames: frameCount,
                         gains: (sound.gains.left * currentVolume, sound.gains.right * currentVolume)
                     )
@@ -996,7 +1004,7 @@ final class SoundManager {
         let route = SpatialMath.route(position: position, spatialEnabled: spatialEnabled, outputKind: outputKind) {
             mono == nil ? nil : renderer?.acquireBus(position: $0)
         }
-        activeSounds.append(ActiveSound(sound: pcmSound, rate: rate, latencyId: latencyId,
+        activeSounds.append(ActiveSound(sound: pcmSound, rate: rate, outputSampleRate: sampleRate, latencyId: latencyId,
                                         gains: route.gains, bus: route.bus, mono: route.bus == nil ? nil : mono,
                                         source: source, position: position))
         activeSoundsLock.unlock()
@@ -1133,7 +1141,7 @@ final class SoundManager {
                 return nil
             }
             
-            return PCMSound(data: pcmData, frameCount: Int(buffer.frameLength))
+            return PCMSound(data: pcmData, frameCount: Int(buffer.frameLength), sampleRate: format.sampleRate)
             
         } catch {
             Logger.audio.error("PCM decode failed: \(error.localizedDescription)")

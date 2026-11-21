@@ -3,6 +3,25 @@ import Testing
 @testable import Thock
 
 struct SoundRenderingTests {
+    /// Frames of output that carry signal when one sound is rendered on its own
+    private func renderedFrames(of sound: SoundManager.PCMSound) -> Int {
+        let manager = SoundManager(audioOutputEnabled: false)
+        manager.enqueue(sound, pitchVariation: 0, latencyId: nil, position: nil, source: .keyboard)
+        var output = [Float](repeating: 0, count: 1024)
+        output.withUnsafeMutableBufferPointer {
+            manager.renderSamples(into: $0.baseAddress!, frameCount: 512)
+        }
+        return stride(from: 0, to: output.count, by: 2).count { output[$0] != 0 }
+    }
+
+    // The offline manager renders at 44.1 kHz
+    @Test func soundsPlayAtTheirRecordedSampleRate() {
+        let samples = [Float](repeating: 0.8, count: 200)
+        #expect(renderedFrames(of: .init(data: samples, frameCount: 100, sampleRate: 44100)) == 100)
+        #expect(renderedFrames(of: .init(data: samples, frameCount: 100, sampleRate: 22050)) == 200)
+        #expect(renderedFrames(of: .init(data: samples, frameCount: 100, sampleRate: 88200)) == 50)
+    }
+
     @Test func recoveryDetachesTheNewestVoiceBeforeTeardownCallbacksRender() throws {
         let manager = SoundManager(audioOutputEnabled: false)
         let older = SoundManager.PCMSound(data: Array(repeating: 0.8, count: 1024), frameCount: 512)
