@@ -28,6 +28,15 @@ struct LeadingSilenceTests {
         #expect(samples(of: buffer, channel: 1) == [0.5, 1, 0.5])
     }
 
+    @Test func measuresSilenceAgainstTheSoundsOwnPeak() {
+        // The same sound at a hundredth of the level trims at the same frame
+        let buffer = makeBuffer([[0, 0, 0.00001, 0, 0.01, 0.005],
+                                 [0, 0, -0.00001, 0.005, 0.01, 0.005]])
+        LeadingSilence.trim(buffer)
+        #expect(samples(of: buffer, channel: 0) == [0, 0.01, 0.005])
+        #expect(samples(of: buffer, channel: 1) == [0.005, 0.01, 0.005])
+    }
+
     @Test func keepsSoundsThatStartImmediately() {
         let buffer = makeBuffer([[0.9, 0.1, 0]])
         LeadingSilence.trim(buffer)
