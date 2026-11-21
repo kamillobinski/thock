@@ -7,6 +7,10 @@ import Foundation
 final class SoundEngine {
     static let shared = SoundEngine()
     
+    /// Sounds played last for a press and for a release. Only touched on SoundManager.playbackQueue.
+    private var lastKeyDownSound: String?
+    private var lastKeyUpSound: String?
+    
     // MARK: - Initialization
     
     private init() {}
@@ -42,10 +46,23 @@ final class SoundEngine {
         : SoundpackEngine.shared.getKeyUpSounds(for: keyType)
         
         // Play random sound from the list
-        if let soundFileName = keySoundList.randomElement() {
+        let lastSound = isKeyDown ? lastKeyDownSound : lastKeyUpSound
+        if let soundFileName = Self.pickSound(from: keySoundList, avoiding: lastSound) {
+            if isKeyDown {
+                lastKeyDownSound = soundFileName
+            } else {
+                lastKeyUpSound = soundFileName
+            }
             recordLatencyCheckpoint(latencyId, point: .soundSelected)
             play(sound: soundFileName, latencyId: latencyId, position: KeyLayout.position(for: keyCode, width: SettingsEngine.shared.getSpatialWidth(), layout: layout))
         }
+    }
+    
+    /// Picks a random sound, skipping the one that played last when there is another to choose.
+    /// Hearing the same sample twice in a row is what makes sampled typing sound mechanical.
+    static func pickSound(from sounds: [String], avoiding lastSound: String?) -> String? {
+        let fresh = sounds.filter { $0 != lastSound }
+        return (fresh.isEmpty ? sounds : fresh).randomElement()
     }
     
     /// Plays a specific sound by name
