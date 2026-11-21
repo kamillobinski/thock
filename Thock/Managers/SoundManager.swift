@@ -874,16 +874,9 @@ final class SoundManager {
         
         renderer?.render(frames: frameCount, into: outputBuffer, gain: currentLevels.master * SpatialRenderer.calibrationGain)
         
-        let initialCount = activeSounds.count
         activeSounds.removeAll(where: { $0.isFinished })
-        let remainingCount = activeSounds.count
-        let finishedCount = initialCount - remainingCount
         
         activeSoundsLock.unlock()
-        
-        if finishedCount > 0 {
-            Logger.audio.debug("Removed \(finishedCount) finished sounds, \(remainingCount) still active")
-        }
         
         // Sanitize the final mix, with optional soft clipping of finite peaks.
         OutputLimiter.apply(to: outputBuffer, sampleCount: frameCount * Int(channelCount), softClippingEnabled: softClippingEnabled)

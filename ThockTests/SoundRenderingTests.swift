@@ -34,7 +34,12 @@ struct SoundRenderingTests {
 
     @Test func rendersIOCyclesLargerThanTheConfiguredBuffer() {
         let manager = SoundManager(audioOutputEnabled: false)
-        let sound = SoundManager.PCMSound(data: Array(repeating: 0.8, count: 6000), frameCount: 3000)
+        // Every frame and channel differs, so a repeated block or swapped channels would show
+        let samples = (0..<3000).flatMap { frame -> [Float] in
+            let left = 0.1 + Float(frame) * 0.0002
+            return [left, -left / 2]
+        }
+        let sound = SoundManager.PCMSound(data: samples, frameCount: 3000)
         manager.enqueue(sound, pitchVariation: 0, latencyId: nil, position: nil, source: .keyboard)
 
         // More frames than the largest buffer setting, so the cycle spans several render blocks
@@ -44,7 +49,11 @@ struct SoundRenderingTests {
             manager.fillOutput($0.baseAddress!, frameCount: frames)
         }
 
-        #expect(output.prefix(6000).allSatisfy { $0 != 0 }, "The sound continues across block boundaries")
-        #expect(output.dropFirst(6000).allSatisfy { $0 == 0 })
+        let gain = output[0] / samples[0]
+        #expect(gain > 0)
+        for (index, sample) in samples.enumerated() {
+            #expect(abs(output[index] - sample * gain) < 0.0001, "The sound continues across block boundaries")
+        }
+        #expect(output.dropFirst(samples.count).allSatisfy { $0 == 0 })
     }
 }
