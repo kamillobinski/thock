@@ -1,7 +1,16 @@
 import Accelerate
 
-/// Linear-interpolation playback of PCM at an arbitrary rate, keeping fractional phase between calls.
+/// Cubic-interpolation playback of PCM at an arbitrary rate, keeping fractional phase between calls.
 enum Resampler {
+    /// Catmull-Rom curve through four consecutive samples, evaluated between the middle two
+    @inline(__always)
+    private static func interpolate(_ before: Float, _ from: Float, _ to: Float, _ after: Float, fraction: Float) -> Float {
+        let c1 = 0.5 * (to - before)
+        let c2 = before - 2.5 * from + 2 * to - 0.5 * after
+        let c3 = 0.5 * (after - before) + 1.5 * (from - to)
+        return ((c3 * fraction + c2) * fraction + c1) * fraction + from
+    }
+
     @discardableResult
     static func mix(source: UnsafeBufferPointer<Float>, channels: Int, frameCount: Int,
                     position: inout Double, rate: Double,
@@ -34,16 +43,19 @@ enum Resampler {
         while written < outFrames {
             let frame = Int(pos)
             if frame >= frameCount { break }
-            let next = min(frame + 1, last)
             let fraction = Float(pos - Double(frame))
+            // The first and last frames stand in for the neighbours they lack
+            let before = max(frame - 1, 0) * channels
             let a = frame * channels
-            let b = next * channels
+            let b = min(frame + 1, last) * channels
+            let after = min(frame + 2, last) * channels
 
-            let leftSample = base[a] + (base[b] - base[a]) * fraction
+            let leftSample = interpolate(base[before], base[a], base[b], base[after], fraction: fraction)
             if outChannels == 1 {
                 out[written] += leftSample * gains.left
             } else {
-                let rightSample = base[a + rightOffset] + (base[b + rightOffset] - base[a + rightOffset]) * fraction
+                let rightSample = interpolate(base[before + rightOffset], base[a + rightOffset],
+                                              base[b + rightOffset], base[after + rightOffset], fraction: fraction)
                 out[written * 2] += leftSample * gains.left
                 out[written * 2 + 1] += rightSample * gains.right
             }
