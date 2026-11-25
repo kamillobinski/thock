@@ -283,8 +283,8 @@ struct SoundSettingsView: View {
                         .foregroundColor(.secondary)
                         .accessibilityHidden(true)
 
-                    Slider(value: value, in: 0...1)
-                        .frame(width: 240)
+                    Slider(value: value, in: 0...1, step: 1.0 / 9.0)
+                        .frame(width: 140)
                         .accessibilityLabel(Text(title))
                         .accessibilityValue(Text(value.wrappedValue.formatted(.percent.precision(.fractionLength(0)))))
                         .onChange(of: value.wrappedValue, perform: onChange)

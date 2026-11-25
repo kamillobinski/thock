@@ -22,7 +22,22 @@ class KeyboardEventTracker {
     /// stop tracking): overlays should clear any held-key visuals.
     var onKeyVisualReset: (() -> Void)?
     
+    private var cleaningModeObserver: NSObjectProtocol?
+    private var tapIsActive = false
+
+    init() {
+        cleaningModeObserver = NotificationCenter.default.addObserver(forName: .cleaningModeDidChange, object: nil, queue: nil) { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self, self.eventMonitor != nil else { return }
+                if SettingsEngine.shared.isCleaningModeEnabled() != self.tapIsActive {
+                    self.startTracking()
+                }
+            }
+        }
+    }
+
     deinit {
+        if let cleaningModeObserver { NotificationCenter.default.removeObserver(cleaningModeObserver) }
         stopTracking()
     }
     
@@ -40,11 +55,12 @@ class KeyboardEventTracker {
         // AppDelegate owns the tracker and stops the tap before releasing it.
         let observer = Unmanaged.passUnretained(self).toOpaque()
         lastEventTime = currentTime()
+        tapIsActive = SettingsEngine.shared.isCleaningModeEnabled()
         
         eventMonitor = CGEvent.tapCreate(
             tap: .cghidEventTap,
             place: .tailAppendEventTap,
-            options: .defaultTap,
+            options: tapIsActive ? .defaultTap : .listenOnly,
             eventsOfInterest: eventMask,
             callback: { _, type, event, userInfo in
                 guard let userInfo = userInfo else { return Unmanaged.passUnretained(event) }

@@ -9,6 +9,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private var keyboardEventTracker: KeyboardEventTracker!
     private var mouseEventTracker: MouseEventTracker!
     private var permissionMonitor: DispatchSourceTimer?
+    private var accessibilityObserver: NSObjectProtocol?
+    private var didCompleteOneTimeSetup = false
     
     // MARK: - App Lifecycle
     
@@ -97,17 +99,38 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
         timer.schedule(deadline: .now() + 1, repeating: 1.0)
         timer.setEventHandler { [weak self] in
-            guard let self, !AXIsProcessTrusted() else { return }
+            guard let self, !Self.isAccessibilityGranted() else { return }
             DispatchQueue.main.async { self.handlePermissionsRevoked() }
         }
         timer.resume()
         permissionMonitor = timer
+
+        accessibilityObserver = DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name("com.apple.accessibility.api"), object: nil, queue: .main
+        ) { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                guard let self, self.permissionMonitor != nil, !Self.isAccessibilityGranted() else { return }
+                self.handlePermissionsRevoked()
+            }
+        }
     }
     
+    private static func isAccessibilityGranted() -> Bool {
+        guard AXIsProcessTrusted() else { return false }
+        var value: CFTypeRef?
+        let error = AXUIElementCopyAttributeValue(AXUIElementCreateSystemWide(), kAXFocusedApplicationAttribute as CFString, &value)
+        return error != .apiDisabled
+    }
+
     private func handlePermissionsRevoked() {
         permissionMonitor?.cancel()
         permissionMonitor = nil
-        
+        if let accessibilityObserver {
+            DistributedNotificationCenter.default().removeObserver(accessibilityObserver)
+            self.accessibilityObserver = nil
+        }
+
+        SettingsEngine.shared.setCleaningMode(false)
         keyboardEventTracker?.stopTracking()
         keyboardEventTracker = nil
         mouseEventTracker?.stopTracking()
@@ -128,7 +151,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     private func waitForPermissionsRestored() {
         DispatchQueue.global(qos: .utility).async {
-            while !AXIsProcessTrusted() {
+            while !Self.isAccessibilityGranted() {
                 Thread.sleep(forTimeInterval: 1.0)
             }
             DispatchQueue.main.async {
@@ -167,9 +190,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         KeyOverlayManager.shared.applyInitialState()
         KeyHudManager.shared.applyInitialState()
         
+        guard !didCompleteOneTimeSetup else { return }
+        didCompleteOneTimeSetup = true
         setupGlobalShortcuts()
         setupSleepWakeMonitoring()
-        
     }
     
     // MARK: - Migration
