@@ -132,6 +132,31 @@ jobs:
           HASH=$(shasum -a 256 "build/$ZIP_NAME" | awk '{ print $1 }')
           echo "sha=$HASH" >> $GITHUB_OUTPUT
 
+      - name: Verify Sparkle key matches the app
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          EXPECTED=$(plutil -extract SUPublicEDKey raw build/Thock.app/Contents/Info.plist)
+          cat > "$RUNNER_TEMP/derive.swift" <<'EOF'
+          import CryptoKit
+          import Foundation
+          let input = String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self)
+          guard let raw = Data(base64Encoded: input.trimmingCharacters(in: .whitespacesAndNewlines)) else { exit(1) }
+          let publicKey: Data
+          switch raw.count {
+          case 32: publicKey = try! Curve25519.Signing.PrivateKey(rawRepresentation: raw).publicKey.rawRepresentation
+          case 96: publicKey = raw.suffix(32)
+          default: exit(1)
+          }
+          print(publicKey.base64EncodedString())
+          EOF
+          ACTUAL=$(printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | swift "$RUNNER_TEMP/derive.swift") || ACTUAL=""
+          rm -f "$RUNNER_TEMP/derive.swift"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "Error: SPARKLE_ED_PRIVATE_KEY does not match SUPublicEDKey in Info.plist" >&2
+            exit 1
+          fi
+
       - name: Generate Sparkle appcast
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
