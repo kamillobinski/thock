@@ -42,9 +42,9 @@ struct VolumeLevelsTests {
     }
 
     @Test(arguments: [
-        (Float(-0.1), Float(0)), (0, 0), (0.42, 0.42), (1, 1), (1.1, 1),
+        (-0.1, 0), (0, 0), (0.42, 0.42), (1, 1), (1.1, 1),
         (.nan, 0), (.infinity, 0), (-.infinity, 0)
-    ])
+    ] as [(Float, Float)])
     func channelVolumesStayFiniteAndWithinRange(input: Float, expected: Float) {
         #expect(VolumeLevels.clamped(input) == expected)
     }

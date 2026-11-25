@@ -1320,6 +1320,66 @@ struct L10n {
         }
     }
     
+    static var nextKeyboardSoundpack: String {
+        switch lang {
+        case .english: return "Next Keyboard Soundpack"
+        case .spanish: return "Siguiente paquete de sonido de teclado"
+        case .french: return "Pack de sons clavier suivant"
+        case .chinese: return "下一个键盘音效包"
+        case .japanese: return "次のキーボードサウンドパック"
+        case .german: return "Nächstes Tastatur-Soundpack"
+        case .vietnamese: return "Gói âm thanh bàn phím tiếp theo"
+        case .italian: return "Pacchetto suoni tastiera successivo"
+        case .portuguese: return "Próximo pacote de sons do teclado"
+        case .russian: return "Следующий звуковой пакет клавиатуры"
+        }
+    }
+
+    static var nextKeyboardSoundpackSubtitle: String {
+        switch lang {
+        case .english: return "Switch to the next keyboard soundpack in the menu list"
+        case .spanish: return "Cambiar al siguiente paquete de sonido de teclado de la lista del menú"
+        case .french: return "Passer au pack de sons clavier suivant dans la liste du menu"
+        case .chinese: return "切换到菜单列表中的下一个键盘音效包"
+        case .japanese: return "メニューの一覧で次のキーボードサウンドパックに切り替えます"
+        case .german: return "Zum nächsten Tastatur-Soundpack in der Menüliste wechseln"
+        case .vietnamese: return "Chuyển sang gói âm thanh bàn phím tiếp theo trong danh sách menu"
+        case .italian: return "Passa al pacchetto suoni tastiera successivo nell'elenco del menu"
+        case .portuguese: return "Mudar para o próximo pacote de sons do teclado na lista do menu"
+        case .russian: return "Переключиться на следующий звуковой пакет клавиатуры в списке меню"
+        }
+    }
+
+    static var previousKeyboardSoundpack: String {
+        switch lang {
+        case .english: return "Previous Keyboard Soundpack"
+        case .spanish: return "Paquete de sonido de teclado anterior"
+        case .french: return "Pack de sons clavier précédent"
+        case .chinese: return "上一个键盘音效包"
+        case .japanese: return "前のキーボードサウンドパック"
+        case .german: return "Vorheriges Tastatur-Soundpack"
+        case .vietnamese: return "Gói âm thanh bàn phím trước"
+        case .italian: return "Pacchetto suoni tastiera precedente"
+        case .portuguese: return "Pacote de sons do teclado anterior"
+        case .russian: return "Предыдущий звуковой пакет клавиатуры"
+        }
+    }
+
+    static var previousKeyboardSoundpackSubtitle: String {
+        switch lang {
+        case .english: return "Switch to the previous keyboard soundpack in the menu list"
+        case .spanish: return "Cambiar al paquete de sonido de teclado anterior de la lista del menú"
+        case .french: return "Revenir au pack de sons clavier précédent dans la liste du menu"
+        case .chinese: return "切换到菜单列表中的上一个键盘音效包"
+        case .japanese: return "メニューの一覧で前のキーボードサウンドパックに切り替えます"
+        case .german: return "Zum vorherigen Tastatur-Soundpack in der Menüliste wechseln"
+        case .vietnamese: return "Chuyển về gói âm thanh bàn phím trước trong danh sách menu"
+        case .italian: return "Passa al pacchetto suoni tastiera precedente nell'elenco del menu"
+        case .portuguese: return "Mudar para o pacote de sons do teclado anterior na lista do menu"
+        case .russian: return "Переключиться на предыдущий звуковой пакет клавиатуры в списке меню"
+        }
+    }
+
     static var grantAccess: String {
         switch lang {
         case .english: return "Grant Access"
