@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SoundSettingsView: View {
     @State private var volume = Double(SettingsEngine.shared.getVolume())
+    @State private var constantVolumeEnabled = SettingsEngine.shared.isConstantVolumeEnabled()
     @State private var keyboardVolume = Double(SettingsEngine.shared.getKeyboardVolume())
     @State private var mouseVolume = Double(SettingsEngine.shared.getMouseVolume())
     @State private var disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
@@ -31,6 +32,20 @@ struct SoundSettingsView: View {
                         SettingsEngine.shared.setMouseVolume(Float($0))
                     }
                     
+                    SettingsRowView(
+                        title: L10n.constantVolume,
+                        subtitle: L10n.constantVolumeSubtitle,
+                        control: AnyView(
+                            Toggle(L10n.constantVolume, isOn: $constantVolumeEnabled)
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .labelsHidden()
+                                .onChange(of: constantVolumeEnabled) { newValue in
+                                    SettingsEngine.shared.setConstantVolume(newValue)
+                                }
+                        )
+                    )
+
                     SettingsRowView(
                         title: L10n.playThrough,
                         subtitle: nil,
@@ -255,6 +270,7 @@ struct SoundSettingsView: View {
             selectedDeviceUID = SettingsEngine.shared.getSelectedAudioDeviceUID() ?? "system-default"
         }
         .onReceive(NotificationCenter.default.publisher(for: .settingsDidChange)) { _ in
+            constantVolumeEnabled = SettingsEngine.shared.isConstantVolumeEnabled()
             disableModifierKeys = SettingsEngine.shared.isModifierKeySoundDisabled()
             ignoreRapidKeyEvents = SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled()
             autoMuteOnMusicPlayback = SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled()
