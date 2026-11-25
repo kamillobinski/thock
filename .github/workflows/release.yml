@@ -192,7 +192,13 @@ jobs:
             build/${{ env.ZIP_NAME }}
             build/appcast.xml
           body_path: docs/releases/${{ github.ref_name }}.md
+          draft: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "$VERSION" --draft=false --repo "${{ github.repository }}"
 
       - name: Update Homebrew Cask
         env:
