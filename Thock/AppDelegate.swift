@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private var mouseEventTracker: MouseEventTracker!
     private var permissionMonitor: DispatchSourceTimer?
     private var accessibilityObserver: NSObjectProtocol?
+    private var didCompleteOneTimeSetup = false
     
     // MARK: - App Lifecycle
     
@@ -124,7 +125,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     private func handlePermissionsRevoked() {
         permissionMonitor?.cancel()
         permissionMonitor = nil
-        
+        if let accessibilityObserver {
+            DistributedNotificationCenter.default().removeObserver(accessibilityObserver)
+            self.accessibilityObserver = nil
+        }
+
         SettingsEngine.shared.setCleaningMode(false)
         keyboardEventTracker?.stopTracking()
         keyboardEventTracker = nil
@@ -146,7 +151,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
     
     private func waitForPermissionsRestored() {
         DispatchQueue.global(qos: .utility).async {
-            while !AXIsProcessTrusted() {
+            while !Self.isAccessibilityGranted() {
                 Thread.sleep(forTimeInterval: 1.0)
             }
             DispatchQueue.main.async {
@@ -185,9 +190,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, MenuBarControllerDelegate {
         KeyOverlayManager.shared.applyInitialState()
         KeyHudManager.shared.applyInitialState()
         
+        guard !didCompleteOneTimeSetup else { return }
+        didCompleteOneTimeSetup = true
         setupGlobalShortcuts()
         setupSleepWakeMonitoring()
-        
     }
     
     // MARK: - Migration
