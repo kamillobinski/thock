@@ -9,6 +9,7 @@ jobs:
   release:
     name: Build, Release & Bump Homebrew
     runs-on: macos-26
+    environment: release
 
     steps:
       - name: Checkout code
