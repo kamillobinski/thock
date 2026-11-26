@@ -418,7 +418,7 @@ struct L10n {
     
     static var autoMuteOnMicrophoneUse: String {
         switch lang {
-        case .english: return "Mute while microphone is in use"
+        case .english: return "Auto-mute when microphone is in use"
         case .spanish: return "Silenciar mientras se usa el micrófono"
         case .french: return "Couper le son pendant l’utilisation du microphone"
         case .chinese: return "使用麦克风时静音"
@@ -433,7 +433,7 @@ struct L10n {
 
     static var autoMuteOnMicrophoneUseSubtitle: String {
         switch lang {
-        case .english: return "Automatically mute keyboard and mouse sounds while an app uses the microphone"
+        case .english: return "Automatically mute sounds when an app is using the microphone"
         case .spanish: return "Silencia automáticamente los sonidos del teclado y del ratón mientras una app usa el micrófono"
         case .french: return "Coupe automatiquement les sons du clavier et de la souris lorsqu’une app utilise le microphone"
         case .chinese: return "应用使用麦克风时自动静音键盘和鼠标声音"

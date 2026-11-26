@@ -16,8 +16,12 @@ struct ThockTests {
         defer { settings.setAutoMuteOnMicrophoneUse(original) }
         settings.setAutoMuteOnMicrophoneUse(false)
 
+        let lock = NSLock()
         var active = true
-        let monitor = MicrophoneMonitor(activity: { active })
+        let monitor = MicrophoneMonitor {
+            #expect(!Thread.isMainThread)
+            return lock.withLock { active }
+        }
         #expect(!monitor.shouldMute)
 
         settings.setAutoMuteOnMicrophoneUse(true)
@@ -27,19 +31,25 @@ struct ThockTests {
             #expect(!MicrophoneMonitor.isMicrophoneInUse())
             return
         }
-        #expect(monitor.shouldMute)
+        try await expectMute(true, monitor: monitor)
 
-        active = false
-        try await Task.sleep(for: .milliseconds(350))
-        #expect(!monitor.shouldMute)
+        lock.withLock { active = false }
+        try await expectMute(false, monitor: monitor)
 
-        active = true
-        try await Task.sleep(for: .milliseconds(350))
-        #expect(monitor.shouldMute)
+        lock.withLock { active = true }
+        try await expectMute(true, monitor: monitor)
 
         settings.setAutoMuteOnMicrophoneUse(false)
+        try await expectMute(false, monitor: monitor)
+        try await Task.sleep(for: .milliseconds(250))
         #expect(!monitor.shouldMute)
-        try await Task.sleep(for: .milliseconds(350))
-        #expect(!monitor.shouldMute)
+    }
+
+    private func expectMute(_ expected: Bool, monitor: MicrophoneMonitor) async throws {
+        let deadline = ContinuousClock.now + .seconds(2)
+        while monitor.shouldMute != expected && ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(monitor.shouldMute == expected)
     }
 }

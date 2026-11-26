@@ -6,14 +6,13 @@ final class MicrophoneMonitor {
     static let shared = MicrophoneMonitor()
 
     private let activity: () -> Bool
+    private let queue = DispatchQueue(label: "Thock.MicrophoneMonitor", qos: .utility)
     private let lock = NSLock()
     private var microphoneInUse = false
-    private var timer: Timer?
+    private var timer: DispatchSourceTimer?
 
     var shouldMute: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return microphoneInUse
+        lock.withLock { microphoneInUse }
     }
 
     init(activity: @escaping () -> Bool = MicrophoneMonitor.isMicrophoneInUse) {
@@ -25,49 +24,78 @@ final class MicrophoneMonitor {
     }
 
     deinit {
-        timer?.invalidate()
+        timer?.cancel()
         NotificationCenter.default.removeObserver(self)
     }
 
     @objc private func updateMonitoring() {
+        queue.async { [weak self] in self?.updateTimer() }
+    }
+
+    private func updateTimer() {
         guard #available(macOS 14.0, *), SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() else {
-            timer?.invalidate()
+            timer?.cancel()
             timer = nil
-            setMicrophoneInUse(false)
+            lock.withLock { microphoneInUse = false }
             return
         }
-        refresh()
         guard timer == nil else { return }
-        // Poll because running-input property notifications are unreliable on some macOS versions.
-        let timer = Timer(timeInterval: 0.2, repeats: true) { [weak self] _ in self?.refresh() }
-        RunLoop.main.add(timer, forMode: .common)
+
+        // Running-input property notifications are unreliable on some macOS versions.
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.schedule(deadline: .now(), repeating: .milliseconds(200), leeway: .milliseconds(20))
+        timer.setEventHandler { [weak self] in self?.refresh() }
         self.timer = timer
+        timer.resume()
     }
 
     private func refresh() {
-        setMicrophoneInUse(activity())
-    }
-
-    private func setMicrophoneInUse(_ active: Bool) {
-        lock.lock()
-        microphoneInUse = active
-        lock.unlock()
+        let active = activity()
+        lock.withLock { microphoneInUse = active }
     }
 
     static func isMicrophoneInUse() -> Bool {
         guard #available(macOS 14.0, *) else { return false }
         let system = AudioObjectID(kAudioObjectSystemObject)
-        return objectIDs(system, selector: kAudioHardwarePropertyProcessObjectList).contains {
-            isRunning($0, selector: kAudioProcessPropertyIsRunningInput)
+        return objectIDs(system, selector: kAudioHardwarePropertyProcessObjectList).contains { process in
+            uint32Property(process, selector: kAudioProcessPropertyIsRunningInput) == 1
+                && !isExcluded(process)
         }
+    }
+
+    @available(macOS 14.0, *)
+    private static func isExcluded(_ process: AudioObjectID) -> Bool {
+        let pid = pid_t(bitPattern: uint32Property(process, selector: kAudioProcessPropertyPID) ?? 0)
+        if pid == getpid() { return true }
+
+        var address = propertyAddress(kAudioProcessPropertyBundleID)
+        var bundleID: Unmanaged<CFString>?
+        var size = UInt32(MemoryLayout.size(ofValue: bundleID))
+        if AudioObjectGetPropertyData(process, &address, 0, nil, &size, &bundleID) == noErr,
+           let identifier = bundleID?.takeRetainedValue() as String?,
+           identifier == "com.apple.corespeechd" || identifier == "com.apple.corespeechd_system" {
+            return true
+        }
+
+        // System daemons can appear in CoreAudio without a bundle identifier.
+        guard pid > 0 else { return false }
+        var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
+        guard proc_pidpath(pid, &path, UInt32(path.count)) > 0 else { return false }
+        let executable = String(cString: path)
+        return executable.hasPrefix("/System/Library/PrivateFrameworks/CoreSpeech.framework/")
+            && (executable.hasSuffix("/corespeechd") || executable.hasSuffix("/corespeechd_system"))
+    }
+
+    private static func propertyAddress(_ selector: AudioObjectPropertySelector) -> AudioObjectPropertyAddress {
+        AudioObjectPropertyAddress(
+            mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain
+        )
     }
 
     private static func objectIDs(
         _ object: AudioObjectID, selector: AudioObjectPropertySelector
     ) -> [AudioObjectID] {
-        var address = AudioObjectPropertyAddress(
-            mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain
-        )
+        var address = propertyAddress(selector)
         var size: UInt32 = 0
         guard AudioObjectGetPropertyDataSize(object, &address, 0, nil, &size) == noErr, size > 0 else {
             return []
@@ -79,13 +107,12 @@ final class MicrophoneMonitor {
         return status == noErr ? Array(ids.prefix(Int(size) / MemoryLayout<AudioObjectID>.size)) : []
     }
 
-    private static func isRunning(_ object: AudioObjectID, selector: AudioObjectPropertySelector) -> Bool {
-        var address = AudioObjectPropertyAddress(
-            mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
+    private static func uint32Property(
+        _ object: AudioObjectID, selector: AudioObjectPropertySelector
+    ) -> UInt32? {
+        var address = propertyAddress(selector)
         var value: UInt32 = 0
-        var size = UInt32(MemoryLayout<UInt32>.size)
-        return AudioObjectGetPropertyData(object, &address, 0, nil, &size, &value) == noErr && value != 0
+        var size = UInt32(MemoryLayout.size(ofValue: value))
+        return AudioObjectGetPropertyData(object, &address, 0, nil, &size, &value) == noErr ? value : nil
     }
 }
