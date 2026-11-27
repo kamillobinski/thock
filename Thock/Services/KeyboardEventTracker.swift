@@ -11,7 +11,10 @@ class KeyboardEventTracker {
     private var eventMonitor: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var trackedRunLoop: CFRunLoop?
+    /// Time of the last key press in milliseconds, releases are not recorded
     private var lastEventTime: Double = 0
+    /// Keys whose press the rapid-event filter muted, so their release is muted too
+    private var rapidKeys: Set<Int64> = []
     private var tapReEnableCount = 0
     
     /// Receives every key transition (keyCode, isKeyDown) for visual display,
@@ -111,19 +114,8 @@ class KeyboardEventTracker {
                 let latencyId = startLatencyMeasurement()
                 recordLatencyCheckpoint(latencyId, point: .keyEventReceived)
                 
-                if SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled() {
-                    // Ignore events that are too close to each other.
-                    defer { tracker.lastEventTime = tracker.currentTime() }
-                    let currentTimestamp = tracker.currentTime()
-                    let elapsedTime = currentTimestamp - tracker.lastEventTime
-                    if elapsedTime <= 10 { return Unmanaged.passUnretained(event) }
-                }
-                
-                // Mute sound if music is playing and custom setting is enabled
-                if AudioMonitor.shared.isMusicAppPlaying && SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
-                    return Unmanaged.passUnretained(event)
-                }
-                
+                // Track held keys before any filter runs. A muted release that skipped this
+                // would leave its key marked as held and silence that key's next press.
                 let soundAction: (keyCode: Int64, isKeyDown: Bool)?
                 switch type {
                 case .keyDown where !tracker.pressedKeys.contains(keyCode):
@@ -151,13 +143,23 @@ class KeyboardEventTracker {
                     soundAction = nil
                 }
                 
-                if let action = soundAction {
-                    // The tap runs on the main run loop. Capture this event's keyboard before
-                    // another device can type and before leaving Carbon's supported thread.
-                    let layout = KeyLayout.Physical.fromKeyboardType(event.getIntegerValueField(.keyboardEventKeyboardType))
-                    SoundManager.playbackQueue.async {
-                        SoundEngine.shared.play(for: action.keyCode, isKeyDown: action.isKeyDown, layout: layout, latencyId: latencyId)
-                    }
+                guard let action = soundAction else { return Unmanaged.passUnretained(event) }
+                
+                if SettingsEngine.shared.isIgnoreRapidKeyEventsEnabled(),
+                   tracker.isRapid(keyCode: action.keyCode, isKeyDown: action.isKeyDown, at: tracker.currentTime()) {
+                    return Unmanaged.passUnretained(event)
+                }
+                
+                // Mute sound if music is playing and custom setting is enabled
+                if AudioMonitor.shared.isMusicAppPlaying && SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
+                    return Unmanaged.passUnretained(event)
+                }
+                
+                // The tap runs on the main run loop. Capture this event's keyboard before
+                // another device can type and before leaving Carbon's supported thread.
+                let layout = KeyLayout.Physical.fromKeyboardType(event.getIntegerValueField(.keyboardEventKeyboardType))
+                SoundManager.playbackQueue.async {
+                    SoundEngine.shared.play(for: action.keyCode, isKeyDown: action.isKeyDown, layout: layout, latencyId: latencyId)
                 }
                 
                 return Unmanaged.passUnretained(event)
@@ -192,6 +194,21 @@ class KeyboardEventTracker {
         runLoopSource = nil
         trackedRunLoop = nil
         DispatchQueue.main.async { [weak self] in self?.onKeyVisualReset?() }
+    }
+    
+    /// Decides whether "Ignore rapid key events" mutes a key transition. A press is rapid when it
+    /// follows the previous press within 10 ms, the burst that remappers and event-posting tools
+    /// produce. Releases are never timed, so a press that lands right after another key's release
+    /// still sounds. A release is muted only when its own press was.
+    func isRapid(keyCode: Int64, isKeyDown: Bool, at time: Double) -> Bool {
+        guard isKeyDown else { return rapidKeys.remove(keyCode) != nil }
+        defer { lastEventTime = time }
+        guard time - lastEventTime <= 10 else {
+            rapidKeys.remove(keyCode)
+            return false
+        }
+        rapidKeys.insert(keyCode)
+        return true
     }
     
     // MARK: Private methods
