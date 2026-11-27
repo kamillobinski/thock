@@ -1127,6 +1127,7 @@ final class SoundManager {
             }
             
             try file.read(into: buffer)
+            LeadingSilence.trim(buffer)
             
             // Convert to stereo Float32 array
             guard let pcmData = convertToStereoFloat(buffer: buffer) else {
