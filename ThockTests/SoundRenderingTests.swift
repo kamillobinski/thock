@@ -15,7 +15,7 @@ struct SoundRenderingTests {
 
         var output = [Float](repeating: 0, count: 64)
         let retained = try #require(manager.stopPlayback(preservingLatestSound: true) {
-            // Model pending buffers returned by synchronous AudioQueueStop. A late
+            // Model render callbacks that still run while the output stops. A late
             // snapshot would consume the short newest voice and retain the older one.
             for _ in 0..<3 {
                 output.withUnsafeMutableBufferPointer {
@@ -30,5 +30,30 @@ struct SoundRenderingTests {
         #expect(retained.position == position)
         #expect(retained.latencyId == latencyID)
         #expect(retained.sourcePosition == 0)
+    }
+
+    @Test func rendersIOCyclesLargerThanTheConfiguredBuffer() {
+        let manager = SoundManager(audioOutputEnabled: false)
+        // Every frame and channel differs, so a repeated block or swapped channels would show
+        let samples = (0..<3000).flatMap { frame -> [Float] in
+            let left = 0.1 + Float(frame) * 0.0002
+            return [left, -left / 2]
+        }
+        let sound = SoundManager.PCMSound(data: samples, frameCount: 3000)
+        manager.enqueue(sound, pitchVariation: 0, latencyId: nil, position: nil, source: .keyboard)
+
+        // More frames than the largest buffer setting, so the cycle spans several render blocks
+        let frames = 4096
+        var output = [Float](repeating: 0, count: frames * 2)
+        output.withUnsafeMutableBufferPointer {
+            manager.fillOutput($0.baseAddress!, frameCount: frames)
+        }
+
+        let gain = output[0] / samples[0]
+        #expect(gain > 0)
+        for (index, sample) in samples.enumerated() {
+            #expect(abs(output[index] - sample * gain) < 0.0001, "The sound continues across block boundaries")
+        }
+        #expect(output.dropFirst(samples.count).allSatisfy { $0 == 0 })
     }
 }
