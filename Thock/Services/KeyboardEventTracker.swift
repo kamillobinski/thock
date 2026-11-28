@@ -119,11 +119,6 @@ class KeyboardEventTracker {
                     if elapsedTime <= 10 { return Unmanaged.passUnretained(event) }
                 }
                 
-                // Mute sound if music is playing and custom setting is enabled
-                if AudioMonitor.shared.isMusicAppPlaying && SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
-                    return Unmanaged.passUnretained(event)
-                }
-                
                 let soundAction: (keyCode: Int64, isKeyDown: Bool)?
                 switch type {
                 case .keyDown where !tracker.pressedKeys.contains(keyCode):

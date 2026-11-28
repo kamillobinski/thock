@@ -419,30 +419,30 @@ struct L10n {
     static var autoMuteOnMicrophoneUse: String {
         switch lang {
         case .english: return "Auto-mute when microphone is in use"
-        case .spanish: return "Silenciar mientras se usa el micrófono"
-        case .french: return "Couper le son pendant l’utilisation du microphone"
-        case .chinese: return "使用麦克风时静音"
-        case .japanese: return "マイク使用中はミュート"
-        case .german: return "Stummschalten bei Mikrofonnutzung"
-        case .vietnamese: return "Tắt âm thanh khi micrô đang được sử dụng"
-        case .italian: return "Disattiva i suoni durante l’uso del microfono"
-        case .portuguese: return "Silenciar enquanto o microfone estiver em uso"
-        case .russian: return "Отключать звуки при использовании микрофона"
+        case .spanish: return "Silencio automático al usar el micrófono"
+        case .french: return "Mise en sourdine automatique pendant l'utilisation du microphone"
+        case .chinese: return "麦克风使用时自动静音"
+        case .japanese: return "マイク使用時に自動ミュート"
+        case .german: return "Automatisch stummschalten bei Mikrofonnutzung"
+        case .vietnamese: return "Tự động tắt tiếng khi micrô đang được sử dụng"
+        case .italian: return "Silenzia automaticamente durante l'uso del microfono"
+        case .portuguese: return "Silenciar automaticamente com o microfone em uso"
+        case .russian: return "Отключать звук при использовании микрофона"
         }
     }
 
     static var autoMuteOnMicrophoneUseSubtitle: String {
         switch lang {
         case .english: return "Automatically mute sounds when an app is using the microphone"
-        case .spanish: return "Silencia automáticamente los sonidos del teclado y del ratón mientras una app usa el micrófono"
-        case .french: return "Coupe automatiquement les sons du clavier et de la souris lorsqu’une app utilise le microphone"
-        case .chinese: return "应用使用麦克风时自动静音键盘和鼠标声音"
-        case .japanese: return "アプリがマイクを使用している間、キーボードとマウスの音を自動的にミュートします"
-        case .german: return "Tastatur- und Mausgeräusche automatisch stummschalten, während eine App das Mikrofon verwendet"
-        case .vietnamese: return "Tự động tắt âm thanh bàn phím và chuột khi một ứng dụng sử dụng micrô"
-        case .italian: return "Disattiva automaticamente i suoni di tastiera e mouse quando un’app usa il microfono"
-        case .portuguese: return "Silencia automaticamente os sons do teclado e do mouse enquanto um app usa o microfone"
-        case .russian: return "Автоматически отключать звуки клавиатуры и мыши, пока приложение использует микрофон"
+        case .spanish: return "Silencia automáticamente cuando una app está usando el micrófono"
+        case .french: return "Désactiver automatiquement les sons lorsqu'une app utilise le microphone"
+        case .chinese: return "当应用正在使用麦克风时自动静音"
+        case .japanese: return "アプリがマイクを使用中は自動的にミュート"
+        case .german: return "Automatisch stummschalten, wenn eine App das Mikrofon verwendet"
+        case .vietnamese: return "Tự động tắt tiếng khi một ứng dụng đang sử dụng micrô"
+        case .italian: return "Silenzia automaticamente i suoni quando un'app sta usando il microfono"
+        case .portuguese: return "Silenciar automaticamente quando um app estiver usando o microfone"
+        case .russian: return "Автоматически отключать звук, когда приложение использует микрофон"
         }
     }
 

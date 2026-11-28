@@ -91,11 +91,6 @@ class MouseEventTracker {
                     return Unmanaged.passUnretained(event)
                 }
                 
-                // Mute if music is playing and auto-mute is enabled
-                if AudioMonitor.shared.isMusicAppPlaying && SettingsEngine.shared.isAutoMuteOnMusicPlaybackEnabled() {
-                    return Unmanaged.passUnretained(event)
-                }
-                
                 // Map CGEventType to MouseButtonEvent and play sound
                 let mouseEvent: MouseButtonEvent?
                 switch type {
