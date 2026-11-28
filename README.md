@@ -21,7 +21,7 @@
       <img alt="Discord" src="https://img.shields.io/discord/1453196153771397286?style=rounded&color=white&labelColor=000000&label=discord">
     </a>
     <a href="https://deepwiki.com/kamillobinski/thock" target="_blank" rel="noopener noreferrer">
-      <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"/>
+      <img src="https://img.shields.io/badge/-Ask%20DeepWiki-white?style=rounded&labelColor=000000&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5MiA5MiI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTI2LjAgMi42TDQzLjggMTIuOUw0My44IDI4LjJMNTguMCAzMS40TDY3LjAgMjYuMkw4NC44IDM2LjVMODQuOCA1Ny4xTDY3LjAgNjcuNEw1OC4wIDYyLjJMNDMuOCA2NC4xTDQzLjggNzkuNEwyNi4wIDg5LjdMOC4yIDc5LjRMOC4yIDU4LjhMMjYuMCA0OC41TDMyLjMgNTIuMUE5LjAgOS4wIDAgMSAwIDMyLjMgNDAuMkwyNi4wIDQzLjhMOC4yIDMzLjVMOC4yIDEyLjlaIi8+PC9zdmc+" alt="Ask DeepWiki"/>
     </a>
   </p>
 </div>
