@@ -8,6 +8,7 @@ final class SettingsManager {
     static let defaultDisableModifierKeys: Bool = false
     static let defaultIgnoreRapidKeyEvents: Bool = false
     static let defaultAutoMuteOnMusicPlayback: Bool = false
+    static let defaultAutoMuteOnMicrophoneUse: Bool = false
     static let defaultIdleTimeoutSeconds: TimeInterval = 10.0
     static let defaultAudioBufferSize: UInt32 = 256
     static let defaultSelectedAudioDeviceUID: String? = nil
@@ -58,8 +59,8 @@ final class SettingsManager {
     
     /// Whether to mute sounds while an app is using an audio input.
     var autoMuteOnMicrophoneUse: Bool {
-        get { UserDefaults.standard.bool(forKey: "autoMuteOnMicrophoneUse") }
-        set { UserDefaults.standard.set(newValue, forKey: "autoMuteOnMicrophoneUse") }
+        get { UserDefaults.autoMuteOnMicrophoneUse }
+        set { UserDefaults.autoMuteOnMicrophoneUse = newValue }
     }
 
     /// Number of seconds of inactivity before stopping the audio queue to save CPU.
@@ -189,6 +190,7 @@ private extension UserDefaults {
         static let disableModifierKeys = "disableModifierKeys"
         static let ignoreRapidKeyEvents = "ignoreRapidKeyEvents"
         static let autoMuteOnMusicPlayback = "autoMuteOnMusicPlayback"
+        static let autoMuteOnMicrophoneUse = "autoMuteOnMicrophoneUse"
         static let idleTimeoutSeconds = "idleTimeoutSeconds"
         static let audioBufferSize = "audioBufferSize"
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
@@ -255,6 +257,18 @@ private extension UserDefaults {
         }
         set {
             standard.set(newValue, forKey: Keys.autoMuteOnMusicPlayback)
+        }
+    }
+
+    static var autoMuteOnMicrophoneUse: Bool {
+        get {
+            if standard.object(forKey: Keys.autoMuteOnMicrophoneUse) == nil {
+                return SettingsManager.defaultAutoMuteOnMicrophoneUse
+            }
+            return standard.bool(forKey: Keys.autoMuteOnMicrophoneUse)
+        }
+        set {
+            standard.set(newValue, forKey: Keys.autoMuteOnMicrophoneUse)
         }
     }
     

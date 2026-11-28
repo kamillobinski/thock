@@ -20,7 +20,13 @@ class AudioMonitor {
     static let shared = AudioMonitor()
     
     /// A boolean property indicating whether music is currently playing in the Music app.
-    private(set) var isMusicAppPlaying: Bool = false
+    private(set) var isMusicAppPlaying: Bool {
+        get { stateLock.withLock { musicAppPlaying } }
+        set { stateLock.withLock { musicAppPlaying = newValue } }
+    }
+
+    private let stateLock = NSLock()
+    private var musicAppPlaying = false
     
     /// The timer responsible for periodically polling the Music app's player state.
     private var timer: Timer?

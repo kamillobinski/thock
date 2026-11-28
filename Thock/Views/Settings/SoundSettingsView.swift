@@ -175,7 +175,7 @@ struct SoundSettingsView: View {
                         )
                     )
                     
-                    if #available(macOS 14.0, *) {
+                    if MicrophoneMonitor.isSupported {
                         SettingsRowView(
                             title: L10n.autoMuteOnMicrophoneUse,
                             subtitle: L10n.autoMuteOnMicrophoneUseSubtitle,

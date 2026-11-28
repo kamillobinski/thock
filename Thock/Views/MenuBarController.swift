@@ -395,7 +395,7 @@ class MenuBarController {
         autoMuteOnMusicPlaybackItem.target = self
         subMenu.addItem(autoMuteOnMusicPlaybackItem)
 
-        if #available(macOS 14.0, *) {
+        if MicrophoneMonitor.isSupported {
             let microphoneItem = NSMenuItem(
                 title: L10n.autoMuteOnMicrophoneUse,
                 action: #selector(toggleAutoMuteOnMicrophoneUse(_:)),
@@ -574,9 +574,7 @@ class MenuBarController {
     }
     
     @objc private func toggleAutoMuteOnMicrophoneUse(_ sender: NSMenuItem) {
-        let enabled = !SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled()
-        SettingsEngine.shared.setAutoMuteOnMicrophoneUse(enabled)
-        sender.state = enabled ? .on : .off
+        sender.state = SettingsEngine.shared.toggleAutoMuteOnMicrophoneUse() ? .on : .off
     }
 
     @objc private func toggleKeyOverlay(_ sender: NSMenuItem) {

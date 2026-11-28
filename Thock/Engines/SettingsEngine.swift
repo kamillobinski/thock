@@ -112,8 +112,17 @@ final class SettingsEngine {
         NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
     
+    // MARK: - Auto Mute on Microphone Use
+
+    func toggleAutoMuteOnMicrophoneUse() -> Bool {
+        let newState = !SettingsManager.shared.autoMuteOnMicrophoneUse
+        SettingsManager.shared.autoMuteOnMicrophoneUse = newState
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+        return newState
+    }
+
     func isAutoMuteOnMicrophoneUseEnabled() -> Bool {
-        SettingsManager.shared.autoMuteOnMicrophoneUse
+        return SettingsManager.shared.autoMuteOnMicrophoneUse
     }
 
     func setAutoMuteOnMicrophoneUse(_ enabled: Bool) {

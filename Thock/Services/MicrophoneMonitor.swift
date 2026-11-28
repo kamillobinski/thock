@@ -5,6 +5,11 @@ import CoreAudio
 final class MicrophoneMonitor {
     static let shared = MicrophoneMonitor()
 
+    static var isSupported: Bool {
+        if #available(macOS 14.0, *) { return true }
+        return false
+    }
+
     private let activity: () -> Bool
     private let queue = DispatchQueue(label: "Thock.MicrophoneMonitor", qos: .utility)
     private let lock = NSLock()
@@ -33,7 +38,7 @@ final class MicrophoneMonitor {
     }
 
     private func updateTimer() {
-        guard #available(macOS 14.0, *), SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() else {
+        guard Self.isSupported, SettingsEngine.shared.isAutoMuteOnMicrophoneUseEnabled() else {
             timer?.cancel()
             timer = nil
             lock.withLock { microphoneInUse = false }
@@ -63,6 +68,10 @@ final class MicrophoneMonitor {
         }
     }
 
+    private static let excludedBundleIDs: Set<String> = [
+        "com.apple.CoreSpeech", "com.apple.corespeechd", "com.apple.corespeechd_system"
+    ]
+
     @available(macOS 14.0, *)
     private static func isExcluded(_ process: AudioObjectID) -> Bool {
         let pid = pid_t(bitPattern: uint32Property(process, selector: kAudioProcessPropertyPID) ?? 0)
@@ -73,7 +82,7 @@ final class MicrophoneMonitor {
         var size = UInt32(MemoryLayout.size(ofValue: bundleID))
         if AudioObjectGetPropertyData(process, &address, 0, nil, &size, &bundleID) == noErr,
            let identifier = bundleID?.takeRetainedValue() as String?,
-           identifier == "com.apple.corespeechd" || identifier == "com.apple.corespeechd_system" {
+           excludedBundleIDs.contains(identifier) {
             return true
         }
 
