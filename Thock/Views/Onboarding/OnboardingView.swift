@@ -29,8 +29,8 @@ struct OnboardingView: View {
 
     var body: some View {
         content
-        .background(Color(nsColor: .windowBackgroundColor))
         .frame(width: OnboardingMetrics.windowSize.width, height: OnboardingMetrics.windowSize.height)
+        .background(Color(nsColor: .windowBackgroundColor))
         .onAppear(perform: scheduleDebugAutoAdvance)
         .onChange(of: permission.isGranted) { _, granted in
             guard granted, step == .permission else { return }
